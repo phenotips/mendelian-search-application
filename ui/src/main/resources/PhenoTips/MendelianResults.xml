@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xwikidoc version="1.1">
+  <web>PhenoTips</web>
+  <name>MendelianResults</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <creationDate>1424444184000</creationDate>
+  <parent>PhenoTips.MendelianSearch</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <date>1424814261000</date>
+  <contentUpdateDate>1424814260000</contentUpdateDate>
+  <version>1.1</version>
+  <title>MendelianResults</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>false</hidden>
+  <content>{{include document='PhenoTips.MendelianSearch' /}}
+{{include document='PhenoTips.MendelianDisplay' /}}
+{{velocity}}
+#if($request &amp;&amp; $request.getMethod() == 'GET')
+  #set ($gene="CTPS")
+  #set ($phenotype = "Hard Head")
+  #set ($geneOptions = "")
+  #set ($phenotypeOptions = "")
+  #set ($numPatients = 2)
+  #set ($results = $services.DummyMendelianSearch.search($gene, $phenotype, $numPatients))
+  #set ($displayResults = true)
+#else
+  #set ($displayResults = false)
+#end
+#if (!${displayResults})
+  {{html clean=false}}
+  &lt;div class="box"&gt;Select your search terms above&lt;/div&gt;
+  {{/html}}
+#else
+  $results
+#end
+{{/velocity}}
+</content>
+</xwikidoc>
