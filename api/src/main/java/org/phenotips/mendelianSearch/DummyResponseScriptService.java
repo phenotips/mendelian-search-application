@@ -60,6 +60,16 @@ public class DummyResponseScriptService implements ScriptService
         return response;
     }
 
+    /**
+     * @param gene gene
+     * @param phenotype phenotype
+     * @return a count of patients in the four categories
+     */
+    public Integer[] count(String gene, List<String> phenotype)
+    {
+        return new Integer[] { 4, 3, 2, 100 };
+    }
+
     private JSONObject generateDummyPatient()
     {
         JSONObject patient = new JSONObject();

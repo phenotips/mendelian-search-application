@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
 <xwikidoc version="1.1">
   <web>PhenoTips</web>
   <name>MendelianResults</name>
@@ -11,8 +31,8 @@
   <parent>PhenoTips.MendelianSearch</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1424814261000</date>
-  <contentUpdateDate>1424814260000</contentUpdateDate>
+  <date>1425073197000</date>
+  <contentUpdateDate>1425070068000</contentUpdateDate>
   <version>1.1</version>
   <title>MendelianResults</title>
   <comment/>
@@ -20,26 +40,568 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>false</hidden>
   <content>{{include document='PhenoTips.MendelianSearch' /}}
-{{include document='PhenoTips.MendelianDisplay' /}}
 {{velocity}}
+$xwiki.jsx.use('PhenoTips.MendelianResults')##
+$xwiki.ssx.use('PhenoTips.MendelianResults')##
 #if($request &amp;&amp; $request.getMethod() == 'GET')
   #set ($gene="CTPS")
   #set ($phenotype = "Hard Head")
-  #set ($geneOptions = "")
-  #set ($phenotypeOptions = "")
-  #set ($numPatients = 2)
-  #set ($results = $services.DummyMendelianSearch.search($gene, $phenotype, $numPatients))
+  #set ($results = $services.DummyMendelianSearch.count($gene, $phenotype))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
 #end
 #if (!${displayResults})
   {{html clean=false}}
-  &lt;div class="box"&gt;Select your search terms above&lt;/div&gt;
+  &lt;div class="infomessage box"&gt;Select your search terms above&lt;/div&gt;
   {{/html}}
 #else
-  $results
+  {{html clean = false}}
+## hidden element containing the previous request string for use in asynchronous requests
+&lt;input type='hidden' id='query-string' value="$request.getQueryString()"/&gt;
+&lt;section id="mendelian-results"&gt;
+  &lt;div id="mendellian-overview-container"&gt;
+    &lt;div id='mendelian-visualization'&gt;
+      &lt;table&gt;
+        &lt;tr&gt;
+          &lt;!-- Blank cells for alignment --&gt;
+          &lt;td&gt;&lt;/td&gt; 
+          &lt;td&gt;&lt;/td&gt; 
+          &lt;td colspan='2'&gt;Matching Gene&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+          &lt;!-- Blank cells for alignment --&gt;
+          &lt;td&gt;&lt;/td&gt; 
+          &lt;td&gt;&lt;/td&gt; 
+          &lt;td&gt;Yes&lt;/td&gt;
+          &lt;td&gt;No&lt;/td&gt;
+        &lt;/tr&gt;
+
+        &lt;tr&gt;
+          &lt;td class='vertical-text' rowspan='2'&gt;Matching Phenotype&lt;/td&gt;
+          &lt;td class='vertical-text'&gt;Yes&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[0]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[1]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+        &lt;/tr&gt;
+
+        &lt;tr&gt;
+          &lt;td class='vertical-text'&gt;No&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[2]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[3]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  
+  &lt;div id="mendelian-livetable-wrapper"&gt;
+    &lt;div id="mendelian-livetable-container"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+
+  {{/html}}
+  
 #end
 {{/velocity}}
 </content>
+  <object>
+    <name>PhenoTips.MendelianResults</name>
+    <number>0</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>30652af7-9a30-419b-9272-4f40b224ea78</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>default</cache>
+    </property>
+    <property>
+      <code>var PhenoTips = (function (PhenoTips) {
+	var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
+	widgets.MendelianLivetable = Class.create({
+		mendelianLiveTableResultsURL : "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
+		initialize : function(query, subgroup, container){
+			this.query = query;
+			this.subgroup = subgroup;
+			this.container = container;
+			this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
+			this.container.insert(this.resultsTable);
+
+			this.launchSearch();
+		},
+
+		launchSearch : function(){
+			if (this.activeSearch) {return;}
+	    	var _this = this;
+	    	this.activeSearch = new Ajax.Request(
+	        this.mendelianLiveTableResultsURL,
+	        {
+	          parameters: {
+	            'query' : this.query,
+	            'outputSyntax' : "plain",
+	            'resultsPerPage' : this.resultsPerPage || 10,
+	            'resultsPage' : this.resultsPage || 20
+	          },
+	          method: "POST",
+	          onCreate : function() {
+	            _this.container.addClassName('loading');
+	          },
+	          onSuccess: function(response) {
+	            _this.displayResults(response.responseJSON);
+	          },
+	          onComplete : function() {
+	            _this.container.removeClassName('loading');
+	            _this.activeSearch = false;
+	          }
+	        });
+		},
+
+		displayResults : function (data) {
+	    	var _this = this;
+	    	this._data = data;
+
+	    	// // Make sure the results are for this query
+	    	// if (!data.query) {return;}
+	    	// if (data.query.id != this.query) {return;}
+
+	    	// Empty the container to make room for the new results
+	    	if (this.resultsTable.childElements()) {
+                this.resultsTable.update('');
+            }
+            var columns = {
+            	"patientId" : {
+            		heading : _this.strings["patientId.heading"],
+            		display : _this.displayResultPatientId.bind(_this)
+            	},
+            	"owner" : {
+            		heading : _this.strings["owner.heading"],
+            		display : _this.displayResultOwner.bind(_this)
+            	},
+            	"diagnosis" : {
+            		heading : _this.strings["diagnosis.heading"],
+            		display : _this.displayResultDiagnosis.bind(_this)
+            	},
+            	"more" : {
+            		heading : _this.strings["more.heading"],
+            		display : _this.displayResultMoreInfo.bind(_this)
+            	}
+            }
+       
+       		this._displayTableHeader(columns, this.resultsTable);
+
+       		data.results.each(function(r) {
+				_this._displayPatientRow(r, columns, _this.resultsTable);
+				_this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
+			});
+
+			delete this._data;
+       	},
+
+	    _displayTableHeader : function (columns, table) {
+	      var row = this._getEmptyRow(table);
+	      for (var c in columns) {
+	        row.insert(new Element("th", {"class" : c}).update(columns[c].heading));
+	      }
+	      return row;
+	    },
+
+       	_getEmptyRow : function(table, className) {
+       		if (className) {
+       			var row = new Element('tr', {'class' : className});
+       		} else {
+       			var row = new Element('tr');
+       		}
+       		table.insert(row);
+       		return row;
+       	},
+
+       	_displayPatientRow : function(rowData, columns, table){
+       		var row = this._getEmptyRow(table, 'patient-row');
+       		for (var c in columns) {
+    			row.insert(columns[c].display(rowData));
+    		}
+    		return row;
+       	},
+
+       	//the display result functions all return a td element that will be used to display the upper level data for each patient
+
+       	displayResultPatientId : function(data) {
+       		var cell = new Element('td');
+       		cell.insert(data.id);
+       		return cell;
+       	},
+
+       	displayResultOwner : function(data) {
+       		var cell = new Element('td');
+       		cell.insert(data.owner);
+       		return cell;
+
+       	},
+
+       	displayResultDiagnosis : function(data) {
+       		var cell = new Element('td');
+       		cell.insert(data.diagnosis);
+       		return cell;
+       	},
+
+       	displayResultMoreInfo : function(data) {
+       		var cell = new Element('td');
+       		if ((data.genotype.length == 0) &amp;&amp; (data.phenotype.length == 0)) {
+       			cell.innerHTML=this.strings["noPhenotypeOrVariants.text"];
+       			return cell;
+       		}
+       		var moreInfoButton = new Element('a', {'href': '#'}).insert(this.strings["showMore.button"]);
+       		cell.insert(moreInfoButton);
+       		return cell; 
+
+       	},
+
+       	_displayPatientSubTable : function(data, width, table) {
+       		var row = this._getEmptyRow(table, 'patient-subResult');
+       		var containerCell = new Element('td', {'colspan' : width });
+       		
+       		var phenotypeContainer = new Element('div', {'class' : 'patient-phenotype-container'});
+       		phenotypeContainer.insert(this.generatePhenotypeTable(data.phenotype));
+       		containerCell.insert(phenotypeContainer);
+
+       		var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
+       		variantContainer.insert(this.generateVariantTable(data.genotype));
+       		containerCell.insert(variantContainer);
+
+       		row.insert(containerCell);
+       		return row;
+       	},
+
+       	generatePhenotypeTable : function(data) {
+       		//right now phenotype information is just a list of strings. 
+       		var _this = this;
+       		var table = new Element('table');
+       		table.insert(_this._getEmptyRow(table).insert(new Element('th').update(this.strings["patientSymptom.heading"])));
+       		data.each(function(e){
+       			table.insert(_this._getEmptyRow(table).insert(new Element('td').update(e)));
+       		});
+       		return table;
+       	},
+
+       	generateVariantTable : function (variants) {
+       		//variant keys: "chr", "posisiton" , "ref", "alt" , "effect", "score"
+       		var _this = this;
+       		var variantTable = new Element('table');
+       		var columns = {
+       			"positon" : {
+       				heading : _this.strings['variant.position.heading'],
+       				display : _this._displayResultVariantPosition.bind(_this)
+       			},
+       			"change" : {
+       				heading : _this.strings['variant.change.heading'],
+       				display : _this._displayResultVariantChange.bind(_this)
+       			},
+       			"effect" : {
+       				heading : _this.strings['variant.effect.heading'],
+       				display : _this._displayResultVariantEffect.bind(_this)
+       			},
+       			"score" : {
+       				heading : _this.strings['variant.score.heading'],
+       				display : _this._displayResultVariantScore.bind(_this)
+       			}
+       		}
+
+       		variantTable.insert(new Element('tr').insert(new Element('th', {'colspan' : Object.getOwnPropertyNames(columns).length}).update(this.strings['patientVaraiantsHeading'])));
+			this._displayTableHeader(columns, variantTable);
+
+			variants.each(function (r){
+				_this._displayVariantRow(r, columns, variantTable);
+			});
+
+			return variantTable;
+       	},
+
+       	_displayVariantRow : function(variant, columns, table) {
+       		var row = this._getEmptyRow(table, 'variant-row');
+       		for (var c in columns) {
+    			row.insert(columns[c].display(variant));
+    		}
+    		return row;
+       	},
+
+       	_displayResultVariantPosition : function (r) {
+       		var cell = new Element('td', {'class' : 'variant-position'});
+    		var _this = this;
+    		if (r.chr &amp;&amp; r.position &amp;&amp; r.ref) {
+	    		var start = r.position;
+	    		var end = r.position + r.ref.length;
+	    		var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",r.chr.toUpperCase()[0]).replace("__START__", start).replace("__STOP__", end);
+	    		var positionURLFragment = "Chr" + r.chr.toUpperCase()[0] + ": " + start + "-" + end;
+	            var assembly = r.assembly || "hg19";
+	            var position = new Element('a', {
+	                 'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
+	                 'class' : 'button secondary',
+	                 'target' : '__blank',
+	                 'title' : _this.strings["variantPositionLinkTitle"]
+	            }).update(positionText).wrap('span', {'class' : 'buttonwrapper'});
+	        	cell.insert(position);
+	        }
+	        return cell;
+       	},
+
+       	_displayResultVariantChange : function (r) {
+       		var cell = new Element('td', {'class' : 'variant-change'});
+    		var displayedRef = (r.ref.length &gt; 10) ? (r.ref.substring(0,10)+"...") : r.ref;
+    		var displayedAlt = (r.alt.length &gt; 10) ? (r.alt.substring(0,10)+"...") : r.alt;
+    		cell.update("&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;");
+    		return cell;
+    	},
+
+
+    	_displayResultVariantEffect : function (r) {
+    		var cell = new Element('td', {'class' : 'variant-effect'}).update("&lt;span class='variant-type-text'&gt;" + r.type + "&lt;/span&gt;");
+    		return cell;
+    	},
+
+		_displayResultVariantScore : function(r) {
+    	    var cell = new Element('td', {'class' : 'variant-score'});
+    		var varScore = new Element('div', {'class' : 'variant-score'});
+    		varScore.insert(this.Utils.generateSegmentedBar(5, r.score));
+            cell.insert(varScore);
+    		return cell;
+    	},
+
+       	strings : {
+       		"patientId.heading" 	: "ID",
+       		"owner.heading" 		: "Owner",
+       		"diagnosis.heading" 	: "Diagnosis",
+       		"more.heading"			: "More info",
+       		"noPhenotypeOrVariants.text" : "Nothing to display",
+       		"showMore.button"		: "Show phenotype and variant info",
+       		"patientSymptom.heading": "Symptoms observed in this patient",
+       		'patientVaraiantsHeading': "Relevant variants found in this patient",
+       		'variant.position.heading': "Position",
+       		'variant.change.heading': "Change",
+       		'variant.effect.heading': "Effect",
+       		'variant.score.heading' : "Score",
+       		"positionPhrase"  : "Chr __CHROMOSOME__: __START__-__STOP__",
+    		"variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
+       	},
+
+       	Utils : {
+		    generateSegmentedBar : function (count, value) {
+		        var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
+		        var valueUnit = 1 / count;
+		        for (var i = 0; i &lt; count; ++i) {
+		          var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
+		          var segment = new Element('span', {'class' : 'segmented-unit'}).update(
+		                        new Element('span', {
+		                        	'class' : 'segmented-unit-fill',
+		                        	'style' : "width: " + segmentFill + "%"
+		                        })
+		          );
+		          bar.insert(segment);
+		        }
+		        return bar.insert(' ' + Math.round(value * 100) + '%');
+		      }
+    	},
+	});
+
+	var init = function (){
+		var queryString = $('query-string').value;
+		var subgroup = 1;
+		var container = $('mendelian-livetable-container');
+
+		if (queryString &amp;&amp; subgroup &amp;&amp; container) {
+			new PhenoTips.widgets.MendelianLivetable(queryString, subgroup, container);
+		}
+
+
+	};
+
+	(XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianSearchFormBehaviour()) || document.observe("xwiki:dom:loaded", init);
+	
+	// End PhenoTips augmentation.
+	return PhenoTips;
+}(PhenoTips || {}));</code>
+    </property>
+    <property>
+      <name>MendelianLivetable</name>
+    </property>
+    <property>
+      <parse>1</parse>
+    </property>
+    <property>
+      <use>onDemand</use>
+    </property>
+  </object>
+  <object>
+    <name>PhenoTips.MendelianResults</name>
+    <number>0</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>41ed21eb-4693-42f5-a950-c282bf9d24bc</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>#mendellian-overview-container{
+  display: inline-block;
+  width: 30%;
+}
+#mendelian-livetable-wrapper{
+  display: inline-block;
+  float: right;
+  height: 90vh;
+  overflow-y: scroll;
+  width:70%;
+}
+#mendelian-livetable-wrapper .patient-subResult td&gt;div{
+  width: 50%;
+  display:inline-block;
+}
+</code>
+    </property>
+    <property>
+      <name>MendelianLivetableStyles</name>
+    </property>
+    <property>
+      <parse/>
+    </property>
+    <property>
+      <use>currentPage</use>
+    </property>
+  </object>
 </xwikidoc>
