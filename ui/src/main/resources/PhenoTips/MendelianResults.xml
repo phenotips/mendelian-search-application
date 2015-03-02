@@ -43,7 +43,7 @@
 {{velocity}}
 $xwiki.jsx.use('PhenoTips.MendelianResults')##
 $xwiki.ssx.use('PhenoTips.MendelianResults')##
-#if($request &amp;&amp; $request.getMethod() == 'GET')
+#if($request &amp;&amp; $request.getMethod() == 'POST')
   #set ($gene="CTPS")
   #set ($phenotype = "Hard Head")
   #set ($results = $services.DummyMendelianSearch.count($gene, $phenotype))
@@ -58,7 +58,13 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #else
   {{html clean = false}}
 ## hidden element containing the previous request string for use in asynchronous requests
-&lt;input type='hidden' id='query-string' value="$request.getQueryString()"/&gt;
+&lt;form display='none' id='hidden-query-form'&gt;
+  #foreach($param in $request.getParameterNames())
+    #foreach($value in $request.getParameterValues($param))
+      &lt;input type='hidden' name="$param" value="$value"/&gt;
+    #end
+  #end
+&lt;/form&gt;
 &lt;section id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
     &lt;div id='mendelian-visualization'&gt;
@@ -187,8 +193,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 	var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
 	widgets.MendelianLivetable = Class.create({
 		mendelianLiveTableResultsURL : "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
-		initialize : function(query, subgroup, container){
-			this.query = query;
+		initialize : function(queryForm, subgroup, container){
+			this.queryForm = queryForm;
 			this.subgroup = subgroup;
 			this.container = container;
 			this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
@@ -203,12 +209,11 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 	    	this.activeSearch = new Ajax.Request(
 	        this.mendelianLiveTableResultsURL,
 	        {
-	          parameters: {
-	            'query' : this.query,
+	          parameters: $H({
 	            'outputSyntax' : "plain",
-	            'resultsPerPage' : this.resultsPerPage || 10,
-	            'resultsPage' : this.resultsPage || 20
-	          },
+	            'resultsPerPage' : _this.resultsPerPage || 10,
+	            'resultsPage' : _this.resultsPage || 20
+	          }).merge(_this.queryForm.serialize(true)).toObject(),
 	          method: "POST",
 	          onCreate : function() {
 	            _this.container.addClassName('loading');
@@ -217,6 +222,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 	            _this.displayResults(response.responseJSON);
 	          },
 	          onComplete : function() {
+	            _this.addEventListeners();
 	            _this.container.removeClassName('loading');
 	            _this.activeSearch = false;
 	          }
@@ -260,6 +266,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 				_this._displayPatientRow(r, columns, _this.resultsTable);
 				_this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
 			});
+
 
 			delete this._data;
        	},
@@ -326,16 +333,17 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
        	_displayPatientSubTable : function(data, width, table) {
        		var row = this._getEmptyRow(table, 'patient-subResult');
        		var containerCell = new Element('td', {'colspan' : width });
+       		var container = new Element('div', {'class' :  'collapsed'});
        		
        		var phenotypeContainer = new Element('div', {'class' : 'patient-phenotype-container'});
        		phenotypeContainer.insert(this.generatePhenotypeTable(data.phenotype));
-       		containerCell.insert(phenotypeContainer);
+       		container.insert(phenotypeContainer);
 
        		var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
        		variantContainer.insert(this.generateVariantTable(data.genotype));
-       		containerCell.insert(variantContainer);
+       		container.insert(variantContainer);
 
-       		row.insert(containerCell);
+       		row.insert(containerCell.insert(container));
        		return row;
        	},
 
@@ -433,6 +441,22 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     		return cell;
     	},
 
+    	addEventListeners : function(){
+    		$$('tr.patient-row').each(function(r){
+   				 r.observe('click', function(){
+      				var container = this.next().down().down();
+      				if(container.hasClassName('collapsed')){
+        				container.removeClassName('collapsed');
+        				r.addClassName('expanded');
+      				} else {
+       					 container.addClassName('collapsed');
+        				r.removeClassName('expanded');
+     				 }
+     			});
+    		});
+
+    	},
+
        	strings : {
        		"patientId.heading" 	: "ID",
        		"owner.heading" 		: "Owner",
@@ -470,12 +494,12 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 	});
 
 	var init = function (){
-		var queryString = $('query-string').value;
+		var form = $('hidden-query-form');
 		var subgroup = 1;
 		var container = $('mendelian-livetable-container');
 
-		if (queryString &amp;&amp; subgroup &amp;&amp; container) {
-			new PhenoTips.widgets.MendelianLivetable(queryString, subgroup, container);
+		if (form &amp;&amp; subgroup &amp;&amp; container) {
+			new PhenoTips.widgets.MendelianLivetable(form, subgroup, container);
 		}
 
 
@@ -577,22 +601,89 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       <cache>long</cache>
     </property>
     <property>
-      <code>#mendellian-overview-container{
+      <code>#mendelian-livetable-wrapper{
+  display: inline-block;
+  float: right;
+  width:70%;
+}
+
+#mendellian-overview-container{
   display: inline-block;
   width: 30%;
 }
-#mendelian-livetable-wrapper{
-  display: inline-block;
-  float: right;
-  height: 90vh;
-  overflow-y: scroll;
-  width:70%;
+
+table.mendelian-results-table{
+  border: none;
+  border-collapse: separate;
+  border-spacing: 0px 5px ;
+  text-align: left;
 }
-#mendelian-livetable-wrapper .patient-subResult td&gt;div{
-  width: 50%;
+
+tr.patient-row td {
+  background-color: white;
+  border: none;
+  padding: 5px;
+  position: relative;
+}
+
+tr.patient-row:hover td {
+  cursor: pointer;
+  -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+  -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+}
+tr.patient-row:hover td:first-child {
+  -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+  -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
+}
+tr.patient-row:hover td:after, tr.patient-row.expanded td:after {
+  background-color: white;
+  content: "";
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 3px;
+  z-index: 1;
+}
+
+tr.patient-row.expanded td {
+  -moz-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+  -webkit-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+tr.patientrow.expanded td:first-child {
+  -moz-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+  -webkit-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+tr.patient-subResult&gt;td{
+  border: none;
+  padding: 0 5px;
+}
+
+tr.patient-subResult&gt;td&gt;div{
+  box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+  -moz-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+  -webkit-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+  margin-top:-6px;
+  max-height: 500px;
+  overflow: hidden;
+  transition: max-height 1s;
+  z-index:2;
+}
+
+tr.patient-subResult&gt;td&gt;div.collapsed{
+  max-height: 0px;
+}
+
+tr.patient-subResult td&gt;div&gt;div{
   display:inline-block;
-}
-</code>
+  width: 50%;
+}</code>
     </property>
     <property>
       <name>MendelianLivetableStyles</name>

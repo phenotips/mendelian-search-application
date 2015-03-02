@@ -48,7 +48,7 @@ $xwiki.jsx.use('PhenoTips.TouchscreenEvents')##
 $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 #set ($alleleFreqPrecision = 4)##
 {{html}}
-&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('PhenoTips.MendelianResults')" method='GET'&gt;
+&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('PhenoTips.MendelianResults')" method='POST'&gt;
   &lt;div class="form-section gene-section"&gt;
     &lt;p class='search-heading'&gt;Enter the gene you are investigating:&lt;/p&gt;
     &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder='Enter a gene name' value="$!{request.gene}"/&gt;
