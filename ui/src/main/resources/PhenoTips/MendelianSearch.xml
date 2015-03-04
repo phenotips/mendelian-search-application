@@ -31,8 +31,8 @@
   <parent>PhenoTips.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1425073605000</date>
-  <contentUpdateDate>1425065001000</contentUpdateDate>
+  <date>1425492481000</date>
+  <contentUpdateDate>1425414170000</contentUpdateDate>
   <version>1.1</version>
   <title>MendelianSearch</title>
   <comment/>
@@ -48,32 +48,32 @@ $xwiki.jsx.use('PhenoTips.TouchscreenEvents')##
 $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 #set ($alleleFreqPrecision = 4)##
 {{html}}
-&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('PhenoTips.MendelianResults')" method='POST'&gt;
+&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('PhenoTips.MendelianResults')" method='post'&gt;
   &lt;div class="form-section gene-section"&gt;
     &lt;p class='search-heading'&gt;Enter the gene you are investigating:&lt;/p&gt;
-    &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder='Enter a gene name' value="$!{request.gene}"/&gt;
+    &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder='Enter a gene name' value="$!{escapetool.xml($request.gene)}"/&gt;
     &lt;div class='mendelian-search-advanced collapsed'&gt;
         &lt;p class='advanced-option-heading'&gt;Please select the mutation types you want to be included in your search:&lt;/p&gt;
         ##TODO: auto-list possible variant-effects
         &lt;ul&gt;
-          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='mutation-effect' value='MISSENSE' checked='checked'/&gt;Mis-sense&lt;/label&gt;&lt;/li&gt;
-          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='mutation-effect' value='INS' checked='checked'/&gt;Insertion&lt;/label&gt;&lt;/li&gt;
-          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='mutation-effect' value='DEL' checked='checked'/&gt;Deletion&lt;/label&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value='MISSENSE' checked='checked'/&gt;Mis-sense&lt;/label&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value='INS' checked='checked'/&gt;Insertion&lt;/label&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value='DEL' checked='checked'/&gt;Deletion&lt;/label&gt;&lt;/li&gt;
         &lt;/ul&gt;
         &lt;p class='advanced-option-heading'&gt;Adjust allele frequency cut-offs:&lt;/p&gt;
         &lt;ul&gt;
-          #if("$!{request.mutation-freq-exac}"=='')
+          #if("$!{request.allele-freq-exac}"=='')
             #set($frequency = 1)
           #else
-            #set($frequency = $request.mutation-freq-exac)
+            #set($frequency = $escapetool.xml($request.allele-freq-exac))
           #end
-          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='mutation-freq-exac' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in EXAC&lt;/label&gt;&lt;/li&gt;
-          #if("$!{request.mutation-freq-phenomeCentral}"=='')
+          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-exac' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in EXAC&lt;/label&gt;&lt;/li&gt;
+          #if("$!{request.allele-freq-pc}"=='')
             #set($frequency = 10)
           #else
-            #set($frequency = $request.mutation-freq-phenomeCentral)
+            #set($frequency = $escapetool.xml($request.allele-freq-pc))
           #end
-          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='mutation-freq-phenomeCentral' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in PhenomeCentral&lt;/label&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-pc' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in PhenomeCentral&lt;/label&gt;&lt;/li&gt;
         &lt;/ul&gt;
     &lt;/div&gt;
   &lt;/div&gt;
@@ -85,7 +85,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
         &lt;ul class="accepted-suggestions"&gt;
           #foreach($symptom in $request.getParameterValues('phenotype'))
           &lt;li&gt;
-            &lt;label class="accepted-suggestion" for="phenotype_$symptom"&gt;&lt;input type="hidden" name="phenotype" id="phenotype_$symptom" value="$symptom"&gt;&lt;span class="value"&gt;$services.ontologies.resolveTerm($symptom).getName()&lt;/span&gt;&lt;/label&gt;
+            &lt;label class="accepted-suggestion" for="phenotype_$symptom"&gt;&lt;input type="hidden" name="phenotype" id="phenotype_$symptom" value="$symptom" &gt;&lt;span class="value"&gt;$!{services.ontologies.resolveTerm($symptom).getName()}&lt;/span&gt;&lt;/label&gt;
             &lt;span class="delete-tool" title="Delete this term"&gt;✖&lt;/span&gt;
           &lt;/li&gt;
           #end
@@ -195,6 +195,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 			//Add click listener to toggle advanced options
 			this.advancedOptionsButton = $('mendelian-advanced-options-button');
 			(this.advancedOptionsButton &amp;&amp; this.advancedOptionsButton.observe('click', this.toggleAdvancedOptions));
+
 
 			//Add term suggest for gene name input
 			this.geneSuggest(this.searchForm);
@@ -320,7 +321,8 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 			});
 		},
 
-		toggleAdvancedOptions: function(){
+		toggleAdvancedOptions: function(event){
+			event.stop();
 			this.advancedOptionsBox = this.advancedOptionsBox || $$("div.mendelian-search-advanced");
 			this.advancedOptionsBox.each(function(e){
 				if (e &amp;&amp; e.hasClassName("collapsed")){
@@ -437,10 +439,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
       <code>#template('colorThemeInit.vm')
 
 form.mendelian-search-form{
-  border-radius:5px;
   box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
-  -moz-box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
-  -webkit-box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
 }
 form.mendelian-search-form &gt; .form-section{
     display: inline-block;
@@ -464,9 +463,12 @@ form.mendelian-search-form input.percentage-input {
 }
 .mendelian-search-advanced{
   display: block;
+  max-height:300px;
+  overflow:hidden;
+  transition: max-height .5s linear;
 }
 .mendelian-search-advanced.collapsed {
-  display: none;
+  max-height: 0px;
 }
 .mendelian-search-advanced p.advanced-option-heading {
   color: $theme.titleColor;

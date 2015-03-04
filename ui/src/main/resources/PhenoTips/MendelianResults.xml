@@ -31,8 +31,8 @@
   <parent>PhenoTips.MendelianSearch</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1425073197000</date>
-  <contentUpdateDate>1425070068000</contentUpdateDate>
+  <date>1425483164000</date>
+  <contentUpdateDate>1425483164000</contentUpdateDate>
   <version>1.1</version>
   <title>MendelianResults</title>
   <comment/>
@@ -44,9 +44,9 @@
 $xwiki.jsx.use('PhenoTips.MendelianResults')##
 $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #if($request &amp;&amp; $request.getMethod() == 'POST')
-  #set ($gene="CTPS")
-  #set ($phenotype = "Hard Head")
-  #set ($results = $services.DummyMendelianSearch.count($gene, $phenotype))
+  #set ($gene = $request.getParameter('gene'))
+  #set ($phenotype = $request.getParameterValues('phenotype'))
+    #set ($results = $services.DummyMendelianSearch.count($gene, $phenotype, $request.getParameter('phenotype-matching'), $request.getParameterValues('variant-effect'), $request.getParameter('allele-freq-exac'), $request.getParameter('allele-freq-pc')))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
@@ -58,14 +58,16 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #else
   {{html clean = false}}
 ## hidden element containing the previous request string for use in asynchronous requests
-&lt;form display='none' id='hidden-query-form'&gt;
+&lt;form display='none' id='hidden-query-form' action='#'&gt;
+  &lt;div&gt;
   #foreach($param in $request.getParameterNames())
     #foreach($value in $request.getParameterValues($param))
       &lt;input type='hidden' name="$param" value="$value"/&gt;
     #end
   #end
+  &lt;/div&gt;
 &lt;/form&gt;
-&lt;section id="mendelian-results"&gt;
+&lt;div id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
     &lt;div id='mendelian-visualization'&gt;
       &lt;table&gt;
@@ -86,14 +88,14 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         &lt;tr&gt;
           &lt;td class='vertical-text' rowspan='2'&gt;Matching Phenotype&lt;/td&gt;
           &lt;td class='vertical-text'&gt;Yes&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[0]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[1]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withBoth')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withGene')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
         &lt;/tr&gt;
 
         &lt;tr&gt;
           &lt;td class='vertical-text'&gt;No&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[2]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results[3]}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withPhenotype')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withNeither')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
         &lt;/tr&gt;
       &lt;/table&gt;
     &lt;/div&gt;
@@ -102,7 +104,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
   &lt;div id="mendelian-livetable-wrapper"&gt;
     &lt;div id="mendelian-livetable-container"&gt;&lt;/div&gt;
   &lt;/div&gt;
-&lt;/section&gt;
+&lt;/div&gt;
 
   {{/html}}
   
@@ -192,14 +194,87 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       <code>var PhenoTips = (function (PhenoTips) {
 	var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
 	widgets.MendelianLivetable = Class.create({
+		
 		mendelianLiveTableResultsURL : "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
+		DEFAULT_RESULTS_PER_PAGE : 20,
+		DEFAULT_PAGE : 1,
+
 		initialize : function(queryForm, subgroup, container){
 			this.queryForm = queryForm;
 			this.subgroup = subgroup;
 			this.container = container;
+			this.page = this.DEFAULT_PAGE;
+			this.resultsPerPage = this.DEFAULT_RESULTS_PER_PAGE;
+
+			this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
+			this.container.insert(this.tableControls);
+			this.initializeControls();
+			
 			this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
 			this.container.insert(this.resultsTable);
+			this.launchSearch();
+		},
 
+		initializeControls : function(){
+
+			this.resultsSummary = new Element('p').update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+
+			var resultsPerPagePicker = this.generateResultsPerPagePicker();
+			var pageSelector = this.generatePageSelector();
+			this.tableControls.insert(this.resultsSummary);
+			this.tableControls.insert(resultsPerPagePicker);
+			this.tableControls.insert(pageSelector);
+		},
+
+		generateResultsPerPagePicker : function(){
+			var _this = this;
+			var result = new Element('label').update(_this.strings["control.resultsPerPage.label"])
+			var select = new Element('select');
+			[10, 20, 50].each(function(i) {
+				var option = new Element('option', {'value' : i}).insert(i);
+				if (i === _this.DEFAULT_RESULTS_PER_PAGE){
+					option.setAttribute('selected', 'selected');
+				}
+				select.insert(option);
+			});
+			select.observe('change', _this.handleResultsPerPageChange.bind(_this));
+			result.insert(select);
+			return result;
+		},
+
+		generatePageSelector : function(){
+			var _this = this;
+			this.page = this.page || this.DEFAULT_PAGE;
+			var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
+			var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
+			var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
+
+			var result = new Element('span', {'class' : 'page-selector'}).update('Page: ').insert(previousButton).insert(currentPageDisplay).insert(nextButton);
+			return result;
+
+		},
+
+		handleNewPage : function(event, increment){
+			event.stop();
+			//sanitize newPage
+			var newPage = this.page + increment;
+			if (newPage&lt;1) {
+				return;
+			}
+			this.page = newPage;
+			$$('div.mendelian-livetable-controls span.current-page')[0].update(newPage);
+			this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+			this.launchSearch();
+		},
+
+		handleResultsPerPageChange : function(event) {
+			event.stop();
+			var newValue = Event.element(event).value;
+			if (isNaN(newValue)){
+				return;
+			}
+			this.resultsPerPage = newValue;
+			this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
 			this.launchSearch();
 		},
 
@@ -211,8 +286,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 	        {
 	          parameters: $H({
 	            'outputSyntax' : "plain",
-	            'resultsPerPage' : _this.resultsPerPage || 10,
-	            'resultsPage' : _this.resultsPage || 20
+	            'resultsPerPage' : _this.resultsPerPage || _this.DEFAULT_RESULTS_PER_PAGE,
+	            'page' : _this.page || _this.DEFAULT_PAGE
 	          }).merge(_this.queryForm.serialize(true)).toObject(),
 	          method: "POST",
 	          onCreate : function() {
@@ -612,6 +687,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
   width: 30%;
 }
 
+#mendelian-livetable-container{
+  padding: 10px;
+}
+
 table.mendelian-results-table{
   border: none;
   border-collapse: separate;
@@ -649,8 +728,6 @@ tr.patient-row:hover td:after, tr.patient-row.expanded td:after {
 }
 
 tr.patient-row.expanded td {
-  -moz-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
-  -webkit-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
 }
 

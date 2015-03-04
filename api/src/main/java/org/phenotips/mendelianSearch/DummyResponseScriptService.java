@@ -43,18 +43,33 @@ import net.sf.json.JSONObject;
 @Singleton
 public class DummyResponseScriptService implements ScriptService
 {
+    private final String withGene = "withGene";
+
+    private final String resultsPerPage = "resultsPerPage";
+
+    private final String matching = "matching";
+
     /**
      * Generates a dummy patient for ui building.
      *
      * @param gene gene
      * @param phenotype phenotype
-     * @param maxPatients max patients
+     * @param matching String
+     * @param freqExac double
+     * @param freqPC double
+     * @param resultsPerPage integer
+     * @param page integer
      * @return a list of patients in a JSONArray
      */
-    public JSONArray search(String gene, List<String> phenotype, int maxPatients)
+    public JSONArray search(String gene, List<String> phenotype, String matching,
+        double freqExac, double freqPC, int resultsPerPage, int page)
     {
+        if ((gene.isEmpty()) || phenotype.isEmpty()) {
+            return null;
+        }
+
         JSONArray response = new JSONArray();
-        for (int i = 0; i < maxPatients; i++) {
+        for (int i = 0; i < resultsPerPage; i++) {
             response.add(this.generateDummyPatient());
         }
         return response;
@@ -63,11 +78,31 @@ public class DummyResponseScriptService implements ScriptService
     /**
      * @param gene gene
      * @param phenotype phenotype
+     * @param matching String
+     * @param variantEffects key
+     * @param freqExac double
+     * @param freqPC double
      * @return a count of patients in the four categories
      */
-    public Integer[] count(String gene, List<String> phenotype)
+    public JSONObject count(String gene, String[] phenotype, String matching, String[] variantEffects,
+        double freqExac, double freqPC)
     {
-        return new Integer[] { 4, 3, 2, 100 };
+        boolean simpleResult = "strict".equals(matching);
+        JSONObject result = new JSONObject();
+
+        if (simpleResult) {
+            result.element("withBoth", 30);
+            result.element(this.withGene, 20);
+            result.element("withPhenotype", 10);
+            result.element("withNeither", 234);
+            return result;
+        } else {
+            double[] scores = { 0.43, 0.45, 0.64, 0.32, 0.54, 0.56, 0.54, 0.34, 0.45, 0.46 };
+            result.element(this.withGene, scores);
+            double[] otherScores = { 0.23, 0.12, 0.45, 0.35, 0.21, 0.24, 0.12, 0.34, 0.21, 0.42, 0.31 };
+            result.element("withoutGene", otherScores);
+            return result;
+        }
     }
 
     private JSONObject generateDummyPatient()
@@ -84,21 +119,24 @@ public class DummyResponseScriptService implements ScriptService
         String chr = "chr";
         String alt = "alt";
         String type = "type";
+        String score = "score";
         JSONArray variants = new JSONArray();
-        JSONObject v1 = new JSONObject();
-        v1.element(position, "4532183485231732");
-        v1.element(chr, "21");
-        v1.element(type, "MISSENSE");
-        v1.element(ref, "T");
-        v1.element(alt, "TTATATATA");
-        variants.add(v1);
-        JSONObject v2 = new JSONObject();
-        v2.element(position, "453218348521732");
-        v2.element(chr, "X");
-        v2.element(type, "NONSENSE");
-        v2.element(ref, "A");
-        v2.element(alt, "TATATATATATA");
-        variants.add(v2);
+        JSONObject v = new JSONObject();
+        v.element(position, "4532183485231732");
+        v.element(chr, "21");
+        v.element(type, "MISSENSE");
+        v.element(ref, "T");
+        v.element(alt, "TTATATATA");
+        v.element(score, 0.6);
+        variants.add(v);
+
+        v.element(position, "453218348521732");
+        v.element(chr, "X");
+        v.element(type, "NONSENSE");
+        v.element(ref, "A");
+        v.element(alt, "TATATATATATA");
+        v.element(score, 0.98);
+        variants.add(v);
         patient.element("genotype", variants);
 
         return patient;
