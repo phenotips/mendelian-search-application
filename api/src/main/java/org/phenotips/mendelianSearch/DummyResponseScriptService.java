@@ -64,11 +64,12 @@ public class DummyResponseScriptService implements ScriptService
     public JSONArray search(String gene, List<String> phenotype, String matching,
         double freqExac, double freqPC, int resultsPerPage, int page)
     {
+        JSONArray response = new JSONArray();
+
         if ((gene.isEmpty()) || phenotype.isEmpty()) {
             return null;
         }
 
-        JSONArray response = new JSONArray();
         for (int i = 0; i < resultsPerPage; i++) {
             response.add(this.generateDummyPatient());
         }
