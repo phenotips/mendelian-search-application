@@ -42,11 +42,12 @@
   <content>{{include document='PhenoTips.MendelianSearch' /}}
 {{velocity}}
 $xwiki.jsx.use('PhenoTips.MendelianResults')##
+$xwiki.jsx.use('PhenoTips.d3')##
 $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #if($request &amp;&amp; $request.getMethod() == 'POST')
   #set ($gene = $request.getParameter('gene'))
   #set ($phenotype = $request.getParameterValues('phenotype'))
-    #set ($results = $services.DummyMendelianSearch.count($gene, $phenotype, $request.getParameter('phenotype-matching'), $request.getParameterValues('variant-effect'), $request.getParameter('allele-freq-exac'), $request.getParameter('allele-freq-pc')))
+    #set ($count = $services.DummyMendelianSearch.count($gene, $phenotype, $request.getParameter('phenotype-matching'), $request.getParameterValues('variant-effect'), $request.getParameter('allele-freq-exac'), $request.getParameter('allele-freq-pc')))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
@@ -69,48 +70,46 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 &lt;/form&gt;
 &lt;div id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
-    &lt;div id='mendelian-visualization'&gt;
-      &lt;table&gt;
+  #if($count.size() == 4 )
+    &lt;div class='grid-view'&gt;
+      &lt;table class = 'grid-visualization'&gt;
         &lt;tr&gt;
           &lt;!-- Blank cells for alignment --&gt;
-          &lt;td&gt;&lt;/td&gt; 
-          &lt;td&gt;&lt;/td&gt; 
+          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
+          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
           &lt;td colspan='2'&gt;Matching Gene&lt;/td&gt;
         &lt;/tr&gt;
         &lt;tr&gt;
           &lt;!-- Blank cells for alignment --&gt;
-          &lt;td&gt;&lt;/td&gt; 
-          &lt;td&gt;&lt;/td&gt; 
-          &lt;td&gt;Yes&lt;/td&gt;
-          &lt;td&gt;No&lt;/td&gt;
+          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
+          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
+          &lt;td class='yn-cell'&gt;Yes&lt;/td&gt;
+          &lt;td class='yn-cell'&gt;No&lt;/td&gt;
         &lt;/tr&gt;
-
         &lt;tr&gt;
-          &lt;td class='vertical-text' rowspan='2'&gt;Matching Phenotype&lt;/td&gt;
-          &lt;td class='vertical-text'&gt;Yes&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withBoth')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withGene')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td class='vertical-text' rowspan='2'&gt;&lt;div&gt;Matching Phenotype&lt;/div&gt;&lt;/td&gt;
+          &lt;td class='yn-cell'&gt;Yes&lt;/td&gt;
+          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withBoth')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withPhenotype')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
         &lt;/tr&gt;
-
         &lt;tr&gt;
-          &lt;td class='vertical-text'&gt;No&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withPhenotype')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
-          &lt;td&gt;&lt;span class='patient-number'&gt;$!{results.get('withNeither')}&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td class='yn-cell'&gt;No&lt;/td&gt;
+          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withGene')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withNeither')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
         &lt;/tr&gt;
       &lt;/table&gt;
     &lt;/div&gt;
+  #elseif ($count.size() == 2)
+    &lt;input type="hidden" value="$escapetool.xml($count)" id="box-plot-values" /&gt;
+    &lt;svg id='chart'&gt;&lt;/svg&gt;
+  #end
   &lt;/div&gt;
-  
-  &lt;div id="mendelian-livetable-wrapper"&gt;
-    &lt;div id="mendelian-livetable-container"&gt;&lt;/div&gt;
-  &lt;/div&gt;
-&lt;/div&gt;
+  &lt;div id="mendelian-livetable-container"&gt;&lt;/div&gt;
+ &lt;/div&gt;
 
-  {{/html}}
-  
+{{/html}}
 #end
-{{/velocity}}
-</content>
+{{/velocity}}</content>
   <object>
     <name>PhenoTips.MendelianResults</name>
     <number>0</number>
@@ -192,398 +191,398 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
     <property>
       <code>var PhenoTips = (function (PhenoTips) {
-	var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
-	widgets.MendelianLivetable = Class.create({
-		
-		mendelianLiveTableResultsURL : "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
-		DEFAULT_RESULTS_PER_PAGE : 20,
-		DEFAULT_PAGE : 1,
+  var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
+  widgets.MendelianLivetable = Class.create({
+    
+    mendelianLiveTableResultsURL : "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
+    DEFAULT_RESULTS_PER_PAGE : 20,
+    DEFAULT_PAGE : 1,
 
-		initialize : function(queryForm, subgroup, container){
-			this.queryForm = queryForm;
-			this.subgroup = subgroup;
-			this.container = container;
-			this.page = this.DEFAULT_PAGE;
-			this.resultsPerPage = this.DEFAULT_RESULTS_PER_PAGE;
+    initialize : function(queryForm, subgroup, container){
+      this.queryForm = queryForm;
+      this.subgroup = subgroup;
+      this.container = container;
+      this.page = this.DEFAULT_PAGE;
+      this.resultsPerPage = this.DEFAULT_RESULTS_PER_PAGE;
 
-			this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
-			this.container.insert(this.tableControls);
-			this.initializeControls();
-			
-			this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
-			this.container.insert(this.resultsTable);
-			this.launchSearch();
-		},
+      this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
+      this.container.insert(this.tableControls);
+      this.initializeControls();
+      
+      this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
+      this.container.insert(this.resultsTable);
+      this.launchSearch();
+    },
 
-		initializeControls : function(){
+    initializeControls : function(){
 
-			this.resultsSummary = new Element('p').update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+      this.resultsSummary = new Element('p').update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
 
-			var resultsPerPagePicker = this.generateResultsPerPagePicker();
-			var pageSelector = this.generatePageSelector();
-			this.tableControls.insert(this.resultsSummary);
-			this.tableControls.insert(resultsPerPagePicker);
-			this.tableControls.insert(pageSelector);
-		},
+      var resultsPerPagePicker = this.generateResultsPerPagePicker();
+      var pageSelector = this.generatePageSelector();
+      this.tableControls.insert(this.resultsSummary);
+      this.tableControls.insert(resultsPerPagePicker);
+      this.tableControls.insert(pageSelector);
+    },
 
-		generateResultsPerPagePicker : function(){
-			var _this = this;
-			var result = new Element('label').update(_this.strings["control.resultsPerPage.label"])
-			var select = new Element('select');
-			[10, 20, 50].each(function(i) {
-				var option = new Element('option', {'value' : i}).insert(i);
-				if (i === _this.DEFAULT_RESULTS_PER_PAGE){
-					option.setAttribute('selected', 'selected');
-				}
-				select.insert(option);
-			});
-			select.observe('change', _this.handleResultsPerPageChange.bind(_this));
-			result.insert(select);
-			return result;
-		},
+    generateResultsPerPagePicker : function(){
+      var _this = this;
+      var result = new Element('label').update(_this.strings["control.resultsPerPage.label"])
+      var select = new Element('select');
+      [10, 20, 50].each(function(i) {
+        var option = new Element('option', {'value' : i}).insert(i);
+        if (i === _this.DEFAULT_RESULTS_PER_PAGE){
+          option.setAttribute('selected', 'selected');
+        }
+        select.insert(option);
+      });
+      select.observe('change', _this.handleResultsPerPageChange.bind(_this));
+      result.insert(select);
+      return result;
+    },
 
-		generatePageSelector : function(){
-			var _this = this;
-			this.page = this.page || this.DEFAULT_PAGE;
-			var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
-			var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
-			var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
+    generatePageSelector : function(){
+      var _this = this;
+      this.page = this.page || this.DEFAULT_PAGE;
+      var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
+      var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
+      var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
 
-			var result = new Element('span', {'class' : 'page-selector'}).update('Page: ').insert(previousButton).insert(currentPageDisplay).insert(nextButton);
-			return result;
+      var result = new Element('span', {'class' : 'page-selector'}).update('Page: ').insert(previousButton).insert(currentPageDisplay).insert(nextButton);
+      return result;
 
-		},
+    },
 
-		handleNewPage : function(event, increment){
-			event.stop();
-			//sanitize newPage
-			var newPage = this.page + increment;
-			if (newPage&lt;1) {
-				return;
-			}
-			this.page = newPage;
-			$$('div.mendelian-livetable-controls span.current-page')[0].update(newPage);
-			this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
-			this.launchSearch();
-		},
+    handleNewPage : function(event, increment){
+      event.stop();
+      //sanitize newPage
+      var newPage = this.page + increment;
+      if (newPage&lt;1) {
+        return;
+      }
+      this.page = newPage;
+      $$('div.mendelian-livetable-controls span.current-page')[0].update(newPage);
+      this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+      this.launchSearch();
+    },
 
-		handleResultsPerPageChange : function(event) {
-			event.stop();
-			var newValue = Event.element(event).value;
-			if (isNaN(newValue)){
-				return;
-			}
-			this.resultsPerPage = newValue;
-			this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
-			this.launchSearch();
-		},
+    handleResultsPerPageChange : function(event) {
+      event.stop();
+      var newValue = Event.element(event).value;
+      if (isNaN(newValue)){
+        return;
+      }
+      this.resultsPerPage = newValue;
+      this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+      this.launchSearch();
+    },
 
-		launchSearch : function(){
-			if (this.activeSearch) {return;}
-	    	var _this = this;
-	    	this.activeSearch = new Ajax.Request(
-	        this.mendelianLiveTableResultsURL,
-	        {
-	          parameters: $H({
-	            'outputSyntax' : "plain",
-	            'resultsPerPage' : _this.resultsPerPage || _this.DEFAULT_RESULTS_PER_PAGE,
-	            'page' : _this.page || _this.DEFAULT_PAGE
-	          }).merge(_this.queryForm.serialize(true)).toObject(),
-	          method: "POST",
-	          onCreate : function() {
-	            _this.container.addClassName('loading');
-	          },
-	          onSuccess: function(response) {
-	            _this.displayResults(response.responseJSON);
-	          },
-	          onComplete : function() {
-	            _this.addEventListeners();
-	            _this.container.removeClassName('loading');
-	            _this.activeSearch = false;
-	          }
-	        });
-		},
+    launchSearch : function(){
+      if (this.activeSearch) {return;}
+        var _this = this;
+        this.activeSearch = new Ajax.Request(
+          this.mendelianLiveTableResultsURL,
+          {
+            parameters: $H({
+              'outputSyntax' : "plain",
+              'resultsPerPage' : _this.resultsPerPage || _this.DEFAULT_RESULTS_PER_PAGE,
+              'page' : _this.page || _this.DEFAULT_PAGE
+            }).merge(_this.queryForm.serialize(true)).toObject(),
+            method: "POST",
+            onCreate : function() {
+              _this.container.addClassName('loading');
+            },
+            onSuccess: function(response) {
+              _this.displayResults(response.responseJSON);
+            },
+            onComplete : function() {
+              _this.addEventListeners();
+              _this.container.removeClassName('loading');
+              _this.activeSearch = false;
+            }
+          });
+    },
 
-		displayResults : function (data) {
-	    	var _this = this;
-	    	this._data = data;
+    displayResults : function (data) {
+        var _this = this;
+        this._data = data;
 
-	    	// // Make sure the results are for this query
-	    	// if (!data.query) {return;}
-	    	// if (data.query.id != this.query) {return;}
+        // // Make sure the results are for this query
+        // if (!data.query) {return;}
+        // if (data.query.id != this.query) {return;}
 
-	    	// Empty the container to make room for the new results
-	    	if (this.resultsTable.childElements()) {
+        // Empty the container to make room for the new results
+        if (this.resultsTable.childElements()) {
                 this.resultsTable.update('');
             }
             var columns = {
-            	"patientId" : {
-            		heading : _this.strings["patientId.heading"],
-            		display : _this.displayResultPatientId.bind(_this)
-            	},
-            	"owner" : {
-            		heading : _this.strings["owner.heading"],
-            		display : _this.displayResultOwner.bind(_this)
-            	},
-            	"diagnosis" : {
-            		heading : _this.strings["diagnosis.heading"],
-            		display : _this.displayResultDiagnosis.bind(_this)
-            	},
-            	"more" : {
-            		heading : _this.strings["more.heading"],
-            		display : _this.displayResultMoreInfo.bind(_this)
-            	}
-            }
+              "patientId" : {
+                heading : _this.strings["patientId.heading"],
+                display : _this.displayResultPatientId.bind(_this)
+              },
+              "owner" : {
+                heading : _this.strings["owner.heading"],
+                display : _this.displayResultOwner.bind(_this)
+              },
+              "diagnosis" : {
+                heading : _this.strings["diagnosis.heading"],
+                display : _this.displayResultDiagnosis.bind(_this)
+              },
+              "more" : {
+                heading : _this.strings["more.heading"],
+                display : _this.displayResultMoreInfo.bind(_this)
+              }
+            };
        
-       		this._displayTableHeader(columns, this.resultsTable);
+          this._displayTableHeader(columns, this.resultsTable);
 
-       		data.results.each(function(r) {
-				_this._displayPatientRow(r, columns, _this.resultsTable);
-				_this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
-			});
-
-
-			delete this._data;
-       	},
-
-	    _displayTableHeader : function (columns, table) {
-	      var row = this._getEmptyRow(table);
-	      for (var c in columns) {
-	        row.insert(new Element("th", {"class" : c}).update(columns[c].heading));
-	      }
-	      return row;
-	    },
-
-       	_getEmptyRow : function(table, className) {
-       		if (className) {
-       			var row = new Element('tr', {'class' : className});
-       		} else {
-       			var row = new Element('tr');
-       		}
-       		table.insert(row);
-       		return row;
-       	},
-
-       	_displayPatientRow : function(rowData, columns, table){
-       		var row = this._getEmptyRow(table, 'patient-row');
-       		for (var c in columns) {
-    			row.insert(columns[c].display(rowData));
-    		}
-    		return row;
-       	},
-
-       	//the display result functions all return a td element that will be used to display the upper level data for each patient
-
-       	displayResultPatientId : function(data) {
-       		var cell = new Element('td');
-       		cell.insert(data.id);
-       		return cell;
-       	},
-
-       	displayResultOwner : function(data) {
-       		var cell = new Element('td');
-       		cell.insert(data.owner);
-       		return cell;
-
-       	},
-
-       	displayResultDiagnosis : function(data) {
-       		var cell = new Element('td');
-       		cell.insert(data.diagnosis);
-       		return cell;
-       	},
-
-       	displayResultMoreInfo : function(data) {
-       		var cell = new Element('td');
-       		if ((data.genotype.length == 0) &amp;&amp; (data.phenotype.length == 0)) {
-       			cell.innerHTML=this.strings["noPhenotypeOrVariants.text"];
-       			return cell;
-       		}
-       		var moreInfoButton = new Element('a', {'href': '#'}).insert(this.strings["showMore.button"]);
-       		cell.insert(moreInfoButton);
-       		return cell; 
-
-       	},
-
-       	_displayPatientSubTable : function(data, width, table) {
-       		var row = this._getEmptyRow(table, 'patient-subResult');
-       		var containerCell = new Element('td', {'colspan' : width });
-       		var container = new Element('div', {'class' :  'collapsed'});
-       		
-       		var phenotypeContainer = new Element('div', {'class' : 'patient-phenotype-container'});
-       		phenotypeContainer.insert(this.generatePhenotypeTable(data.phenotype));
-       		container.insert(phenotypeContainer);
-
-       		var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
-       		variantContainer.insert(this.generateVariantTable(data.genotype));
-       		container.insert(variantContainer);
-
-       		row.insert(containerCell.insert(container));
-       		return row;
-       	},
-
-       	generatePhenotypeTable : function(data) {
-       		//right now phenotype information is just a list of strings. 
-       		var _this = this;
-       		var table = new Element('table');
-       		table.insert(_this._getEmptyRow(table).insert(new Element('th').update(this.strings["patientSymptom.heading"])));
-       		data.each(function(e){
-       			table.insert(_this._getEmptyRow(table).insert(new Element('td').update(e)));
-       		});
-       		return table;
-       	},
-
-       	generateVariantTable : function (variants) {
-       		//variant keys: "chr", "posisiton" , "ref", "alt" , "effect", "score"
-       		var _this = this;
-       		var variantTable = new Element('table');
-       		var columns = {
-       			"positon" : {
-       				heading : _this.strings['variant.position.heading'],
-       				display : _this._displayResultVariantPosition.bind(_this)
-       			},
-       			"change" : {
-       				heading : _this.strings['variant.change.heading'],
-       				display : _this._displayResultVariantChange.bind(_this)
-       			},
-       			"effect" : {
-       				heading : _this.strings['variant.effect.heading'],
-       				display : _this._displayResultVariantEffect.bind(_this)
-       			},
-       			"score" : {
-       				heading : _this.strings['variant.score.heading'],
-       				display : _this._displayResultVariantScore.bind(_this)
-       			}
-       		}
-
-       		variantTable.insert(new Element('tr').insert(new Element('th', {'colspan' : Object.getOwnPropertyNames(columns).length}).update(this.strings['patientVaraiantsHeading'])));
-			this._displayTableHeader(columns, variantTable);
-
-			variants.each(function (r){
-				_this._displayVariantRow(r, columns, variantTable);
-			});
-
-			return variantTable;
-       	},
-
-       	_displayVariantRow : function(variant, columns, table) {
-       		var row = this._getEmptyRow(table, 'variant-row');
-       		for (var c in columns) {
-    			row.insert(columns[c].display(variant));
-    		}
-    		return row;
-       	},
-
-       	_displayResultVariantPosition : function (r) {
-       		var cell = new Element('td', {'class' : 'variant-position'});
-    		var _this = this;
-    		if (r.chr &amp;&amp; r.position &amp;&amp; r.ref) {
-	    		var start = r.position;
-	    		var end = r.position + r.ref.length;
-	    		var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",r.chr.toUpperCase()[0]).replace("__START__", start).replace("__STOP__", end);
-	    		var positionURLFragment = "Chr" + r.chr.toUpperCase()[0] + ": " + start + "-" + end;
-	            var assembly = r.assembly || "hg19";
-	            var position = new Element('a', {
-	                 'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
-	                 'class' : 'button secondary',
-	                 'target' : '__blank',
-	                 'title' : _this.strings["variantPositionLinkTitle"]
-	            }).update(positionText).wrap('span', {'class' : 'buttonwrapper'});
-	        	cell.insert(position);
-	        }
-	        return cell;
-       	},
-
-       	_displayResultVariantChange : function (r) {
-       		var cell = new Element('td', {'class' : 'variant-change'});
-    		var displayedRef = (r.ref.length &gt; 10) ? (r.ref.substring(0,10)+"...") : r.ref;
-    		var displayedAlt = (r.alt.length &gt; 10) ? (r.alt.substring(0,10)+"...") : r.alt;
-    		cell.update("&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;");
-    		return cell;
-    	},
+          data.results.each(function(r) {
+        _this._displayPatientRow(r, columns, _this.resultsTable);
+        _this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
+      });
 
 
-    	_displayResultVariantEffect : function (r) {
-    		var cell = new Element('td', {'class' : 'variant-effect'}).update("&lt;span class='variant-type-text'&gt;" + r.type + "&lt;/span&gt;");
-    		return cell;
-    	},
+      delete this._data;
+        },
 
-		_displayResultVariantScore : function(r) {
-    	    var cell = new Element('td', {'class' : 'variant-score'});
-    		var varScore = new Element('div', {'class' : 'variant-score'});
-    		varScore.insert(this.Utils.generateSegmentedBar(5, r.score));
+      _displayTableHeader : function (columns, table) {
+        var row = this._getEmptyRow(table);
+        for (var c in columns) {
+          row.insert(new Element("th", {"class" : c}).update(columns[c].heading));
+        }
+        return row;
+      },
+
+        _getEmptyRow : function(table, className) {
+          var row;
+          if (className) {
+            row = new Element('tr', {'class' : className});
+          } else {
+            row = new Element('tr');
+          }
+          table.insert(row);
+          return row;
+        },
+
+        _displayPatientRow : function(rowData, columns, table){
+          var row = this._getEmptyRow(table, 'patient-row');
+          for (var c in columns) {
+          row.insert(columns[c].display(rowData));
+        }
+        return row;
+        },
+
+        //the display result functions all return a td element that will be used to display the upper level data for each patient
+
+        displayResultPatientId : function(data) {
+          var cell = new Element('td');
+          cell.insert(new Element('p').update(data.id));
+          return cell;
+        },
+
+        displayResultOwner : function(data) {
+          var cell = new Element('td');
+          cell.insert(new Element('p').update(data.owner));
+          return cell;
+
+        },
+
+        displayResultDiagnosis : function(data) {
+          var cell = new Element('td');
+          cell.insert(new Element('p').update(data.diagnosis));
+          return cell;
+        },
+
+        displayResultMoreInfo : function(data) {
+          var cell = new Element('td');
+          if ((data.genotype.length === 0) &amp;&amp; (data.phenotype.length === 0)) {
+            cell.innerHTML=this.strings["noPhenotypeOrVariants.text"];
+            return cell;
+          }
+          var moreInfoButton = new Element('a', {'href': '#'}).insert(this.strings["showMore.button"]);
+          cell.insert(moreInfoButton);
+          return cell;
+        },
+
+        _displayPatientSubTable : function(data, width, table) {
+          var row = this._getEmptyRow(table, 'patient-subResult');
+          var containerCell = new Element('td', {'colspan' : width });
+          var container = new Element('div', {'class' :  'collapsed'});
+          
+          var phenotypeContainer = new Element('div', {'class' : 'patient-phenotype-container'});
+          phenotypeContainer.insert(this.generatePhenotypeTable(data.phenotype));
+          container.insert(phenotypeContainer);
+
+          var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
+          variantContainer.insert(this.generateVariantTable(data.genotype));
+          container.insert(variantContainer);
+
+          row.insert(containerCell.insert(container));
+          return row;
+        },
+
+        generatePhenotypeTable : function(data) {
+          //right now phenotype information is just a list of strings. 
+          var _this = this;
+          var table = new Element('table');
+          table.insert(_this._getEmptyRow(table).insert(new Element('th').update(this.strings["patientSymptom.heading"])));
+          data.each(function(e){
+            table.insert(_this._getEmptyRow(table).insert(new Element('td').update(e)));
+          });
+          return table;
+        },
+
+        generateVariantTable : function (variants) {
+          //variant keys: "chr", "posisiton" , "ref", "alt" , "effect", "score"
+          var _this = this;
+          var variantTable = new Element('table');
+          var columns = {
+            "positon" : {
+              heading : _this.strings['variant.position.heading'],
+              display : _this._displayResultVariantPosition.bind(_this)
+            },
+            "change" : {
+              heading : _this.strings['variant.change.heading'],
+              display : _this._displayResultVariantChange.bind(_this)
+            },
+            "effect" : {
+              heading : _this.strings['variant.effect.heading'],
+              display : _this._displayResultVariantEffect.bind(_this)
+            },
+            "score" : {
+              heading : _this.strings['variant.score.heading'],
+              display : _this._displayResultVariantScore.bind(_this)
+            }
+          };
+
+          variantTable.insert(new Element('tr').insert(new Element('th', {'colspan' : Object.getOwnPropertyNames(columns).length}).update(this.strings['patientVaraiantsHeading'])));
+      this._displayTableHeader(columns, variantTable);
+
+      variants.each(function (r){
+        _this._displayVariantRow(r, columns, variantTable);
+      });
+
+      return variantTable;
+        },
+
+        _displayVariantRow : function(variant, columns, table) {
+          var row = this._getEmptyRow(table, 'variant-row');
+          for (var c in columns) {
+          row.insert(columns[c].display(variant));
+        }
+        return row;
+        },
+
+        _displayResultVariantPosition : function (r) {
+          var cell = new Element('td', {'class' : 'variant-position'});
+        var _this = this;
+        if (r.chr &amp;&amp; r.position &amp;&amp; r.ref) {
+          var start = r.position;
+          var end = r.position + r.ref.length;
+          var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",r.chr.toUpperCase()[0]).replace("__START__", start).replace("__STOP__", end);
+          var positionURLFragment = "Chr" + r.chr.toUpperCase()[0] + ": " + start + "-" + end;
+              var assembly = r.assembly || "hg19";
+              var position = new Element('a', {
+                   'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
+                   'class' : 'button secondary',
+                   'target' : '__blank',
+                   'title' : _this.strings["variantPositionLinkTitle"]
+              }).update(positionText).wrap('span', {'class' : 'buttonwrapper'});
+            cell.insert(position);
+          }
+          return cell;
+        },
+
+        _displayResultVariantChange : function (r) {
+          var cell = new Element('td', {'class' : 'variant-change'});
+        var displayedRef = (r.ref.length &gt; 10) ? (r.ref.substring(0,10)+"...") : r.ref;
+        var displayedAlt = (r.alt.length &gt; 10) ? (r.alt.substring(0,10)+"...") : r.alt;
+        cell.update("&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;");
+        return cell;
+      },
+
+
+      _displayResultVariantEffect : function (r) {
+        var cell = new Element('td', {'class' : 'variant-effect'}).update("&lt;span class='variant-type-text'&gt;" + r.type + "&lt;/span&gt;");
+        return cell;
+      },
+
+    _displayResultVariantScore : function(r) {
+          var cell = new Element('td', {'class' : 'variant-score'});
+        var varScore = new Element('div', {'class' : 'variant-score'});
+        varScore.insert(this.Utils.generateSegmentedBar(5, r.score));
             cell.insert(varScore);
-    		return cell;
-    	},
+        return cell;
+      },
 
-    	addEventListeners : function(){
-    		$$('tr.patient-row').each(function(r){
-   				 r.observe('click', function(){
-      				var container = this.next().down().down();
-      				if(container.hasClassName('collapsed')){
-        				container.removeClassName('collapsed');
-        				r.addClassName('expanded');
-      				} else {
-       					 container.addClassName('collapsed');
-        				r.removeClassName('expanded');
-     				 }
-     			});
-    		});
+      addEventListeners : function(){
+        $$('tr.patient-row').each(function(r){
+           r.observe('click', function(){
+              var container = this.next().down().down();
+              if(container.hasClassName('collapsed')){
+                container.removeClassName('collapsed');
+                r.addClassName('expanded');
+              } else {
+                 container.addClassName('collapsed');
+                r.removeClassName('expanded');
+             }
+          });
+        });
 
-    	},
+      },
 
-       	strings : {
-       		"patientId.heading" 	: "ID",
-       		"owner.heading" 		: "Owner",
-       		"diagnosis.heading" 	: "Diagnosis",
-       		"more.heading"			: "More info",
-       		"noPhenotypeOrVariants.text" : "Nothing to display",
-       		"showMore.button"		: "Show phenotype and variant info",
-       		"patientSymptom.heading": "Symptoms observed in this patient",
-       		'patientVaraiantsHeading': "Relevant variants found in this patient",
-       		'variant.position.heading': "Position",
-       		'variant.change.heading': "Change",
-       		'variant.effect.heading': "Effect",
-       		'variant.score.heading' : "Score",
-       		"positionPhrase"  : "Chr __CHROMOSOME__: __START__-__STOP__",
-    		"variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
-       	},
+        strings : {
+          "patientId.heading"   : "ID",
+          "owner.heading"     : "Owner",
+          "diagnosis.heading"   : "Diagnosis",
+          "more.heading"      : "More info",
+          "noPhenotypeOrVariants.text" : "Nothing to display",
+          "showMore.button"   : "More...",
+          "patientSymptom.heading": "Symptoms observed in this patient",
+          'patientVaraiantsHeading': "Relevant variants found in this patient",
+          'variant.position.heading': "Position",
+          'variant.change.heading': "Change",
+          'variant.effect.heading': "Effect",
+          'variant.score.heading' : "Score",
+          "positionPhrase"  : "Chr __CHROMOSOME__: __START__-__STOP__",
+        "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
+        },
 
-       	Utils : {
-		    generateSegmentedBar : function (count, value) {
-		        var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
-		        var valueUnit = 1 / count;
-		        for (var i = 0; i &lt; count; ++i) {
-		          var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
-		          var segment = new Element('span', {'class' : 'segmented-unit'}).update(
-		                        new Element('span', {
-		                        	'class' : 'segmented-unit-fill',
-		                        	'style' : "width: " + segmentFill + "%"
-		                        })
-		          );
-		          bar.insert(segment);
-		        }
-		        return bar.insert(' ' + Math.round(value * 100) + '%');
-		      }
-    	},
-	});
+        Utils : {
+        generateSegmentedBar : function (count, value) {
+            var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
+            var valueUnit = 1 / count;
+            for (var i = 0; i &lt; count; ++i) {
+              var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
+              var segment = new Element('span', {'class' : 'segmented-unit'}).update(
+                            new Element('span', {
+                              'class' : 'segmented-unit-fill',
+                              'style' : "width: " + segmentFill + "%"
+                            })
+              );
+              bar.insert(segment);
+            }
+            return bar.insert(' ' + Math.round(value * 100) + '%');
+          }
+      },
+  });
 
-	var init = function (){
-		var form = $('hidden-query-form');
-		var subgroup = 1;
-		var container = $('mendelian-livetable-container');
+  var init = function (){
+    var form = $('hidden-query-form');
+    var subgroup = 1;
+    var container = $('mendelian-livetable-container');
 
-		if (form &amp;&amp; subgroup &amp;&amp; container) {
-			new PhenoTips.widgets.MendelianLivetable(form, subgroup, container);
-		}
+    if (form &amp;&amp; subgroup &amp;&amp; container) {
+      new PhenoTips.widgets.MendelianLivetable(form, subgroup, container);
+    }
 
 
-	};
+  };
 
-	(XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianSearchFormBehaviour()) || document.observe("xwiki:dom:loaded", init);
-	
-	// End PhenoTips augmentation.
-	return PhenoTips;
+  (XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianSearchFormBehaviour()) || document.observe("xwiki:dom:loaded", init);
+  
+  // End PhenoTips augmentation.
+  return PhenoTips;
 }(PhenoTips || {}));</code>
     </property>
     <property>
@@ -672,6 +671,233 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
       </use>
     </class>
+    <property>
+      <cache>default</cache>
+    </property>
+    <property>
+      <code>document.observe("xwiki:dom:loaded", function(){
+  if (!$('chart') ||  !$('box-plot-values')){
+    return;
+  }
+  var data = JSON.parse($('box-plot-values').value);
+  xAxisLabels = ["With Gene Variants", "Without Gene Variants"];
+  var margin = {top: 20, right: 0, bottom:30, left:50};
+  var height = 400-margin.top-margin.bottom;
+  var width = 400 - margin.right- margin.left;
+
+  var boxWidth = 20;
+
+  var y =d3.scale.linear().range([height,0]).domain([0,1]);
+  var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
+
+
+  var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickFormat(function(d, i){
+      return xAxisLabels[i];
+    });
+  
+  var yAxis = d3.svg.axis().scale(y).orient('left');
+
+  var chart = d3.select('#chart')
+    .attr('width', width+margin.right+ margin.left)
+    .attr('height', height+margin.top+margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+  var category =chart.selectAll('g').data(Object.keys(data))
+    .enter()
+    .append('g')
+      .attr('class', 'category')
+      .attr('transform', function(d, i){ 
+         return "translate(" + x(Object.keys(data)[i]) + ", 0)";
+      });
+
+  //Data points
+  category.selectAll('circle')
+    .data(function(d){return data[d];})
+    .enter()
+    .append('circle')
+      .attr('class', 'data-point')
+      .attr('cx', function(){ return nrmRandom(x.rangeBand(), 0.2);})
+      .attr('cy', function(d , i){return y(d);})
+      .attr('r','1.5px');
+
+  //Median lines
+  category.append('line')
+    .attr('class', 'box-plot')
+    .attr('x1',(x.rangeBand()-boxWidth)/2)
+    .attr('x2', (x.rangeBand()+boxWidth)/2)
+    .attr('y1', function(d){ return y(getMedian(data[d]));})
+    .attr('y2', function(d){return y(getMedian(data[d]));});
+
+  //Boxes
+  category.append('rect')
+    .attr('class', 'box-plot')
+    .attr('x', (x.rangeBand()-boxWidth)/2)
+    .attr('y', function (d) {return y(getUpperQuartile(data[d]));})
+    .attr('width', boxWidth)
+    .attr('height', function(d) { return y(getLowerQuartile(data[d]))-y(getUpperQuartile(data[d]));});
+
+  //Min Lines
+  category.append('line')
+    .attr('class', 'box-plot')
+    .attr('x1',(x.rangeBand()-boxWidth)/2)
+    .attr('x2', (x.rangeBand()+boxWidth)/2)
+    .attr('y1', function(d){ return y(d3.min(data[d]));})
+    .attr('y2', function(d){ return y(d3.min(data[d]));});
+
+  //Max Lines
+  category.append('line')
+    .attr('class', 'box-plot')
+    .attr('x1',(x.rangeBand()-boxWidth)/2)
+    .attr('x2', (x.rangeBand()+boxWidth)/2)
+    .attr('y1', function(d){ return y(d3.max(data[d]));})
+    .attr('y2', function(d){ return y(d3.max(data[d]));});
+
+  //Min whiskers
+  category.append('line')
+    .attr('class', 'whisker box-plot')
+    .attr('x1', x.rangeBand()/2)
+    .attr('x2', x.rangeBand()/2)
+    .attr('y1', function(d){ return y(d3.max(data[d]));})
+    .attr('y2', function(d){ return y(getUpperQuartile(data[d]));});
+
+  //Max whiskers
+  category.append('line')
+    .attr('class', 'whisker box-plot')
+    .attr('x1', x.rangeBand()/2)
+    .attr('x2', x.rangeBand()/2)
+    .attr('y1', function(d){ return y(getLowerQuartile(data[d]));})
+    .attr('y2', function(d){ return y(d3.min(data[d]));});
+
+  //labels
+  var labelX = (x.rangeBand()+boxWidth)/2 + 4;
+  var offsetY = 4;
+
+  // Max labels
+  category.append('text')
+    .attr('class', 'box-label')
+    .attr('dx', labelX)
+    .attr('dy', function(d){ return y(d3.max(data[d]))+ offsetY;})
+    .text(function(d){ return d3.max(data[d]);})
+    .style("text-anchor", "start");
+  // UpperQ labels
+  category.append('text')
+    .attr('class', 'box-label')
+    .attr('dx', labelX)
+    .attr('dy', function(d){ return y(getUpperQuartile(data[d])) + offsetY;})
+    .text(function(d){ return getUpperQuartile(data[d]);})
+    .style("text-anchor", "start");
+  // Median labels
+  category.append('text')
+    .attr('class', 'box-label')
+    .attr('dx', labelX)
+    .attr('dy', function(d){ return y(getMedian(data[d])) + offsetY;})
+    .text(function(d){ return getMedian(data[d]);})
+    .style("text-anchor", "start");
+  //LowerQ labels
+  category.append('text')
+    .attr('class', 'box-label')
+    .attr('dx', labelX)
+    .attr('dy', function(d){ return y(getLowerQuartile(data[d])) + offsetY;})
+    .text(function(d){ return getLowerQuartile(data[d]);})
+    .style("text-anchor", "start");
+  //Min labels
+  category.append('text')
+    .attr('class', 'box-label')
+    .attr('dx', labelX)
+    .attr('dy', function(d){ return y(d3.min(data[d])) + offsetY;})
+    .text(function(d){ return d3.min(data[d]);})
+    .style("text-anchor", "start");
+
+  //info labels
+  var infoLabel = category.append('g')
+    .attr('transform', function(d){
+      return 'translate(0,'+ y(getUpperQuartile(data[d])) +')';
+    });
+
+  infoLabel.append('rect')
+    .attr('class', 'info-label')
+    .attr('height', '3em')
+    .attr('width', x.rangeBand()/2.5);
+
+  infoLabel.append('text')
+    .text(function(d) {return 'n: ' + data[d].length;})
+    .attr('class', 'info-label')
+    .attr('dx', '.5em')
+    .attr('dy', '1.25em')
+    .style("text-anchor", "start");
+  infoLabel.append('text')
+    .text(function(d) {return 'Mean: ' + roundDecimals(d3.mean(data[d]), 2);})
+    .attr('class', 'info-label')
+    .attr('dx', '.5em')
+    .attr('dy', '2.25em')
+    .style("text-anchor", "start");
+
+  //Hover/Click Boxes
+  category.append('rect')
+    .attr('class', 'hover-box')
+    .attr('width', x.rangeBand())
+    .attr('height', height)
+    .append('input')
+      .attr('type','hidden')
+      .attr('value', function(d){
+        return d;
+      });
+
+  //Axes
+  chart.append("g").attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+  
+  chart.append("g").attr("class", "y axis")
+    .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -(height-margin.top)/2)
+      .attr("dy", "-3em")
+      .style("text-anchor", "middle")
+      .text("Phenotypic Similarity Score");
+
+  function nrmRandom( mean, std) {
+      return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3 * mean *std + mean/2;
+  }
+
+  function getUpperQuartile (A){
+    A.sort();
+    var index = Math.round(A.length*0.75)-1;
+    return A[index];
+  }
+
+  function getLowerQuartile (A){
+    A.sort();
+    var index = Math.round(A.length*0.25)-1;
+    return A[index];
+  }
+
+  function getMedian (A){
+    A.sort();
+    var index = Math.round(A.length*0.5)-1;
+    return A[index];
+  }
+  function roundDecimals(N, D){
+    var modifier = Math.pow(10,D);
+    return Math.round(N*modifier)/modifier;
+  }
+});</code>
+    </property>
+    <property>
+      <name>BoxPlotGenerator</name>
+    </property>
+    <property>
+      <parse>1</parse>
+    </property>
+    <property>
+      <use>onDemand</use>
+    </property>
   </object>
   <object>
     <name>PhenoTips.MendelianResults</name>
@@ -750,29 +976,27 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       </use>
     </class>
     <property>
-      <cache>long</cache>
+      <cache>default</cache>
     </property>
     <property>
-      <code>#mendelian-livetable-wrapper{
-  display: inline-block;
-  float: right;
-  width:70%;
-}
-
-#mendellian-overview-container{
-  display: inline-block;
-  width: 30%;
+      <code>#mendellian-overview-container{
+  float: left;
+  width: 400px;
 }
 
 #mendelian-livetable-container{
-  padding: 10px;
+  padding: 0 1em;
+  margin-left: 400px;
+  width: auto;
 }
 
 table.mendelian-results-table{
   border: none;
   border-collapse: separate;
-  border-spacing: 0px 5px ;
+  border-spacing: 0px 3px ;
+  font-size: 12px;
   text-align: left;
+  width: 100%;
 }
 
 tr.patient-row td {
@@ -847,6 +1071,288 @@ tr.patient-subResult td&gt;div&gt;div{
     </property>
     <property>
       <use>currentPage</use>
+    </property>
+  </object>
+  <object>
+    <name>PhenoTips.MendelianResults</name>
+    <number>1</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>a055be5a-5518-4a7e-aa8f-b1f804a73bb4</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>default</cache>
+    </property>
+    <property>
+      <code>div.grid-view table{
+  border-spacing: 0;
+  border-collapse: collapse;
+  font-family: sans-serif;
+  color: #444;
+}
+div.grid-view table td {
+  border: 1px solid #DDD;
+  padding: 10px;
+  text-align: center;
+}
+div.grid-view td.blank-cell {
+  border: none;
+}
+div.grid-view td.vertical-text{
+  width: 1em;
+}
+div.grid-view td.vertical-text div{
+  display: block;
+  transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+}
+div.grid-view table td.results-cell{
+  padding: 30px;
+  font-size: ;
+}
+div.grid-view td.results-cell span.patient-number{
+  font-size: 200%;
+}
+div.grid-view td.results-cell{
+  color: #000;
+  background-color: #FFF;
+  transition: background-color .15s linear;
+}
+  div.grid-view td.results-cell:hover {
+    background-color: #EEE;
+    cursor: pointer;
+  }</code>
+    </property>
+    <property>
+      <name>GridViewStyle</name>
+    </property>
+    <property>
+      <parse/>
+    </property>
+    <property>
+      <use>onDemand</use>
+    </property>
+  </object>
+  <object>
+    <name>PhenoTips.MendelianResults</name>
+    <number>2</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>11dc2ee0-1e22-4670-a72e-2713011e1322</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>default</cache>
+    </property>
+    <property>
+      <code>#chart{
+  font: 10px sans-serif;
+}
+.axis text{
+  font: 10px sans-serif;
+}
+
+#chart .axis path, .axis line{
+  fill:none;
+  stroke:#000;
+  shape-rendering: crispEdges;
+}
+
+#chart .box-plot{
+  fill: #FFF;
+  fill-opacity: 0;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+#chart line.box-plot.whisker {
+  stroke-dasharray: 5,5;
+}
+  #chart g.category:hover .box-plot{
+    stroke: #9F000F;
+  }
+
+#chart circle.data-point{
+  fill: steelblue;
+  opacity: 0.7;
+}
+
+#chart rect.hover-box{
+  opacity:0;
+  transition: all .2s linear;
+}
+ #chart g.category:hover rect.hover-box{
+   box-shadow: 0 0 3px black;
+   cursor: pointer;
+ }
+
+#chart text.box-label {
+  font: 10px sans-serif;
+  opacity: 0;
+  transition: opacity .2s linear;
+  -mdn-transition: opacity .2s linear;
+  -webkit-transition: opacity .2s linear;
+}
+  #chart g.category:hover text.box-label {
+    opacity: 1;
+  }
+
+
+#chart *.info-label{
+ opacity:0;
+ transition: opacity .2s linear;
+}
+#chart text.info-label{
+  fill: #FFF;
+}
+#chart g.category:hover *.info-label{
+  opacity: 1;
+}</code>
+    </property>
+    <property>
+      <name>BoxPlotStyle</name>
+    </property>
+    <property>
+      <parse/>
+    </property>
+    <property>
+      <use>onDemand</use>
     </property>
   </object>
 </xwikidoc>
