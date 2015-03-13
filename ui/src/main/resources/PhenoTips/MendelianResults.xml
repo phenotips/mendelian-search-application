@@ -59,13 +59,14 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #else
   {{html clean = false}}
 ## hidden element containing the previous request string for use in asynchronous requests
-&lt;form display='none' id='hidden-query-form' action='#'&gt;
+&lt;form id='hidden-query-form' action='#'&gt;
   &lt;div&gt;
   #foreach($param in $request.getParameterNames())
     #foreach($value in $request.getParameterValues($param))
       &lt;input type='hidden' name="$param" value="$value"/&gt;
     #end
   #end
+  &lt;input type='hidden' name='title' value=''/&gt;
   &lt;/div&gt;
 &lt;/form&gt;
 &lt;div id="mendelian-results"&gt;
@@ -75,27 +76,46 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       &lt;table class = 'grid-visualization'&gt;
         &lt;tr&gt;
           &lt;!-- Blank cells for alignment --&gt;
-          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
-          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
+          &lt;td class='blank-cell' colspan='2' rowspan='2'&gt;&lt;/td&gt; 
           &lt;td colspan='2'&gt;Matching Gene&lt;/td&gt;
         &lt;/tr&gt;
         &lt;tr&gt;
-          &lt;!-- Blank cells for alignment --&gt;
-          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
-          &lt;td class='blank-cell'&gt;&lt;/td&gt; 
           &lt;td class='yn-cell'&gt;Yes&lt;/td&gt;
           &lt;td class='yn-cell'&gt;No&lt;/td&gt;
         &lt;/tr&gt;
         &lt;tr&gt;
           &lt;td class='vertical-text' rowspan='2'&gt;&lt;div&gt;Matching Phenotype&lt;/div&gt;&lt;/td&gt;
-          &lt;td class='yn-cell'&gt;Yes&lt;/td&gt;
-          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withBoth')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
-          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withPhenotype')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td class='yn-cell'&gt;Yes
+
+          &lt;/td&gt;
+          &lt;td class='results-cell category-button'&gt;
+            &lt;span class='patient-number'&gt;$count.getInt('withBoth')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;input type='hidden' name='title' value='Displaying Patients With Matching Phenotypes And Variants'/&gt;
+            &lt;input type='hidden' name='matchGene' value='1'/&gt;
+            &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
+          &lt;/td&gt;
+          &lt;td class='results-cell category-button'&gt;
+            &lt;span class='patient-number'&gt;$count.getInt('withPhenotype')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;input type='hidden' name='title' value='Displaying Patients With Matching Phenotypes And Non-matching Variants'/&gt;
+            &lt;input type='hidden' name='matchGene' value='0'/&gt;
+            &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
+          &lt;/td&gt;
         &lt;/tr&gt;
         &lt;tr&gt;
-          &lt;td class='yn-cell'&gt;No&lt;/td&gt;
-          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withGene')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
-          &lt;td class='results-cell'&gt;&lt;span class='patient-number'&gt;$count.getInt('withNeither')&lt;/span&gt;&lt;br/&gt;Patients&lt;/td&gt;
+          &lt;td class='yn-cell'&gt;No
+          &lt;/td&gt;
+          &lt;td class='results-cell category-button'&gt;
+            &lt;span class='patient-number'&gt;$count.getInt('withGene')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;input type='hidden' name='title' value='Displaying Patients With Matching Variants And Non-matching Phenotype'/&gt;
+            &lt;input type='hidden' name='matchGene' value='1'/&gt;
+            &lt;input type='hidden' name='matchPhenotype' value='0'/&gt;
+          &lt;/td&gt;
+          &lt;td class='results-cell category-button'&gt;
+            &lt;span class='patient-number'&gt;$count.getInt('withNeither')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;input type='hidden' name='title' value='Displaying Patients That Did Not Match Either The Symptoms or The Variants'/&gt;
+            &lt;input type='hidden' name='matchGene' value='0'/&gt;
+            &lt;input type='hidden' name='matchPhenotype' value='0'/&gt;
+          &lt;/td&gt;
         &lt;/tr&gt;
       &lt;/table&gt;
     &lt;/div&gt;
@@ -106,7 +126,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
   &lt;/div&gt;
   &lt;div id="mendelian-livetable-container"&gt;&lt;/div&gt;
  &lt;/div&gt;
-
 {{/html}}
 #end
 {{/velocity}}</content>
@@ -198,12 +217,16 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     DEFAULT_RESULTS_PER_PAGE : 20,
     DEFAULT_PAGE : 1,
 
-    initialize : function(queryForm, subgroup, container){
+    initialize : function(queryForm, container){
       this.queryForm = queryForm;
-      this.subgroup = subgroup;
       this.container = container;
+      this.container.update('');
+
       this.page = this.DEFAULT_PAGE;
       this.resultsPerPage = this.DEFAULT_RESULTS_PER_PAGE;
+
+      this.tableHeading = new Element('h4', {'class' : 'table-heading'}).update(this.queryForm.getInputs('hidden', 'title')[0].getValue());
+      this.container.insert(this.tableHeading);
 
       this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
       this.container.insert(this.tableControls);
@@ -227,7 +250,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
     generateResultsPerPagePicker : function(){
       var _this = this;
-      var result = new Element('label').update(_this.strings["control.resultsPerPage.label"])
+      var result = new Element('label').update(_this.strings["control.resultsPerPage.label"]);
       var select = new Element('select');
       [10, 20, 50].each(function(i) {
         var option = new Element('option', {'value' : i}).insert(i);
@@ -255,7 +278,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
     handleNewPage : function(event, increment){
       event.stop();
-      //sanitize newPage
       var newPage = this.page + increment;
       if (newPage&lt;1) {
         return;
@@ -497,7 +519,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
           var cell = new Element('td', {'class' : 'variant-change'});
         var displayedRef = (r.ref.length &gt; 10) ? (r.ref.substring(0,10)+"...") : r.ref;
         var displayedAlt = (r.alt.length &gt; 10) ? (r.alt.substring(0,10)+"...") : r.alt;
-        cell.update("&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;");
+        cell.update("&lt;span class = 'dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;");
         return cell;
       },
 
@@ -566,20 +588,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
           }
       },
   });
-
-  var init = function (){
-    var form = $('hidden-query-form');
-    var subgroup = 1;
-    var container = $('mendelian-livetable-container');
-
-    if (form &amp;&amp; subgroup &amp;&amp; container) {
-      new PhenoTips.widgets.MendelianLivetable(form, subgroup, container);
-    }
-
-
-  };
-
-  (XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianSearchFormBehaviour()) || document.observe("xwiki:dom:loaded", init);
   
   // End PhenoTips augmentation.
   return PhenoTips;
@@ -675,12 +683,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       <cache>default</cache>
     </property>
     <property>
-      <code>document.observe("xwiki:dom:loaded", function(){
-  if (!$('chart') ||  !$('box-plot-values')){
-    return;
-  }
+      <code>var boxPlotGenerator = function () {
   var data = JSON.parse($('box-plot-values').value);
   xAxisLabels = ["With Gene Variants", "Without Gene Variants"];
+  chartTitles = ["Displaying Patients With Matching Variants", "Displaying Patients with Non-matching Variants"];
   var margin = {top: 20, right: 0, bottom:30, left:50};
   var height = 400-margin.top-margin.bottom;
   var width = 400 - margin.right- margin.left;
@@ -711,7 +717,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .enter()
     .append('g')
       .attr('class', 'category')
-      .attr('transform', function(d, i){ 
+      .attr('transform', function(d, i){
          return "translate(" + x(Object.keys(data)[i]) + ", 0)";
       });
 
@@ -813,7 +819,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .text(function(d){ return d3.min(data[d]);})
     .style("text-anchor", "start");
 
-  //info labels
+  //Info labels
   var infoLabel = category.append('g')
     .attr('transform', function(d){
       return 'translate(0,'+ y(getUpperQuartile(data[d])) +')';
@@ -838,21 +844,31 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .style("text-anchor", "start");
 
   //Hover/Click Boxes
-  category.append('rect')
-    .attr('class', 'hover-box')
+  var clickArea = category.append('rect')
+    .attr('class', 'hover-box category-button')
     .attr('width', x.rangeBand())
-    .attr('height', height)
-    .append('input')
+    .attr('height', height);
+
+  var inputContainer = clickArea.append('foreignObject');
+
+  inputContainer.append('input')
       .attr('type','hidden')
+      .attr('name', 'matchGene')
       .attr('value', function(d){
-        return d;
+        return (d==='withGene') ? 1 : 0;
+      });
+   inputContainer.append('input')
+      .attr('type','hidden')
+      .attr('name', 'title')
+      .attr('value', function(d, i) {
+        return chartTitles[i];
       });
 
   //Axes
   chart.append("g").attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
-  
+
   chart.append("g").attr("class", "y axis")
     .call(yAxis)
     .append("text")
@@ -887,13 +903,158 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     var modifier = Math.pow(10,D);
     return Math.round(N*modifier)/modifier;
   }
-});</code>
+};</code>
     </property>
     <property>
       <name>BoxPlotGenerator</name>
     </property>
     <property>
       <parse>1</parse>
+    </property>
+    <property>
+      <use>onDemand</use>
+    </property>
+  </object>
+  <object>
+    <name>PhenoTips.MendelianResults</name>
+    <number>2</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>4b4eccd0-5777-482a-9868-6c4fc32c48ae</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>default</cache>
+    </property>
+    <property>
+      <code>(function(){
+    
+    function MendelianResultsController() {
+      if ($('chart') &amp;&amp;  $('box-plot-values')){
+        boxPlotGenerator();
+      }
+      var queryForm = $('hidden-query-form');
+      var container = $('mendelian-livetable-container');
+
+      //get the first chart title and add it to the form
+      var titleElement = $$('.category-button input[name="title"]')[0];
+      var chartTitle = titleElement.getAttribute('value');
+      queryForm.getInputs('hidden', 'title')[0].setValue(chartTitle);
+
+      initializeOverviewButtons();
+
+      launchMendelianLivetable(queryForm, container);
+
+      function initializeOverviewButtons(){
+        var buttons = $$('.category-button');
+        buttons.each(function(b){
+          Element.observe(b, 'click', categoryChangeHandler);
+        });
+      }
+
+      function categoryChangeHandler(event) {
+        event.stop();
+        var category = this;
+        var title = Element.select(category, 'input[name="title"]')[0].getAttribute('value') || "";
+        var phenotypeMatchElement = Element.select(category, 'input[name="matchPhenotype"]')[0];
+        var matchPhenotype = (phenotypeMatchElement) ? phenotypeMatchElement.getAttribute('value') : 1;
+        var matchGene = Element.select(category, 'input[name="matchGene"]')[0].getAttribute('value') || 1;
+        
+        if(isNaN(matchPhenotype) || isNaN(matchGene)){
+          return;
+        }
+
+        queryForm.getInputs('hidden', 'title')[0].setValue(title);
+        queryForm.getInputs('hidden', 'matchGene')[0].setValue(matchGene);
+        queryForm.getInputs('hidden', 'matchPhenotype')[0].setValue(matchPhenotype);
+
+        launchMendelianLivetable(queryForm, container);
+      }
+
+      function launchMendelianLivetable(form, container) {
+        if (form &amp;&amp; container) {
+          new PhenoTips.widgets.MendelianLivetable(form, container);
+        }
+      }
+
+    }
+
+  document.observe('xwiki:dom:loaded', MendelianResultsController);
+}());</code>
+    </property>
+    <property>
+      <name>MendelianResultsController</name>
+    </property>
+    <property>
+      <parse/>
     </property>
     <property>
       <use>onDemand</use>
@@ -989,7 +1150,9 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
   margin-left: 400px;
   width: auto;
 }
-
+#hidden-query-form{
+  display: none;
+}
 table.mendelian-results-table{
   border: none;
   border-collapse: separate;
@@ -1070,7 +1233,7 @@ tr.patient-subResult td&gt;div&gt;div{
       <parse/>
     </property>
     <property>
-      <use>currentPage</use>
+      <use>onDemand</use>
     </property>
   </object>
   <object>
@@ -1174,6 +1337,7 @@ div.grid-view td.vertical-text div{
   display: block;
   transform: rotate(-90deg);
   -ms-transform: rotate(-90deg);
+  -webkit-transform: rotate(-90deg);
 }
 div.grid-view table td.results-cell{
   padding: 30px;
@@ -1326,8 +1490,6 @@ div.grid-view td.results-cell{
   font: 10px sans-serif;
   opacity: 0;
   transition: opacity .2s linear;
-  -mdn-transition: opacity .2s linear;
-  -webkit-transition: opacity .2s linear;
 }
   #chart g.category:hover text.box-label {
     opacity: 1;
@@ -1335,8 +1497,8 @@ div.grid-view td.results-cell{
 
 
 #chart *.info-label{
- opacity:0;
- transition: opacity .2s linear;
+  opacity: 0;
+  transition: opacity .2s linear;
 }
 #chart text.info-label{
   fill: #FFF;
