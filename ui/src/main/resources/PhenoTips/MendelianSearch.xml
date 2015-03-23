@@ -101,6 +101,8 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
     &lt;/div&gt;
   &lt;/div&gt;
   &lt;div class='form-section button-section'&gt;
+    &lt;input type='hidden' name='matchGene' value='1'/&gt;
+    &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
     &lt;span class="buttonwrapper"&gt;&lt;a class="button" id="mendelian-advanced-options-button" href='#'&gt;Advanced options&lt;/a&gt;&lt;/span&gt;
     &lt;span class="buttonwrapper"&gt;&lt;input class='button' type='submit' value="Search"/&gt;&lt;/span&gt;
   &lt;/div&gt;
@@ -257,23 +259,6 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 		            //console.log("HPO\SOLR URL: " + solrServiceURL);
 		            item._suggest = new PhenoTips.widgets.Suggest(item, {
 		                script: solrServiceURL + "rows=100&amp;",
-		                queryProcessor: typeof(PhenoTips.widgets.SolrQueryProcessor) == "undefined" ? null : new PhenoTips.widgets.SolrQueryProcessor({
-		                    'name' : {'wordBoost': 10, 'phraseBoost': 20},
-		                    'nameSpell' : {'wordBoost': 18, 'phraseBoost': 36, 'stubBoost': 14},
-		                    'nameExact' : {'phraseBoost': 100},
-		                    'namePrefix' : {'phraseBoost': 30},
-		                    'synonym' : {'wordBoost': 6, 'phraseBoost': 15},
-		                    'synonymSpell' : {'wordBoost': 10, 'phraseBoost': 25, 'stubBoost': 7},
-		                    'synonymExact' : {'phraseBoost': 70},
-		                    'synonymPrefix' : {'phraseBoost': 20},
-		                    'text' : {'wordBoost': 1, 'phraseBoost': 3, 'stubBoost': 1},
-		                    'textSpell' : {'wordBoost': 2, 'phraseBoost': 5, 'stubBoost': 2, 'stubTrigger': true},
-		                    'id' : {'activationRegex' : /^HP:[0-9]+$/i, 'mandatory' : true, 'transform': function(query) {return query.toUpperCase().replace(/:/g, "\\:");}},
-		                    'alt_id' : {'activationRegex' : /^HP:[0-9]+$/i, 'mandatory' : true, 'transform': function(query) {return query.toUpperCase().replace(/:/g, "\\:");}}
-		                  }, {
-		                    'term_category': ['HP:0000118']
-		                  }
-		                ),
 		                varname: "q",
 		                noresults: "No matching terms",
 		                json: true,
@@ -440,6 +425,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 
 form.mendelian-search-form{
   box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
+  overflow-y: hidden;
 }
 form.mendelian-search-form &gt; .form-section{
     display: inline-block;
@@ -481,13 +467,11 @@ form.mendelian-search-form input.percentage-input {
 #mendelian-search-symptoms &gt; .accepted-suggestions{
  margin: 0 !important;
 }
-.phenotype-container{
-  box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
-  -moz-box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
-  -webkit-box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
-  border-radius: 3px;
-}
-</code>
+.phenotype-container  .accepted-suggestions li {
+  background-color: #FFF;
+  border-top: 1px solid #EEE;
+  padding-left: .5em;
+}</code>
     </property>
     <property>
       <name>MendelianSearch</name>
