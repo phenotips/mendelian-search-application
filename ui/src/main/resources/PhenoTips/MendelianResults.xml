@@ -338,6 +338,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
                 this.resultsTable.update('');
             }
             var columns = {
+              "expandTriangle" : {
+                heading : '',
+                display : _this.displayResultExpandTriangle.bind(_this)
+              },
               "patientId" : {
                 heading : _this.strings["patientId.heading"],
                 display : _this.displayResultPatientId.bind(_this)
@@ -395,6 +399,9 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       },
 
       //the display result functions all return a td element that will be used to display the upper level data for each patient
+      displayResultExpandTriangle : function() {
+        return new Element('td').update('&lt;div class="triRight"&gt;&lt;/div&gt;');
+      },
 
       displayResultPatientId : function(data) {
         var cell = new Element('td');
@@ -501,9 +508,11 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
               if(container.hasClassName('collapsed')){
                 container.removeClassName('collapsed');
                 r.addClassName('expanded');
+                r.select('div.triRight')[0].addClassName('triDown');
               } else {
                  container.addClassName('collapsed');
                 r.removeClassName('expanded');
+                r.select('div.triRight')[0].removeClassName('triDown');
              }
           });
         });
@@ -1098,7 +1107,9 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       <cache>default</cache>
     </property>
     <property>
-      <code>#mendellian-overview-container{
+      <code>#template('colorThemeInit.vm')
+
+#mendellian-overview-container{
   float: left;
   width: 400px;
 }
@@ -1141,19 +1152,17 @@ table.mendelian-results-table tr th {
 tr.patient-row td {
   background-color: white;
   border: none;
+  border-bottom: 1px solid #EEE;
   padding: 5px;
   position: relative;
 }
 
 tr.patient-row:hover td {
   cursor: pointer;
-  -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
-  -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
+
 tr.patient-row:hover td:first-child {
-  -moz-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
-  -webkit-box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
 tr.patient-row:hover td:after, tr.patient-row.expanded td:after {
@@ -1172,9 +1181,21 @@ tr.patient-row.expanded td {
 }
 
 tr.patientrow.expanded td:first-child {
-  -moz-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
-  -webkit-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+tr.patient-row div.triRight {
+    height: 0;
+    width: 0;
+    border-left: 8px solid $theme.titleColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+}
+
+tr.patient-row div.triDown {
+    border-top: 8px solid $theme.titleColor;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
 }
 
 tr.patient-subResult&gt;td{
@@ -1184,8 +1205,6 @@ tr.patient-subResult&gt;td{
 
 tr.patient-subResult&gt;td&gt;div{
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
-  -moz-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
-  -webkit-box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
   margin-top:-6px;
   max-height: 500px;
   overflow: hidden;
@@ -1218,7 +1237,7 @@ tr.patient-subResult div.patient-variant-container{
       <name>MendelianLivetableStyles</name>
     </property>
     <property>
-      <parse/>
+      <parse>1</parse>
     </property>
     <property>
       <use>onDemand</use>
