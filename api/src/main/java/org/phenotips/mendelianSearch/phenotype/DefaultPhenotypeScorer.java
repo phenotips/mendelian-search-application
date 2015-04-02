@@ -1,7 +1,24 @@
+/*
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.phenotips.mendelianSearch.phenotype;
 
-import org.phenotips.data.Feature;
-import org.phenotips.data.Patient;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyService;
 import org.phenotips.ontology.OntologyTerm;
@@ -32,7 +49,7 @@ import org.slf4j.Logger;
  */
 @Component
 @Singleton
-public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
+public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
 {
     /** The root of the phenotypic abnormality portion of HPO. */
     private static final String HP_ROOT = "HP:0000118";
@@ -48,7 +65,7 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
 
     /** Provides access to the term ontology. */
     @Inject
-    protected OntologyManager ontologyManager;
+    private OntologyManager ontologyManager;
 
     @Override
     public void initialize() throws InitializationException
@@ -68,11 +85,7 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
         Map<OntologyTerm, Double> termFreq = getTermFrequencies(mim, hpo, termDescendants.keySet());
 
         // Pre-compute term information content (-logp), for each node t (i.e. t.inf).
-        Map<OntologyTerm, Double> termICs = getTermICs(termFreq, termDescendants);
-
-        // Give data to views to use
-        this.logger.info("Setting view globals...");
-        this.termICs = termICs;
+        this.termICs = findTermICs(termFreq, termDescendants);
 
         this.logger.info("Initialized.");
     }
@@ -84,6 +97,7 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
      * @param p2 the second set of HPO terms
      * @return the similarity score, between 0 (a poor match) and 1 (a good match)
      */
+    @Override
     public double getScore(List<OntologyTerm> p1, List<OntologyTerm> p2)
     {
         if (p1.isEmpty() || p2.isEmpty()) {
@@ -130,29 +144,6 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
     }
 
     /**
-     * Return a (potentially empty) collection of terms present in the patient.
-     *
-     * @param patient
-     * @return a collection of terms present in the patient
-     */
-    private Collection<OntologyTerm> getPresentPatientTerms(Patient patient)
-    {
-        Set<OntologyTerm> terms = new HashSet<OntologyTerm>();
-        for (Feature feature : patient.getFeatures()) {
-            if (!feature.isPresent()) {
-                continue;
-            }
-
-            OntologyTerm term = this.ontologyManager.resolveTerm(feature.getId());
-            if (term != null) {
-                // Only add resolvable terms
-                terms.add(term);
-            }
-        }
-        return terms;
-    }
-
-    /**
      * Return the set of terms implied by a collection of features in the ontology.
      *
      * @param terms a collection of terms
@@ -160,10 +151,12 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
      */
     private Set<OntologyTerm> getAncestors(Collection<OntologyTerm> terms)
     {
-        Set<OntologyTerm> ancestors = new HashSet<OntologyTerm>(terms);
+        Set<OntologyTerm> ancestors = new HashSet<OntologyTerm>();
         for (OntologyTerm term : terms) {
             // Add all ancestors
-            ancestors.addAll(term.getAncestorsAndSelf());
+            if (term != null) {
+                ancestors.addAll(term.getAncestorsAndSelf());
+            }
         }
         return ancestors;
     }
@@ -202,7 +195,6 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
      */
     private Collection<OntologyTerm> queryAllTerms(OntologyService ontology)
     {
-        this.logger.info("Querying all terms in ontology: " + ontology.getAliases().iterator().next());
         Map<String, String> queryAll = new HashMap<String, String>();
         queryAll.put("id", "*");
         Map<String, String> queryAllParams = new HashMap<String, String>();
@@ -272,7 +264,7 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
     @SuppressWarnings("unchecked")
     private Map<OntologyTerm, Double> getTermFrequencies(OntologyService mim, OntologyService hpo,
         Collection<OntologyTerm> allowedTerms)
-        {
+    {
         Map<OntologyTerm, Double> termFreq = new HashMap<OntologyTerm, Double>();
         double freqDenom = 0.0;
         // Add up frequencies of each term across diseases
@@ -318,7 +310,7 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
         }
 
         return termFreq;
-        }
+    }
 
     /**
      * Bound probability to between (0, 1) exclusive.
@@ -338,10 +330,10 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
      * @param termDescendants the descendants of each OntologyTerm
      * @return a map from each term to the information content of that term
      */
-    private Map<OntologyTerm, Double> getTermICs(Map<OntologyTerm, Double> termFreq,
+    private Map<OntologyTerm, Double> findTermICs(Map<OntologyTerm, Double> termFreq,
         Map<OntologyTerm, Collection<OntologyTerm>> termDescendants)
     {
-        Map<OntologyTerm, Double> termICs = new HashMap<OntologyTerm, Double>();
+        Map<OntologyTerm, Double> returnTermICs = new HashMap<OntologyTerm, Double>();
 
         for (OntologyTerm term : termFreq.keySet()) {
             Collection<OntologyTerm> descendants = termDescendants.get(term);
@@ -363,9 +355,9 @@ public class DefaultPhenotypeScorer implements Initializable, PhenotypeScorer
             }
             if (probMass > EPS) {
                 probMass = limitProb(probMass);
-                termICs.put(term, -Math.log(probMass));
+                returnTermICs.put(term, -Math.log(probMass));
             }
         }
-        return termICs;
+        return returnTermICs;
     }
 }
