@@ -17,35 +17,50 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.phenotips.mendelianSearch.phenotype;
+package org.phenotips.mendelianSearch.script;
 
-import org.phenotips.data.Patient;
-import org.phenotips.ontology.OntologyTerm;
-
-import org.xwiki.component.annotation.Role;
-
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * Provides patient oriented methods for computing phenotype scores. Relies heavily on a PhenotypeScorer
+ * An object representation of the query made by a user interacting witht the mendelian search application. Just wraps a
+ * map. Currently used keys:
+ * <ul>
+ * <li>geneSymbol</li>
+ * <li>phenotype</li>
+ * <li>variantEffects</li>
+ * <li>alleleFrequencies</li>
+ * </ul>
  *
  * @version $Id$
  */
-
-@Role
-public interface PatientPhenotypeScorer
+public class MendelianSearchRequest
 {
+    private Map<String, Object> requestParams;
 
     /**
-     * Computes scores between 0 and 1 for each patient in the patients list. Scores are computed against the phenotype
-     * provided in the arguments
-     *
-     * @param phenotype The phenotype against which to compute
-     * @param patients The patients to compute scores for
-     * @return A map with patients as keys and double scores as values
+     * Constructor for a new request.
      */
-    Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients);
+    public MendelianSearchRequest()
+    {
+        this.requestParams = new HashMap<String, Object>();
+    }
 
+    /**
+     * @param param the key
+     * @param value the value
+     */
+    public void set(String param, Object value)
+    {
+        this.requestParams.put(param, value);
+    }
+
+    /**
+     * @param param the key
+     * @return value associated with that key
+     */
+    public Object get(String param)
+    {
+        return this.requestParams.get(param);
+    }
 }

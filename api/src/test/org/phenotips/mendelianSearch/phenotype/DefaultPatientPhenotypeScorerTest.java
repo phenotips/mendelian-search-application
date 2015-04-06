@@ -53,7 +53,7 @@ public class DefaultPatientPhenotypeScorerTest
 {
     @Rule
     public final MockitoComponentMockingRule<DefaultPatientPhenotypeScorer> mocker =
-        new MockitoComponentMockingRule<DefaultPatientPhenotypeScorer>(DefaultPatientPhenotypeScorer.class);
+    new MockitoComponentMockingRule<DefaultPatientPhenotypeScorer>(DefaultPatientPhenotypeScorer.class);
 
     private OntologyManager ontologyManager;
 
@@ -61,6 +61,7 @@ public class DefaultPatientPhenotypeScorerTest
 
     private static Map<String, OntologyTerm> testOntologyTerms;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setup() throws ComponentLookupException
     {
@@ -80,7 +81,7 @@ public class DefaultPatientPhenotypeScorerTest
     public void testNormalPatientList() throws ComponentLookupException
     {
         int numPatients = 10;
-        List<Patient> patientList = new ArrayList<Patient>();
+        Set<Patient> patientList = new HashSet<Patient>();
         for (int i = 0; i < numPatients; i++) {
             Patient mockPatient = mock(Patient.class);
 

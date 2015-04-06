@@ -17,35 +17,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.phenotips.mendelianSearch.phenotype;
+package org.phenotips.mendelianSearch;
 
-import org.phenotips.data.Patient;
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 
-import org.xwiki.component.annotation.Role;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import net.sf.json.JSONObject;
 
 /**
- * Provides patient oriented methods for computing phenotype scores. Relies heavily on a PhenotypeScorer
+ * The main controller for the Mendelian Search Application (aka Gene Genie).
  *
  * @version $Id$
  */
-
-@Role
-public interface PatientPhenotypeScorer
+public interface MendelianSearch
 {
-
     /**
-     * Computes scores between 0 and 1 for each patient in the patients list. Scores are computed against the phenotype
-     * provided in the arguments
+     * The basic search method.
      *
-     * @param phenotype The phenotype against which to compute
-     * @param patients The patients to compute scores for
-     * @return A map with patients as keys and double scores as values
+     * @param request the query
+     * @return returns a list of patients binned into two categories: "matching" and "nonMatching"
      */
-    Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients);
+    JSONObject search(MendelianSearchRequest request);
 
 }

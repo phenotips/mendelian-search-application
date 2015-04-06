@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -49,7 +50,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     private OntologyManager ontologyManager;
 
     @Override
-    public Map<Patient, Double> getScores(List<OntologyTerm> phenotype, List<Patient> patients)
+    public Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients)
     {
         Map<Patient, Double> patientScores = new HashMap<Patient, Double>();
         for (Patient patient : patients) {

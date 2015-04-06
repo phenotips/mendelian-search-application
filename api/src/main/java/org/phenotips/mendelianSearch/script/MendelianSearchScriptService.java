@@ -60,6 +60,7 @@ public class MendelianSearchScriptService
     public JSONArray search(String geneName, List<String> phenotype, List<String> variantEffects,
         Map<String, String> variantFrequencies, String phenotypeMatching, boolean matchGene, boolean matchPhenotype)
     {
+        MendelianSearchRequest request = new MendelianSearchRequest();
         return null;
     }
 
