@@ -29,9 +29,7 @@ import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyTerm;
 
-import org.xwiki.query.Query;
-import org.xwiki.query.QueryException;
-import org.xwiki.query.QueryManager;
+import org.xwiki.component.annotation.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,8 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
-
-import org.slf4j.Logger;
+import javax.inject.Named;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -52,19 +49,16 @@ import net.sf.json.JSONObject;
  *
  * @version $Id$
  */
+@Component
 public class DefaultMendelianSearch implements MendelianSearch
 {
-    @Inject
-    private Logger logger;
 
     @Inject
+    @Named("DummyStore")
     private VariantStore variantStore;
 
     @Inject
     private PatientPhenotypeScorer patientPhenotypeScorer;
-
-    @Inject
-    private QueryManager qm;
 
     @Inject
     private OntologyManager om;
@@ -83,23 +77,24 @@ public class DefaultMendelianSearch implements MendelianSearch
     {
 
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
-        Map<String, JSONObject> matchingVariants =
+        Map<String, JSONArray> matchingVariants =
             this.variantStore.findPatients((String) request.get("geneSymbol"),
                 (List<String>) request.get("variantEffects"), (Map<String, Double>) request.get("alleleFrequencies"));
         Set<String> matchingIds = matchingVariants.keySet();
 
-        // Find the set of all IDs or patients in PhenoTips
+        // Find the set of all IDs or patients in PhenoTips (with variants?)
         Set<String> nonMatchingIds = this.getNonMatchingIds(matchingIds);
 
         // Generate variant result for non-matching ids
-        Map<String, JSONObject> nonMatchingVariants = new HashMap<String, JSONObject>();
+        Map<String, JSONArray> nonMatchingVariants = new HashMap<String, JSONArray>();
         for (String id : nonMatchingIds) {
             nonMatchingVariants.put(id, this.variantStore.getTopVariants(id, 5));
         }
 
-        // Convert the request list of HPO terms into OntologyTerms
+        // Convert the request list of HPO ids into OntologyTerms
         List<OntologyTerm> phenotype = new ArrayList<OntologyTerm>();
-        for (String termId : (List<String>) request.get(this.phenotypeString)) {
+        List<String> hpoIds = (List<String>) request.get(this.phenotypeString);
+        for (String termId : hpoIds) {
             phenotype.add(this.om.resolveTerm(termId));
         }
 
@@ -126,7 +121,7 @@ public class DefaultMendelianSearch implements MendelianSearch
         return result;
     }
 
-    private JSONArray generateResult(Set<Patient> patients, Map<String, JSONObject> variants,
+    private JSONArray generateResult(Set<Patient> patients, Map<String, JSONArray> variants,
         Map<Patient, Double> phenotypeScores)
     {
         JSONArray result = new JSONArray();
@@ -136,8 +131,13 @@ public class DefaultMendelianSearch implements MendelianSearch
             patientResult.element("variants", variants.get(patient.getId()));
             patientResult.element("phenotypeScore", phenotypeScores.get(patient));
             List<String> dPhenotype = new ArrayList<String>();
-            for (Feature term : patient.getFeatures()) {
-                dPhenotype.add(this.om.resolveTerm(term.getId()).getName());
+            if (!patient.getFeatures().isEmpty()) {
+                for (Feature feature : patient.getFeatures()) {
+                    OntologyTerm term = this.om.resolveTerm(feature.getId());
+                    if (term != null) {
+                        dPhenotype.add(term.getName());
+                    }
+                }
             }
             patientResult.element(this.phenotypeString, dPhenotype);
             patientResult.element("owner", this.pm.getPatientAccess(patient).getOwner().getUsername());
@@ -149,19 +149,8 @@ public class DefaultMendelianSearch implements MendelianSearch
 
     private Set<String> getNonMatchingIds(Set<String> matchingIds)
     {
-        try {
-            Query q =
-                this.qm.createQuery(
-                    "select patient.identifier from Document doc, doc.object(PhenoTips.PatientClass) as patient"
-                        + " where patient.identifier is not null order by patient.identifier desc", Query.XWQL);
-            List<String> queryResult = q.execute();
-            Set<String> allIds = new HashSet<String>(queryResult);
-
-            allIds.removeAll(matchingIds);
-            return allIds;
-        } catch (QueryException e) {
-            this.logger.warn("Could not generate a list of all patient Ids:" + e.getMessage());
-            return null;
-        }
+        Set<String> allIds = this.variantStore.getAllPatientIds();
+        allIds.removeAll(matchingIds);
+        return allIds;
     }
 }

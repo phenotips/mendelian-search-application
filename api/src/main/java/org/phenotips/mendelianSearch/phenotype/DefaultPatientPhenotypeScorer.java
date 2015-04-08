@@ -54,6 +54,9 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     {
         Map<Patient, Double> patientScores = new HashMap<Patient, Double>();
         for (Patient patient : patients) {
+            if (patient == null) {
+                continue;
+            }
             patientScores.put(patient, this.scorer.getScore(phenotype, this.getPresentPatientTerms(patient)));
         }
         return patientScores;
@@ -68,6 +71,9 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     private List<OntologyTerm> getPresentPatientTerms(Patient patient)
     {
         List<OntologyTerm> terms = new ArrayList<OntologyTerm>();
+        if (patient.getFeatures().isEmpty()) {
+            return terms;
+        }
         for (Feature feature : patient.getFeatures()) {
             if (!feature.isPresent()) {
                 continue;

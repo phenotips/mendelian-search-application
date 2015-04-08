@@ -19,17 +19,22 @@
  */
 package org.phenotips.mendelianSearch.genotype;
 
+import org.xwiki.component.annotation.Role;
+import org.xwiki.component.phase.Initializable;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import net.sf.json.JSONObject;
+import net.sf.json.JSONArray;
 
 /**
  * Working interface for the variant store query api.
  *
  * @version $Id$
  */
-public interface VariantStore
+@Role
+public interface VariantStore extends Initializable
 {
     /**
      * Queries the variant store for patients which pass the specified filters.
@@ -41,7 +46,7 @@ public interface VariantStore
      * @return An array of JSON objects with two keys: 'PatientID' and 'Relevant-Variants'. 'Relevant-Variants' maps to
      *         an array of variant objects containing a 'position', 'ref', 'alt', 'effect' and 'score'.
      */
-    Map<String, JSONObject> findPatients(String geneSymbol, List<String> variantEffects,
+    Map<String, JSONArray> findPatients(String geneSymbol, List<String> variantEffects,
         Map<String, Double> alleleFrequencies);
 
     /**
@@ -51,5 +56,10 @@ public interface VariantStore
      * @param k The number of variants to return
      * @return Returns up to k top variants with the highest exomiser scores from the specified patient.
      */
-    JSONObject getTopVariants(String patientId, int k);
+    JSONArray getTopVariants(String patientId, int k);
+
+    /**
+     * @return A set of all patient ids that have associated genetic data.
+     */
+    Set<String> getAllPatientIds();
 }

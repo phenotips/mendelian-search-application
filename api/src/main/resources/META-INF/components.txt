@@ -1,1 +1,6 @@
 org.phenotips.mendelianSearch.DummyResponseScriptService
+org.phenotips.mendelianSearch.script.MendelianSearchScriptService
+org.phenotips.mendelianSearch.DefaultMendelianSearch
+org.phenotips.mendelianSearch.genotype.MockVariantStore
+org.phenotips.mendelianSearch.phenotype.DefaultPhenotypeScorer
+org.phenotips.mendelianSearch.phenotype.DefaultPatientPhenotypeScorer

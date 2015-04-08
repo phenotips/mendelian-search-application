@@ -31,8 +31,8 @@
   <parent>PhenoTips.MendelianSearch</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1425483164000</date>
-  <contentUpdateDate>1425483164000</contentUpdateDate>
+  <date>1428522465000</date>
+  <contentUpdateDate>1428510855000</contentUpdateDate>
   <version>1.1</version>
   <title>MendelianResults</title>
   <comment/>
@@ -47,7 +47,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #if($request &amp;&amp; $request.getMethod() == 'POST')
   #set ($gene = $request.getParameter('gene'))
   #set ($phenotype = $request.getParameterValues('phenotype'))
-    #set ($count = $services.DummyMendelianSearch.count($gene, $phenotype, $request.getParameter('phenotype-matching'), $request.getParameterValues('variant-effect'), $request.getParameter('allele-freq-exac'), $request.getParameter('allele-freq-pc')))
+  #set($alleleFrequencies = {"PhenomeCentral" :  $request.getParameter('allele-freq-exac') , "EXAC" : $request.getParameter('allele-freq-pc') })
+#set ($count = $services.MendelianSearch.count($gene, $phenotype, $request.getParameterValues('variant-effect'), $alleleFrequencies, $request.getParameter('phenotype-matching'), "$request.getParameter('matchGene')", "$request.getParameter('matchPhenotype')"))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
@@ -71,7 +72,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 &lt;/form&gt;
 &lt;div id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
-  #if($count.size() == 4 )
+  #if($count.size() == 0 )
     &lt;div class='grid-view'&gt;
       &lt;table class = 'grid-visualization'&gt;
         &lt;tr&gt;
@@ -119,8 +120,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         &lt;/tr&gt;
       &lt;/table&gt;
     &lt;/div&gt;
-  #elseif ($count.size() == 2)
-    &lt;input type="hidden" value="$escapetool.xml($count)" id="box-plot-values" /&gt;
+  #else
+    &lt;input type="hidden" value=$count id="box-plot-values" /&gt;
     &lt;svg id='chart'&gt;&lt;/svg&gt;
   #end
   &lt;/div&gt;
@@ -230,7 +231,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
       this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
       this.container.insert(this.tableControls);
-      this.initializeControls();
       
       this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
       this.container.insert(this.resultsTable);
@@ -254,7 +254,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       var select = new Element('select');
       [10, 20, 50].each(function(i) {
         var option = new Element('option', {'value' : i}).insert(i);
-        if (i === _this.DEFAULT_RESULTS_PER_PAGE){
+        if (i === _this.resultsPerPage){
           option.setAttribute('selected', 'selected');
         }
         select.insert(option);
@@ -294,7 +294,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       if (isNaN(newValue)){
         return;
       }
-      this.resultsPerPage = newValue;
+      this.resultsPerPage = parseInt(newValue);
       this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
       this.launchSearch();
     },
@@ -312,10 +312,12 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
             }).merge(_this.queryForm.serialize(true)).toObject(),
             method: "POST",
             onCreate : function() {
-              _this.container.addClassName('loading');
+              _this.tableControls.update('');
+              _this.resultsTable.update('&lt;p class="loading"&gt;Searching...&lt;/p&gt;');
             },
             onSuccess: function(response) {
               _this.displayResults(response.responseJSON);
+              _this.initializeControls();
             },
             onComplete : function() {
               _this.addEventListeners();
@@ -327,12 +329,15 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
     displayResults : function (data) {
         var _this = this;
-        this._data = data;
+        this._data = data.results;
 
-        // // Make sure the results are for this query
-        // if (!data.query) {return;}
-        // if (data.query.id != this.query) {return;}
-
+        //HACK: Temporary demo stuff--both categories will be returned to the ui-- must decided somewhere where to display
+        var matchGene = parseInt(this.queryForm.select('input[name="matchGene"]')[0].getValue());
+        if (matchGene){
+          this._data = this._data.matching;
+        } else {
+          this._data = this._data.nonMatching;
+        }
         // Empty the container to make room for the new results
         if (this.resultsTable.childElements()) {
                 this.resultsTable.update('');
@@ -350,19 +355,19 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
                 heading : _this.strings["owner.heading"],
                 display : _this.displayResultOwner.bind(_this)
               },
-              "diagnosis" : {
-                heading : _this.strings["diagnosis.heading"],
-                display : _this.displayResultDiagnosis.bind(_this)
+              "phenotypeScore" : {
+                heading : _this.strings["phenotypeScore.heading"],
+                display : _this.displayResultPhenotypeScore.bind(_this)
               },
-              "more" : {
-                heading : _this.strings["more.heading"],
-                display : _this.displayResultMoreInfo.bind(_this)
+              "numberOfVariants" : {
+                heading : _this.strings["numberOfVariants.heading"],
+                display : _this.displayResultNumberOfVariants.bind(_this)
               }
             };
        
           this._displayTableHeader(columns, this.resultsTable);
 
-          data.results.each(function(r) {
+          this._data.each(function(r) {
         _this._displayPatientRow(r, columns, _this.resultsTable);
         _this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
       });
@@ -405,7 +410,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
       displayResultPatientId : function(data) {
         var cell = new Element('td');
-        cell.insert(new Element('p').update(data.id));
+        cell.insert(new Element('p').update(data.patientID));
         return cell;
       },
 
@@ -416,20 +421,15 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
       },
 
-      displayResultDiagnosis : function(data) {
+      displayResultPhenotypeScore : function(data) {
         var cell = new Element('td');
-        cell.insert(new Element('p').update(data.diagnosis));
+        cell.insert(new Element('p').update(Math.round(data.phenotypeScore * 100) / 100));
         return cell;
       },
 
-      displayResultMoreInfo : function(data) {
+      displayResultNumberOfVariants : function(data) {
         var cell = new Element('td');
-        if ((data.genotype.length === 0) &amp;&amp; (data.phenotype.length === 0)) {
-          cell.innerHTML=this.strings["noPhenotypeOrVariants.text"];
-          return cell;
-        }
-        var moreInfoButton = new Element('a', {'href': '#'}).insert(this.strings["showMore.button"]);
-        cell.insert(moreInfoButton);
+        cell.insert(new Element('p').update(data.variants.length));
         return cell;
       },
 
@@ -444,8 +444,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         container.insert(phenotypeContainer);
 
         var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
-        variantContainer.insert(new Element('h6').update(this.strings['patientVaraiantsHeading']));
-        variantContainer.insert(this.generateVariantList(data.genotype));
+        variantContainer.insert(new Element('h6').update(this.strings['patientVariantsHeading']));
+        variantContainer.insert(this.generateVariantList(data.variants));
         container.insert(variantContainer);
 
         row.insert(containerCell.insert(container));
@@ -473,7 +473,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       displayVariantListElement : function(variant){
         var _this = this;
         var listElement = new Element('li');
-        listElement.insert("&lt;span class='variant-type'&gt;" + variant.type + "&lt;/span&gt;");
+        listElement.insert("&lt;p&gt;" +variant.geneSymbol + "&lt;/p&gt;");
+        listElement.insert("&lt;span class='variant-type'&gt;" + variant.effect + "&lt;/span&gt;");
         
         var varScore = new Element('div', {'class' : 'variant-score'});
         varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
@@ -522,12 +523,13 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         strings : {
           "patientId.heading"   : "ID",
           "owner.heading"     : "Owner",
-          "diagnosis.heading"   : "Diagnosis",
+          "phenotypeScore.heading"   : "Phenotype Score",
+          "numberOfVariants.heading" : "Variants observed",
           "more.heading"      : "More info",
           "noPhenotypeOrVariants.text" : "Nothing to display",
           "showMore.button"   : "More...",
           "patientSymptom.heading": "Symptoms observed in this patient",
-          'patientVaraiantsHeading': "Relevant variants found in this patient",
+          'patientVariantsHeading': "Variants found in this patient",
           'variant.position.heading': "Position",
           'variant.change.heading': "Change",
           'variant.effect.heading': "Effect",
@@ -653,7 +655,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       <code>var boxPlotGenerator = function () {
   var data = JSON.parse($('box-plot-values').value);
   xAxisLabels = ["With Gene Variants", "Without Gene Variants"];
-  chartTitles = ["Displaying Patients With Matching Variants", "Displaying Patients with Non-matching Variants"];
+  chartTitles = ["Displaying Patients With Matching Variants", "Displaying Patients With Non-matching Variants"];
   var margin = {top: 20, right: 0, bottom:30, left:50};
   var height = 400-margin.top-margin.bottom;
   var width = 400 - margin.right- margin.left;
@@ -1193,8 +1195,8 @@ tr.patient-row div.triRight {
 }
 
 tr.patient-row div.triDown {
-    border-top: 8px solid $theme.titleColor;
-    border-left: 4px solid transparent;
+    border-top: 8px solid $theme.titleColor;   
+    border-left: 4px solid transparent;   
     border-right: 4px solid transparent;
 }
 
@@ -1231,6 +1233,12 @@ tr.patient-subResult div.patient-phenotype-container{
 tr.patient-subResult div.patient-variant-container{
   border-left: 1px #ddd dotted;
   float: right;
+}
+
+div#mendelian-livetable-container p.loading {
+    display: block;
+    text-align: center;
+    height: 5em;
 }</code>
     </property>
     <property>
