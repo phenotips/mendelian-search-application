@@ -62,7 +62,7 @@ public class MockVariantStore implements VariantStore
         String ref = "ATC";
         String alt = "-";
         String position = "45215587452158";
-        Double score = 0.75;
+        Double score = Math.random();
         String effect = "MISSENSE";
 
         for (int i = 1; i < 10; i++) {
@@ -73,6 +73,7 @@ public class MockVariantStore implements VariantStore
                 variant.element("geneSymbol", geneSymbol);
                 variant.element("ref", ref);
                 variant.element("alt", alt);
+                variant.element("chr", String.valueOf(Math.round(Math.random() * 21)));
                 variant.element("position", position);
                 variant.element("score", score);
                 variant.element("effect", effect);

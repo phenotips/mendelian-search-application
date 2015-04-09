@@ -228,18 +228,20 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
       this.tableHeading = new Element('h4', {'class' : 'table-heading'}).update(this.queryForm.getInputs('hidden', 'title')[0].getValue());
       this.container.insert(this.tableHeading);
-
-      this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
-      this.container.insert(this.tableControls);
       
       this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
       this.container.insert(this.resultsTable);
+      this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
+      this.container.insert(this.tableControls);
       this.launchSearch();
     },
 
     initializeControls : function(){
+      var numberOfResults = this._data.length;
+      var fromResult = this.resultsPerPage*(this.page-1)+1;
+      var toResult = Math.min(this.resultsPerPage*this.page, numberOfResults);
 
-      this.resultsSummary = new Element('p').update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+      this.resultsSummary = new Element('p').update("Displaying results " + fromResult + '-' + toResult);
 
       var resultsPerPagePicker = this.generateResultsPerPagePicker();
       var pageSelector = this.generatePageSelector();
@@ -250,7 +252,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
     generateResultsPerPagePicker : function(){
       var _this = this;
-      var result = new Element('label', {'class' : 'results-per-page'}).update(_this.strings["control.resultsPerPage.label"]);
+      var result = new Element('p', {'class' : 'results-per-page'}).update(_this.strings["control.resultsPerPage.label"]);
       var select = new Element('select');
       [10, 20, 50].each(function(i) {
         var option = new Element('option', {'value' : i}).insert(i);
@@ -267,11 +269,22 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     generatePageSelector : function(){
       var _this = this;
       this.page = this.page || this.DEFAULT_PAGE;
-      var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
-      var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
-      var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
 
-      var result = new Element('span', {'class' : 'page-selector'}).update('Page: ').insert(previousButton).insert(currentPageDisplay).insert(nextButton);
+      var displayPrevious = this.page &gt; 1;
+      var displayNext = this._data.length &gt; this.resultsPerPage*this.page;
+
+      var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
+      
+      var result = new Element('p', {'class' : 'page-selector'}).update('Page: ');
+      if(displayPrevious){
+        var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
+        result.insert(previousButton);
+      }
+      result.insert(currentPageDisplay);
+      if (displayNext){
+        var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
+        result.insert(nextButton);
+      }
       return result;
 
     },
@@ -331,7 +344,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         var _this = this;
         this._data = data.results;
 
-        //HACK: Temporary demo stuff--both categories will be returned to the ui-- must decided somewhere where to display
+        //HACK: Temporary demo stuff--both categories will be returned to the ui-- must decide on which to use
         var matchGene = parseInt(this.queryForm.select('input[name="matchGene"]')[0].getValue());
         if (matchGene){
           this._data = this._data.matching;
@@ -372,8 +385,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         _this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
       });
 
-
-      delete this._data;
         },
 
       _displayTableHeader : function (columns, table) {
@@ -473,32 +484,42 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       displayVariantListElement : function(variant){
         var _this = this;
         var listElement = new Element('li');
-        listElement.insert("&lt;p&gt;" +variant.geneSymbol + "&lt;/p&gt;");
-        listElement.insert("&lt;span class='variant-type'&gt;" + variant.effect + "&lt;/span&gt;");
-        
-        var varScore = new Element('div', {'class' : 'variant-score'});
-        varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
-        listElement.insert(varScore);
 
+        var leftColumn = new Element('div', {'class' : 'left'});
+        var rightColumn = new Element('div', {'class' : 'right'});
+        //TODO: link genesymbol to somewhere. Probably UniProt
+        var geneElement = new Element('p', {'class' : 'gene-name'}).update( _this.strings["geneSymbol"]+ ": " + variant.geneSymbol);
+        leftColumn.insert(geneElement);
+        
         if (variant.chr &amp;&amp; variant.position &amp;&amp; variant.ref) {
           var start = variant.position;
           var end = variant.position + variant.ref.length;
-          var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()[0]).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
-          var positionURLFragment = "Chr" + variant.chr.toUpperCase()[0] + ": " + start + "-" + end;
+          var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
+          var positionURLFragment = "Chr" + variant.chr.toUpperCase() + ": " + start + "-" + end;
           var assembly = variant.assembly || "hg19";
           var position = new Element('a', {
             'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
-            'class' : 'button secondary',
+            'class' : 'variant-position',
             'target' : '__blank',
             'title' : _this.strings["variantPositionLinkTitle"]
-          }).update(positionText).wrap('span', {'class' : 'buttonwrapper variant-position'});
-          listElement.insert(position);
+          }).update(positionText);
+          leftColumn.insert(position);
         }
+        
+        var varScore = new Element('div', {'class' : 'variant-score'});
+        varScore.insert("&lt;p&gt;" + this.strings["score.label"] + ": &lt;/p&gt;");
+        varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
+        rightColumn.insert(varScore);
 
-        var displayedRef = (variant.ref.length &gt; 10) ? (variant.ref.substring(0,10)+"...") : variant.ref;
-        var displayedAlt = (variant.alt.length &gt; 10) ? (variant.alt.substring(0,10)+"...") : variant.alt;
-        listElement.insert("&lt;div class='variant-change'&gt;&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;&lt;/div&gt;");
 
+
+        var displayedRef = (variant.ref.length &gt; 5) ? (variant.ref.substring(0,5)+"...") : variant.ref;
+        var displayedAlt = (variant.alt.length &gt; 5) ? (variant.alt.substring(0,5)+"...") : variant.alt;
+        rightColumn.insert("&lt;div class='variant-change'&gt;&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;&lt;/div&gt;");
+        rightColumn.insert("&lt;p class='variant-type'&gt;" + variant.effect + "&lt;/p&gt;");
+        
+        listElement.insert(leftColumn);
+        listElement.insert(rightColumn);
         return listElement;
       },
 
@@ -534,6 +555,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
           'variant.change.heading': "Change",
           'variant.effect.heading': "Effect",
           'variant.score.heading' : "Score",
+          'geneSymbol'        : "Gene symbol",
+          'score.label'       : "Estimated harmfulness",
           "positionPhrase"  : "Chr __CHROMOSOME__: __START__-__STOP__",
           "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
           'control.resultsPerPage.label' : 'Results per page: '
@@ -1121,21 +1144,26 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
   margin-left: 400px;
   width: auto;
 }
-div.mendelian-livetable-controls&gt;*{
+.mendelian-livetable-controls &gt; *{
   float: right;
-  font-size: 80%;
+  font-size: 90%;
   margin: 0 1em 0 0;
 }
-div.mendelian-livetable-controls p{
+.mendelian-livetable-controls p:first-child{
   float: left;
 }
-div.mendelian-livetable-controls label.results-per-page{
+.mendelian-livetable-controls .results-per-page{
   margin-right: 0;
 }
 #hidden-query-form{
   display: none;
 }
-table.mendelian-results-table{
+#mendelian-livetable-container .loading {
+    display: block;
+    text-align: center;
+    height: 5em;
+}
+.mendelian-results-table{
   border: none;
   border-collapse: separate;
   border-spacing: 0px 3px ;
@@ -1144,14 +1172,14 @@ table.mendelian-results-table{
   width: 100%;
 }
 
-table.mendelian-results-table tr th {
+.mendelian-results-table tr th {
   background: inherit;
   border: none;
   border-bottom: 1px solid #444;
   vertical-align: bottom;
 }
 
-tr.patient-row td {
+.patient-row td {
   background-color: white;
   border: none;
   border-bottom: 1px solid #EEE;
@@ -1159,15 +1187,14 @@ tr.patient-row td {
   position: relative;
 }
 
-tr.patient-row:hover td {
+.patient-row:hover td {
   cursor: pointer;
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
-
-tr.patient-row:hover td:first-child {
+.patient-row:hover td:first-child {
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
-tr.patient-row:hover td:after, tr.patient-row.expanded td:after {
+.patient-row:hover td:after, .patient-row.expanded td:after {
   background-color: white;
   content: "";
   height: 100%;
@@ -1177,35 +1204,29 @@ tr.patient-row:hover td:after, tr.patient-row.expanded td:after {
   width: 3px;
   z-index: 1;
 }
-
-tr.patient-row.expanded td {
+.patient-row.expanded td {
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
 }
-
-tr.patientrow.expanded td:first-child {
+.patientrow.expanded td:first-child {
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
 }
-
-tr.patient-row div.triRight {
+.patient-row .triRight {
     height: 0;
     width: 0;
     border-left: 8px solid $theme.titleColor;
     border-top: 4px solid transparent;
     border-bottom: 4px solid transparent;
 }
-
-tr.patient-row div.triDown {
+.patient-row .triDown {
     border-top: 8px solid $theme.titleColor;   
     border-left: 4px solid transparent;   
     border-right: 4px solid transparent;
 }
-
-tr.patient-subResult&gt;td{
+.patient-subResult&gt;td{
   border: none;
   padding: 0 5px;
 }
-
-tr.patient-subResult&gt;td&gt;div{
+.patient-subResult&gt;td&gt;div{
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
   margin-top:-6px;
   max-height: 500px;
@@ -1213,33 +1234,94 @@ tr.patient-subResult&gt;td&gt;div{
   transition: max-height 1s;
   z-index:2;
 }
-
-tr.patient-subResult&gt;td&gt;div.collapsed{
+.patient-subResult&gt;td&gt;.collapsed{
   max-height: 0px;
 }
 
-tr.patient-subResult td&gt;div&gt;div{
+.patient-subResult td&gt;div&gt;div{
   display:inline-block;
   width: 49.5%;
 }
-tr.patient-subResult h6{
+.patient-subResult h6{
+  font-size: larger;
   margin: 15px 0 5px 0;
   padding-left: .5em;
   width: 100%;
 }
-tr.patient-subResult div.patient-phenotype-container{
+.patient-subResult .patient-phenotype-container{
   float: left;
 }
-tr.patient-subResult div.patient-variant-container{
+.patient-subResult .patient-variant-container{
   border-left: 1px #ddd dotted;
   float: right;
 }
+.patient-variant-container ul {
+  list-style: none;
+  margin: 0 1em;
+}
 
-div#mendelian-livetable-container p.loading {
-    display: block;
-    text-align: center;
-    height: 5em;
-}</code>
+.patient-variant-container li {
+  border-bottom: 1px solid #EEE;
+  overflow: auto;
+  padding: 0.5em .5em;
+}
+
+.patient-variant-container li .left {
+  float: left;
+  width: 50%;
+}
+
+.patient-variant-container li .right {
+  float: right;
+  width: 50%;
+}
+
+.patient-variant-container li &gt; div &gt; *:first-child {
+  font-size: larger;
+  margin: 0;
+}
+
+.variant-score * {
+  display: inline-block;
+  margin-bottom: 0;
+  margin-right: 1em;
+}
+
+.variant-change {
+  text-align: center;
+}
+
+.variant-type {
+  text-align: center;
+}
+
+.variant-position {
+  display: block;
+  padding-left: 1em;
+  text-align: left;
+}
+.segmented-bar {
+  color: red;
+  font-size: 75%;
+  white-space: nowrap;
+  width: auto;
+}
+.segmented-bar .segmented-unit {
+  border: 1px solid black;
+  border-radius: 1px;
+  display: inline-block;
+  height: 5px;
+  margin: 0 1px;
+  width: 5px;
+}
+.segmented-bar .segmented-unit-fill {
+  background-color: red;
+  border-radius: 1px;
+  height: 5px;
+  display: block;
+  width: 5px;
+}
+</code>
     </property>
     <property>
       <name>MendelianLivetableStyles</name>
