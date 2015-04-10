@@ -48,7 +48,8 @@ $xwiki.jsx.use('PhenoTips.TouchscreenEvents')##
 $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 #set ($alleleFreqPrecision = 4)##
 {{html}}
-&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('PhenoTips.MendelianResults')" method='post'&gt;
+&lt;div class='box infomessage mendelian-search-info'&gt;The Gene Genie is a tool used to search for associations between genes and phenotypes. Simply enter a gene symbol and a phenotype and the Gene Genie will search for and score patients based on how well they fit into your hypothesis.&lt;/div&gt;
+&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('data.MendelianResults')" method='post'&gt;
   &lt;div class="form-section gene-section"&gt;
     &lt;p class='search-heading'&gt;Enter the gene you are investigating:&lt;/p&gt;
     &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder='Enter a gene name' value="$!{escapetool.xml($request.gene)}"/&gt;
@@ -436,28 +437,37 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
     <property>
       <code>#template('colorThemeInit.vm')
 
-form.mendelian-search-form{
+.mendelian-search-form{
   box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
   overflow-y: hidden;
 }
-form.mendelian-search-form &gt; .form-section{
+.mendelian-search-form &gt; .form-section{
     display: inline-block;
+    padding: 1% 0.5%;
     vertical-align: top;
     width: 32%;
-    padding: 1% 0.5%;
 }
-form.mendelian-search-form  .form-section.button-section{
+.mendelian-search-info{
+  display: none;
+}
+.gadget .mendelian-search-info {
+  display: block;
+}
+.gadget .mendelian-search-form &gt; .form-section{
+  width: 99%;
+}
+.mendelian-search-form  .form-section.button-section{
   text-align: center;
 }
-form.mendelian-search-form .form-section.button-section &gt; *{
+.mendelian-search-form .form-section.button-section &gt; *{
   margin-left: 2px;
   margin-right: 2px;
 }
-form.mendelian-search-form .form-section p.search-heading{
+.mendelian-search-form .form-section .search-heading{
   color: $theme.titleColor;
   margin: 0;
 }
-form.mendelian-search-form input.percentage-input {
+.mendelian-search-form input[type="text"].percentage-input {
   width: 4em;
 }
 .mendelian-search-advanced{
@@ -469,13 +479,13 @@ form.mendelian-search-form input.percentage-input {
 .mendelian-search-advanced.collapsed {
   max-height: 0px;
 }
-.mendelian-search-advanced p.advanced-option-heading {
+.mendelian-search-advanced .advanced-option-heading {
   color: $theme.titleColor;
   margin-bottom: 0;
 }
 .mendelian-search-advanced &gt; ul {
   list-style-type: none;
-  margin-top: 0;
+  margin: .2em .2em;
 }
 #mendelian-search-symptoms &gt; .accepted-suggestions{
  margin: 0 !important;
@@ -485,7 +495,7 @@ form.mendelian-search-form input.percentage-input {
   border-top: 1px solid #EEE;
   padding-left: .5em;
 }
-ul.variant-effects {
+.variant-effects {
   background-color: #FFF;
   border:  1px solid #DDD;
   height: 8em;
@@ -493,10 +503,10 @@ ul.variant-effects {
   overflow-y: scroll;
 }
 
-ul.variant-effects li {
-    border-bottom: 1px dotted #DDD;
-    font-size: 12px;
-    padding: 5px;
+.variant-effects li {
+  border-bottom: 1px dotted #DDD;
+  font-size: 12px;
+  padding: 5px;
 }</code>
     </property>
     <property>

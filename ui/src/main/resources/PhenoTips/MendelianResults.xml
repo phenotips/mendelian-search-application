@@ -21,14 +21,14 @@
 -->
 
 <xwikidoc version="1.1">
-  <web>PhenoTips</web>
+  <web>data</web>
   <name>MendelianResults</name>
   <language/>
   <defaultLanguage/>
   <translation>0</translation>
   <creator>xwiki:XWiki.Admin</creator>
   <creationDate>1424444184000</creationDate>
-  <parent>PhenoTips.MendelianSearch</parent>
+  <parent>data.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
   <date>1428522465000</date>
@@ -41,14 +41,14 @@
   <hidden>false</hidden>
   <content>{{include document='PhenoTips.MendelianSearch' /}}
 {{velocity}}
-$xwiki.jsx.use('PhenoTips.MendelianResults')##
+$xwiki.jsx.use('data.MendelianResults')##
 $xwiki.jsx.use('PhenoTips.d3')##
-$xwiki.ssx.use('PhenoTips.MendelianResults')##
-#if($request &amp;&amp; $request.getMethod() == 'POST')
+$xwiki.ssx.use('data.MendelianResults')##
+#if($request &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
   #set ($gene = $request.getParameter('gene'))
   #set ($phenotype = $request.getParameterValues('phenotype'))
   #set($alleleFrequencies = {"PhenomeCentral" :  $request.getParameter('allele-freq-exac') , "EXAC" : $request.getParameter('allele-freq-pc') })
-#set ($count = $services.MendelianSearch.count($gene, $phenotype, $request.getParameterValues('variant-effect'), $alleleFrequencies, $request.getParameter('phenotype-matching'), "$request.getParameter('matchGene')", "$request.getParameter('matchPhenotype')"))
+  #set ($count = $services.MendelianSearch.count($gene, $phenotype, $request.getParameterValues('variant-effect'), $alleleFrequencies, $request.getParameter('phenotype-matching'), "$request.getParameter('matchGene')", "$request.getParameter('matchPhenotype')"))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
@@ -131,10 +131,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #end
 {{/velocity}}</content>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>0</number>
     <className>XWiki.JavaScriptExtension</className>
-    <guid>30652af7-9a30-419b-9272-4f40b224ea78</guid>
+    <guid>ada3713a-0b08-4c0b-bd4d-c3583d467654</guid>
     <class>
       <name>XWiki.JavaScriptExtension</name>
       <customClass/>
@@ -380,6 +380,9 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
        
           this._displayTableHeader(columns, this.resultsTable);
 
+        this._data.sort(function(a, b){
+          return a.phenotypeScore &lt; b.phenotypeScore;
+        });
           this._data.each(function(r) {
         _this._displayPatientRow(r, columns, _this.resultsTable);
         _this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
@@ -596,10 +599,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>1</number>
     <className>XWiki.JavaScriptExtension</className>
-    <guid>6ae6a383-0ab8-401f-98c5-0b651faab168</guid>
+    <guid>bca6c561-900b-46e7-af79-f0b39c574ef0</guid>
     <class>
       <name>XWiki.JavaScriptExtension</name>
       <customClass/>
@@ -712,6 +715,19 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       .attr('transform', function(d, i){
          return "translate(" + x(Object.keys(data)[i]) + ", 0)";
       });
+  //Axes
+  chart.append("g").attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  chart.append("g").attr("class", "y axis")
+    .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -(height-margin.top)/2)
+      .attr("dy", "-3em")
+      .style("text-anchor", "middle")
+      .text("Phenotypic Similarity Score");
 
   //Data points
   category.selectAll('circle')
@@ -780,41 +796,42 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(d3.max(data[d]))+ offsetY;})
-    .text(function(d){ return d3.max(data[d]);})
+    .text(function(d){ return roundDecimals(d3.max(data[d]), 2);})
     .style("text-anchor", "start");
   // UpperQ labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(getUpperQuartile(data[d])) + offsetY;})
-    .text(function(d){ return getUpperQuartile(data[d]);})
+    .text(function(d){ return roundDecimals(getUpperQuartile(data[d]), 2);})
     .style("text-anchor", "start");
   // Median labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(getMedian(data[d])) + offsetY;})
-    .text(function(d){ return getMedian(data[d]);})
+    .text(function(d){ return roundDecimals(getMedian(data[d]), 2);})
     .style("text-anchor", "start");
   //LowerQ labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(getLowerQuartile(data[d])) + offsetY;})
-    .text(function(d){ return getLowerQuartile(data[d]);})
+    .text(function(d){ return roundDecimals(getLowerQuartile(data[d]), 2);})
     .style("text-anchor", "start");
   //Min labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(d3.min(data[d])) + offsetY;})
-    .text(function(d){ return d3.min(data[d]);})
+    .text(function(d){ return roundDecimals(d3.min(data[d]), 2);})
     .style("text-anchor", "start");
 
   //Info labels
   var infoLabel = category.append('g')
     .attr('transform', function(d){
-      return 'translate(0,'+ y(getUpperQuartile(data[d])) +')';
+      var yPos =  (y(getUpperQuartile(data[d])) &gt;  height - y(0.2)) ? y(0.2) : y(getUpperQuartile(data[d]));
+      return 'translate(0,'+ yPos +')';
     });
 
   infoLabel.append('rect')
@@ -856,20 +873,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         return chartTitles[i];
       });
 
-  //Axes
-  chart.append("g").attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-
-  chart.append("g").attr("class", "y axis")
-    .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("x", -(height-margin.top)/2)
-      .attr("dy", "-3em")
-      .style("text-anchor", "middle")
-      .text("Phenotypic Similarity Score");
-
   function nrmRandom( mean, std) {
       return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3 * mean *std + mean/2;
   }
@@ -908,10 +911,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>2</number>
     <className>XWiki.JavaScriptExtension</className>
-    <guid>4b4eccd0-5777-482a-9868-6c4fc32c48ae</guid>
+    <guid>5974718a-42b4-4aba-93c1-f4c7eb227902</guid>
     <class>
       <name>XWiki.JavaScriptExtension</name>
       <customClass/>
@@ -1053,10 +1056,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>0</number>
     <className>XWiki.StyleSheetExtension</className>
-    <guid>41ed21eb-4693-42f5-a950-c282bf9d24bc</guid>
+    <guid>2b621d55-392e-42c5-89c5-b5b408e4ba39</guid>
     <class>
       <name>XWiki.StyleSheetExtension</name>
       <customClass/>
@@ -1334,10 +1337,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>1</number>
     <className>XWiki.StyleSheetExtension</className>
-    <guid>a055be5a-5518-4a7e-aa8f-b1f804a73bb4</guid>
+    <guid>8ef3bf5f-57ef-4ff2-8577-3de3bcf516e0</guid>
     <class>
       <name>XWiki.StyleSheetExtension</name>
       <customClass/>
@@ -1464,10 +1467,10 @@ div.grid-view td.results-cell{
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>2</number>
     <className>XWiki.StyleSheetExtension</className>
-    <guid>11dc2ee0-1e22-4670-a72e-2713011e1322</guid>
+    <guid>405d6425-08d3-4bd2-b8d6-5af2aacb089e</guid>
     <class>
       <name>XWiki.StyleSheetExtension</name>
       <customClass/>
