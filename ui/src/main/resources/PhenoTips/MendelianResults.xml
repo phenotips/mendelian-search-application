@@ -72,6 +72,7 @@ $xwiki.ssx.use('data.MendelianResults')##
 &lt;/form&gt;
 &lt;div id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
+  &lt;h4 class='graph-heading'&gt;Overview&lt;/h4&gt;
   #if($count.size() == 0 )
     &lt;div class='grid-view'&gt;
       &lt;table class = 'grid-visualization'&gt;
@@ -691,7 +692,6 @@ $xwiki.ssx.use('data.MendelianResults')##
   var y =d3.scale.linear().range([height,0]).domain([0,1]);
   var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
 
-
   var xAxis = d3.svg.axis()
     .scale(x)
     .orient("bottom")
@@ -707,7 +707,6 @@ $xwiki.ssx.use('data.MendelianResults')##
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-
   var category =chart.selectAll('g').data(Object.keys(data))
     .enter()
     .append('g')
@@ -715,19 +714,6 @@ $xwiki.ssx.use('data.MendelianResults')##
       .attr('transform', function(d, i){
          return "translate(" + x(Object.keys(data)[i]) + ", 0)";
       });
-  //Axes
-  chart.append("g").attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-
-  chart.append("g").attr("class", "y axis")
-    .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("x", -(height-margin.top)/2)
-      .attr("dy", "-3em")
-      .style("text-anchor", "middle")
-      .text("Phenotypic Similarity Score");
 
   //Data points
   category.selectAll('circle')
@@ -851,6 +837,21 @@ $xwiki.ssx.use('data.MendelianResults')##
     .attr('dx', '.5em')
     .attr('dy', '2.25em')
     .style("text-anchor", "start");
+
+
+  //Axes
+  chart.append("g").attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  chart.append("g").attr("class", "y axis")
+    .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -(height-margin.top)/2)
+      .attr("dy", "-3em")
+      .style("text-anchor", "middle")
+      .text("Phenotypic Similarity Score");
 
   //Hover/Click Boxes
   var clickArea = category.append('rect')
@@ -1416,7 +1417,10 @@ $xwiki.ssx.use('data.MendelianResults')##
       <cache>default</cache>
     </property>
     <property>
-      <code>div.grid-view table{
+      <code>h4.graph-heading{
+ margin-top: 0;
+}
+div.grid-view table{
   border-spacing: 0;
   border-collapse: collapse;
   font-family: sans-serif;
