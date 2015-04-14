@@ -23,11 +23,11 @@ import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
 import org.phenotips.data.PatientRepository;
 import org.phenotips.data.permissions.PermissionsManager;
-import org.phenotips.mendelianSearch.genotype.VariantStore;
 import org.phenotips.mendelianSearch.phenotype.PatientPhenotypeScorer;
 import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.variantStoreIntegration.VariantStoreService;
 
 import org.xwiki.component.annotation.Component;
 
@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -54,8 +53,7 @@ public class DefaultMendelianSearch implements MendelianSearch
 {
 
     @Inject
-    @Named("DummyStore")
-    private VariantStore variantStore;
+    private VariantStoreService variantStore;
 
     @Inject
     private PatientPhenotypeScorer patientPhenotypeScorer;
@@ -80,11 +78,12 @@ public class DefaultMendelianSearch implements MendelianSearch
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
         if (request.get(variantSearchKey) != null && (int) request.get(variantSearchKey) == 1) {
             matchingVariants =
-                this.variantStore.findPatients((String) request.get("varChr"), (int) request.get("varPos"),
+                this.variantStore.getIndividualsWithVariant((String) request.get("varChr"),
+                    (int) request.get("varPos"),
                     (String) request.get("varRef"), (String) request.get("varAlt"));
         } else {
             matchingVariants =
-                this.variantStore.findPatients((String) request.get("geneSymbol"),
+                this.variantStore.getIndividualsWithGene((String) request.get("geneSymbol"),
                     (List<String>) request.get("variantEffects"),
                     (Map<String, Double>) request.get("alleleFrequencies"));
         }
@@ -97,7 +96,7 @@ public class DefaultMendelianSearch implements MendelianSearch
         // Generate variant result for non-matching ids
         Map<String, JSONArray> nonMatchingVariants = new HashMap<String, JSONArray>();
         for (String id : nonMatchingIds) {
-            nonMatchingVariants.put(id, this.variantStore.getTopVariants(id, 5));
+            nonMatchingVariants.put(id, this.variantStore.getTopHarmfullVariants(id, 5));
         }
 
         // Convert the request list of HPO ids into OntologyTerms
@@ -141,7 +140,12 @@ public class DefaultMendelianSearch implements MendelianSearch
 
         for (Patient patient : patients) {
             JSONObject patientResult = new JSONObject();
-            patientResult.element("patientID", patient.getExternalId());
+            String patientIDKey = "patientID";
+            if (patient.getExternalId() == null || "".equals(patient.getExternalId())) {
+                patientResult.element(patientIDKey, "-");
+            } else {
+                patientResult.element(patientIDKey, patient.getExternalId());
+            }
             patientResult.element("variants", variants.get(patient.getId()));
             patientResult.element("phenotypeScore", phenotypeScores.get(patient));
             List<String> dPhenotype = new ArrayList<String>();
@@ -163,7 +167,7 @@ public class DefaultMendelianSearch implements MendelianSearch
 
     private Set<String> getNonMatchingIds(Set<String> matchingIds)
     {
-        Set<String> allIds = this.variantStore.getAllPatientIds();
+        Set<String> allIds = new HashSet<String>(this.variantStore.getIndividuals());
         allIds.removeAll(matchingIds);
         return allIds;
     }
