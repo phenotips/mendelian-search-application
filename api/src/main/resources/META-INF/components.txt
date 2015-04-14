@@ -1,4 +1,3 @@
-org.phenotips.mendelianSearch.DummyResponseScriptService
 org.phenotips.mendelianSearch.script.MendelianSearchScriptService
 org.phenotips.mendelianSearch.DefaultMendelianSearch
 org.phenotips.mendelianSearch.genotype.MockVariantStore

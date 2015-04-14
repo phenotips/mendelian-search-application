@@ -41,6 +41,10 @@
       <version>${phenotips.version}</version>
     </dependency>
     <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>patient-access-rules-api</artifactId>
       <version>${phenotips.version}</version>

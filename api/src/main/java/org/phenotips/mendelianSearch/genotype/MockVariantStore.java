@@ -116,4 +116,14 @@ public class MockVariantStore implements VariantStore
         return ids;
     }
 
+    @Override
+    public Map<String, JSONArray> findPatients(String chr, int pos, String ref, String alt)
+    {
+        Map<String, JSONArray> result = new HashMap<String, JSONArray>();
+        for (int i = 1; i < 3; i++) {
+            result.put(MockVariantStore.PATIENT_PREFIX + i, this.patients.get(PATIENT_PREFIX + i));
+        }
+        return result;
+    }
+
 }

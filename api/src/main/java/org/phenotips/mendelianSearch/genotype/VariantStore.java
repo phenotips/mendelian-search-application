@@ -50,6 +50,18 @@ public interface VariantStore extends Initializable
         Map<String, Double> alleleFrequencies);
 
     /**
+     * Queries the variant store for patients with a specific variant.
+     *
+     * @param chr 1-22, X or Y
+     * @param pos Position
+     * @param ref Reference allele
+     * @param alt Alternative allele
+     * @return An array of JSON objects with two keys: 'PatientID' and 'Relevant-Variants'. 'Relevant-Variants' maps to
+     *         an array of variant objects containing a 'position', 'ref', 'alt', 'effect' and 'score'.
+     */
+    Map<String, JSONArray> findPatients(String chr, int pos, String ref, String alt);
+
+    /**
      * Return variant information for the specified patient.
      *
      * @param patientId The patient whose variants are being queried

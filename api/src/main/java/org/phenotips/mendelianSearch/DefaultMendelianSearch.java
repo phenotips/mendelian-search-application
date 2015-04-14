@@ -75,11 +75,20 @@ public class DefaultMendelianSearch implements MendelianSearch
     @Override
     public JSONObject search(MendelianSearchRequest request)
     {
-
+        Map<String, JSONArray> matchingVariants;
+        String variantSearchKey = "variantSearch";
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
-        Map<String, JSONArray> matchingVariants =
-            this.variantStore.findPatients((String) request.get("geneSymbol"),
-                (List<String>) request.get("variantEffects"), (Map<String, Double>) request.get("alleleFrequencies"));
+        if (request.get(variantSearchKey) != null && (int) request.get(variantSearchKey) == 1) {
+            matchingVariants =
+                this.variantStore.findPatients((String) request.get("varChr"), (int) request.get("varPos"),
+                    (String) request.get("varRef"), (String) request.get("varAlt"));
+        } else {
+            matchingVariants =
+                this.variantStore.findPatients((String) request.get("geneSymbol"),
+                    (List<String>) request.get("variantEffects"),
+                    (Map<String, Double>) request.get("alleleFrequencies"));
+        }
+
         Set<String> matchingIds = matchingVariants.keySet();
 
         // Find the set of all IDs or patients in PhenoTips (with variants?)
@@ -125,9 +134,14 @@ public class DefaultMendelianSearch implements MendelianSearch
         Map<Patient, Double> phenotypeScores)
     {
         JSONArray result = new JSONArray();
+
+        if (patients.size() == 0 || variants.size() == 0) {
+            return result;
+        }
+
         for (Patient patient : patients) {
             JSONObject patientResult = new JSONObject();
-            patientResult.element("patientID", patient.getId());
+            patientResult.element("patientID", patient.getExternalId());
             patientResult.element("variants", variants.get(patient.getId()));
             patientResult.element("phenotypeScore", phenotypeScores.get(patient));
             List<String> dPhenotype = new ArrayList<String>();
