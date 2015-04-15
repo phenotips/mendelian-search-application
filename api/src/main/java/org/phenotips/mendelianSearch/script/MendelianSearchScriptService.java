@@ -70,7 +70,7 @@ public class MendelianSearchScriptService implements ScriptService
 
     private String posKey = "varPos";
 
-    private String refKey = "varKey";
+    private String refKey = "varRef";
 
     private String altKey = "varAlt";
 

@@ -42,7 +42,7 @@
   <content>{{include document='PhenoTips.MendelianSearch' /}}
 {{velocity}}
 $xwiki.jsx.use('data.MendelianResults')##
-$xwiki.jsx.use('PhenoTips.d3')##
+$xwiki.jsx.use('PhenoTips.d3', {"minify" : false})##
 $xwiki.ssx.use('data.MendelianResults')##
 #if($request &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
   #set ($count = $services.MendelianSearch.count($request))
@@ -533,7 +533,7 @@ $xwiki.ssx.use('data.MendelianResults')##
         button.observe('click', function(b) {
           _this.queryForm.select('input[name="variantSearch"]')[0].setValue(1);
           _this.queryForm.select('input[name="varChr"]')[0].setValue(variant.chr);
-          _this.queryForm.select('input[name="varPos"]')[0].setValue(variant.pos);
+          _this.queryForm.select('input[name="varPos"]')[0].setValue(variant.position);
           _this.queryForm.select('input[name="varRef"]')[0].setValue(variant.ref);
           _this.queryForm.select('input[name="varAlt"]')[0].setValue(variant.alt);
           _this.submitHiddenForm();
@@ -578,7 +578,7 @@ $xwiki.ssx.use('data.MendelianResults')##
         'variant.score.heading' : "Score",
         'geneSymbol'        : "Gene symbol",
         'score.label'       : "Exomiser score",
-        "positionPhrase"  : "chr__CHROMOSOME__:__START__-__STOP__",
+        "positionPhrase"  : "__CHROMOSOME__:__START__-__STOP__",
         "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
         'variantSearchButton'   : "Redo search with this variant",
         'control.resultsPerPage.label' : 'Results per page: '
@@ -742,8 +742,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       .attr('cx', function(){ return nrmRandom(x.rangeBand(), 0.2);})
       .attr('cy', function(d , i){return y(d);})
       .attr('r','1.5px');
-
-console.log(data[category.datum] + "," +category.datum)
+      
   //Median lines
   category.append('line')
     .attr('class', 'box-plot')

@@ -88,7 +88,7 @@ public class DefaultMendelianSearch implements MendelianSearch
                     (Map<String, Double>) request.get("alleleFrequencies"));
         }
 
-        Set<String> matchingIds = matchingVariants.keySet();
+        Set<String> matchingIds = new HashSet<String>(matchingVariants.keySet());
 
         // Find the set of all IDs or patients in PhenoTips (with variants?)
         Set<String> nonMatchingIds = this.getNonMatchingIds(matchingIds);
@@ -98,6 +98,35 @@ public class DefaultMendelianSearch implements MendelianSearch
         for (String id : nonMatchingIds) {
             nonMatchingVariants.put(id, this.variantStore.getTopHarmfullVariants(id, 5));
         }
+
+        // HACK: variant store returns external ids not internal IDS must convert
+        Set<String> keySet = new HashSet<String>(matchingVariants.keySet());
+        for (String external : keySet) {
+            String newKey = this.getPatientInternalFromExternal(external);
+            JSONArray newValue = matchingVariants.get(external);
+            matchingVariants.remove(external);
+            matchingVariants.put(newKey, newValue);
+        }
+        keySet = new HashSet<String>(nonMatchingVariants.keySet());
+        for (String external : keySet) {
+            String newKey = this.getPatientInternalFromExternal(external);
+            JSONArray newValue = nonMatchingVariants.get(external);
+            nonMatchingVariants.remove(external);
+            nonMatchingVariants.put(newKey, newValue);
+        }
+        keySet = new HashSet<String>(matchingIds);
+        for (String external : keySet) {
+            String internal = this.getPatientInternalFromExternal(external);
+            matchingIds.remove(external);
+            matchingIds.add(internal);
+        }
+        keySet = new HashSet<String>(nonMatchingIds);
+        for (String external : keySet) {
+            String internal = this.getPatientInternalFromExternal(external);
+            nonMatchingIds.remove(external);
+            nonMatchingIds.add(internal);
+        }
+        // End of Hack
 
         // Convert the request list of HPO ids into OntologyTerms
         List<OntologyTerm> phenotype = new ArrayList<OntologyTerm>();
@@ -170,5 +199,15 @@ public class DefaultMendelianSearch implements MendelianSearch
         Set<String> allIds = new HashSet<String>(this.variantStore.getIndividuals());
         allIds.removeAll(matchingIds);
         return allIds;
+    }
+
+    private String getPatientExternalFromInternal(String internal)
+    {
+        return this.pr.getPatientById(internal).getExternalId();
+    }
+
+    private String getPatientInternalFromExternal(String external)
+    {
+        return this.pr.getPatientByExternalId(external).getId();
     }
 }
