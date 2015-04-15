@@ -45,10 +45,7 @@ $xwiki.jsx.use('data.MendelianResults')##
 $xwiki.jsx.use('PhenoTips.d3')##
 $xwiki.ssx.use('data.MendelianResults')##
 #if($request &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
-  #set ($gene = $request.getParameter('gene'))
-  #set ($phenotype = $request.getParameterValues('phenotype'))
-  #set($alleleFrequencies = {"PhenomeCentral" :  $request.getParameter('allele-freq-exac') , "EXAC" : $request.getParameter('allele-freq-pc') })
-  #set ($count = $services.MendelianSearch.count($gene, $phenotype, $request.getParameterValues('variant-effect'), $alleleFrequencies, $request.getParameter('phenotype-matching'), "$request.getParameter('matchGene')", "$request.getParameter('matchPhenotype')"))
+  #set ($count = $services.MendelianSearch.count($request))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
@@ -60,7 +57,7 @@ $xwiki.ssx.use('data.MendelianResults')##
 #else
   {{html clean = false}}
 ## hidden element containing the previous request string for use in asynchronous requests
-&lt;form id='hidden-query-form' action='#'&gt;
+&lt;form id='hidden-query-form' action="$request.getRequestURL()" method='post'"&gt;
   &lt;div&gt;
   #foreach($param in $request.getParameterNames())
     #foreach($value in $request.getParameterValues($param))
@@ -524,10 +521,27 @@ $xwiki.ssx.use('data.MendelianResults')##
         
         listElement.insert(leftColumn);
         listElement.insert(rightColumn);
+
+        listElement.insert(_this.generateVariantSearchButton(variant));
+        
         return listElement;
       },
 
-      addEventListeners : function(){
+      generateVariantSearchButton : function(variant) {
+        var _this = this;
+        var button = new Element('div', {'class' : 'variant-search-redo'}).update(this.strings["variantSearchButton"]);
+        button.observe('click', function(b) {
+          _this.queryForm.select('input[name="variantSearch"]')[0].setValue(1);
+          _this.queryForm.select('input[name="varChr"]')[0].setValue(variant.chr);
+          _this.queryForm.select('input[name="varPos"]')[0].setValue(variant.pos);
+          _this.queryForm.select('input[name="varRef"]')[0].setValue(variant.ref);
+          _this.queryForm.select('input[name="varAlt"]')[0].setValue(variant.alt);
+          _this.submitHiddenForm();
+        });
+        return button;
+      },
+
+      addEventListeners : function() {
         $$('tr.patient-row').each(function(r){
            r.observe('click', function(){
               var container = this.next().down().down();
@@ -542,46 +556,50 @@ $xwiki.ssx.use('data.MendelianResults')##
              }
           });
         });
-
       },
 
-        strings : {
-          "patientId.heading"   : "ID",
-          "owner.heading"     : "Owner",
-          "phenotypeScore.heading"   : "Phenotype Score",
-          "numberOfVariants.heading" : "Variants observed",
-          "more.heading"      : "More info",
-          "noPhenotypeOrVariants.text" : "Nothing to display",
-          "showMore.button"   : "More...",
-          "patientSymptom.heading": "Symptoms observed in this patient",
-          'patientVariantsHeading': "Variants found in this patient",
-          'variant.position.heading': "Position",
-          'variant.change.heading': "Change",
-          'variant.effect.heading': "Effect",
-          'variant.score.heading' : "Score",
-          'geneSymbol'        : "Gene symbol",
-          'score.label'       : "Estimated harmfulness",
-          "positionPhrase"  : "Chr __CHROMOSOME__: __START__-__STOP__",
-          "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
-          'control.resultsPerPage.label' : 'Results per page: '
-        },
+      submitHiddenForm : function() {
+        this.queryForm.submit();
+      },
 
-        Utils : {
+      strings : {
+        "patientId.heading"   : "ID",
+        "owner.heading"     : "Owner",
+        "phenotypeScore.heading"   : "Phenotype Score",
+        "numberOfVariants.heading" : "Variants observed",
+        "more.heading"      : "More info",
+        "noPhenotypeOrVariants.text" : "Nothing to display",
+        "showMore.button"   : "More...",
+        "patientSymptom.heading": "Symptoms observed in this patient",
+        'patientVariantsHeading': "Variants found in this patient",
+        'variant.position.heading': "Position",
+        'variant.change.heading': "Change",
+        'variant.effect.heading': "Effect",
+        'variant.score.heading' : "Score",
+        'geneSymbol'        : "Gene symbol",
+        'score.label'       : "Exomiser score",
+        "positionPhrase"  : "chr__CHROMOSOME__:__START__-__STOP__",
+        "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
+        'variantSearchButton'   : "Redo search with this variant",
+        'control.resultsPerPage.label' : 'Results per page: '
+      },
+
+      Utils : {
         generateSegmentedBar : function (count, value) {
-            var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
-            var valueUnit = 1 / count;
-            for (var i = 0; i &lt; count; ++i) {
-              var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
-              var segment = new Element('span', {'class' : 'segmented-unit'}).update(
-                            new Element('span', {
-                              'class' : 'segmented-unit-fill',
-                              'style' : "width: " + segmentFill + "%"
-                            })
-              );
-              bar.insert(segment);
-            }
-            return bar.insert(' ' + Math.round(value * 100) + '%');
+          var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
+          var valueUnit = 1 / count;
+          for (var i = 0; i &lt; count; ++i) {
+            var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
+            var segment = new Element('span', {'class' : 'segmented-unit'}).update(
+                          new Element('span', {
+                            'class' : 'segmented-unit-fill',
+                            'style' : "width: " + segmentFill + "%"
+                          })
+            );
+            bar.insert(segment);
           }
+          return bar.insert(' ' + Math.round(value * 100) + '%');
+        }
       },
   });
   
@@ -725,6 +743,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       .attr('cy', function(d , i){return y(d);})
       .attr('r','1.5px');
 
+console.log(data[category.datum] + "," +category.datum)
   //Median lines
   category.append('line')
     .attr('class', 'box-plot')
@@ -879,23 +898,27 @@ $xwiki.ssx.use('data.MendelianResults')##
   }
 
   function getUpperQuartile (A){
+    if (!A) return null;
     A.sort();
     var index = Math.round(A.length*0.75)-1;
     return A[index];
   }
 
   function getLowerQuartile (A){
+    if (!A) return null;
     A.sort();
     var index = Math.round(A.length*0.25)-1;
     return A[index];
   }
 
   function getMedian (A){
+    if (!A) return null;
     A.sort();
     var index = Math.round(A.length*0.5)-1;
     return A[index];
   }
   function roundDecimals(N, D){
+    if (!N) return null;
     var modifier = Math.pow(10,D);
     return Math.round(N*modifier)/modifier;
   }
@@ -992,7 +1015,6 @@ $xwiki.ssx.use('data.MendelianResults')##
     </property>
     <property>
       <code>(function(){
-    
     function MendelianResultsController() {
       if ($('chart') &amp;&amp;  $('box-plot-values')){
         boxPlotGenerator();
@@ -1301,8 +1323,19 @@ $xwiki.ssx.use('data.MendelianResults')##
 
 .variant-position {
   display: block;
-  padding-left: 1em;
+  overflow-wrap: break-word;
   text-align: left;
+  word-wrap: break-word;
+}
+
+.variant-search-redo {
+  clear: both;
+  text-align: center;
+}
+
+.variant-search-redo:hover {
+  cursor: pointer;
+  color: $theme.linkColor;
 }
 .segmented-bar {
   color: red;

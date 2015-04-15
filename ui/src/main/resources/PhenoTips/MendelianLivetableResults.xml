@@ -40,8 +40,7 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>false</hidden>
   <content>{{velocity}}
-#set($alleleFrequencies = {"PhenomeCentral" :  $request.getParameter('allele-freq-exac') , "EXAC" : $request.getParameter('allele-freq-pc') })
-#set ($results = $services.MendelianSearch.search($request.getParameter('gene'), $request.getParameterValues('phenotype'),  $request.getParameterValues('variant-effect'), $alleleFrequencies, $request.getParameter('phenotype-matching'), $request.getParameter('matchGene'), $request.getParameter('matchPhenotype')))
+#set ($results = $services.MendelianSearch.search($request))
 #if ($xcontext.action == 'get')
    $response.setContentType('application/json')
 #end
