@@ -699,7 +699,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     <property>
       <code>var boxPlotGenerator = function () {
   var data = JSON.parse($('box-plot-values').value);
-  xAxisLabels = ["With Gene Variants", "Without Gene Variants"];
+  xAxisLabels = ["With Variants", "Without Variants"];
   chartTitles = ["Displaying Patients With Matching Variants", "Displaying Patients With Non-matching Variants"];
   var margin = {top: 20, right: 0, bottom:30, left:50};
   var height = 400-margin.top-margin.bottom;
