@@ -208,6 +208,10 @@ public class DefaultMendelianSearch implements MendelianSearch
 
     private String getPatientInternalFromExternal(String external)
     {
+        Patient patient = this.pr.getPatientByExternalId(external);
+        if (patient == null) {
+            return null;
+        }
         return this.pr.getPatientByExternalId(external).getId();
     }
 }

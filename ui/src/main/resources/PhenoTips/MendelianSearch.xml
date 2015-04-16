@@ -62,13 +62,15 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
             #set($discard = $previousEffects.add($previousEffect))
           #end
         #end
+        #set($uncheckedEffect = ["UTR3", "UTR5", "SYNONYMOUS", "INTRONIC", "ncRNA_INTRONIC", "UPSTREAM",
+            "DOWNSTREAM", "INTERGENIC"])
         #if("$!{variantEffects}" != '')
           &lt;ul class='variant-effects'&gt;
             #foreach($effect in $variantEffects)
               #set($checked = '')
               #if("$!{previousEffects}" != '' &amp;&amp; $previousEffects.contains($effect))
                 #set($checked="checked='checked")
-              #elseif("$!{previousEffects}" == '')
+              #elseif("$!{previousEffects}" == '' &amp;&amp; $uncheckedEffect.contains($effect) == false)
                 #set($checked="checked='checked")
               #end
               &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value="$effect" $checked/&gt;$effect&lt;/label&gt;&lt;/li&gt;

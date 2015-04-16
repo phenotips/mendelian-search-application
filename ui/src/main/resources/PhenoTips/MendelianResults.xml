@@ -379,7 +379,7 @@ $xwiki.ssx.use('data.MendelianResults')##
           this._displayTableHeader(columns, this.resultsTable);
 
         this._data.sort(function(a, b){
-          return a.phenotypeScore &lt; b.phenotypeScore;
+          return b.phenotypeScore - a.phenotypeScore;
         });
           this._data.each(function(r) {
         _this._displayPatientRow(r, columns, _this.resultsTable);
@@ -496,7 +496,7 @@ $xwiki.ssx.use('data.MendelianResults')##
           var start = variant.position;
           var end = variant.position + variant.ref.length;
           var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
-          var positionURLFragment = "Chr" + variant.chr.toUpperCase() + ": " + start + "-" + end;
+          var positionURLFragment = variant.chr.toUpperCase() + ": " + start + "-" + end;
           var assembly = variant.assembly || "hg19";
           var position = new Element('a', {
             'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
@@ -745,10 +745,16 @@ $xwiki.ssx.use('data.MendelianResults')##
       
   //Median lines
   category.append('line')
-    .attr('class', 'box-plot')
+    .attr('class', function(d){
+      if(data[d].length&lt;5){
+        return "hidden";
+      }else{
+        return "box-plot";
+      }
+    })
     .attr('x1',(x.rangeBand()-boxWidth)/2)
     .attr('x2', (x.rangeBand()+boxWidth)/2)
-    .attr('y1', function(d){ return y(getMedian(data[d]));})
+    .attr('y1', function(d){return y(getMedian(data[d]));})
     .attr('y2', function(d){return y(getMedian(data[d]));});
 
   //Boxes
@@ -756,12 +762,22 @@ $xwiki.ssx.use('data.MendelianResults')##
     .attr('class', 'box-plot')
     .attr('x', (x.rangeBand()-boxWidth)/2)
     .attr('y', function (d) {return y(getUpperQuartile(data[d]));})
-    .attr('width', boxWidth)
-    .attr('height', function(d) { return y(getLowerQuartile(data[d]))-y(getUpperQuartile(data[d]));});
+    .attr('width', function(d){
+      return data[d].length&lt;5 ? 0 : boxWidth;
+    })
+    .attr('height', function(d) { 
+    return data[d].length&lt; 5 ? 0:y(getLowerQuartile(data[d]))-y(getUpperQuartile(data[d]));
+  });
 
   //Min Lines
   category.append('line')
-    .attr('class', 'box-plot')
+    .attr('class',function(d){
+      if(data[d].length&lt;5){
+        return "hidden";
+      }else{
+        return 'box-plot';
+      }
+    })
     .attr('x1',(x.rangeBand()-boxWidth)/2)
     .attr('x2', (x.rangeBand()+boxWidth)/2)
     .attr('y1', function(d){ return y(d3.min(data[d]));})
@@ -769,7 +785,13 @@ $xwiki.ssx.use('data.MendelianResults')##
 
   //Max Lines
   category.append('line')
-    .attr('class', 'box-plot')
+    .attr('class', function(d){
+      if(data[d].length&lt;5){
+        return "hidden";
+      }else{
+        return 'box-plot';
+      }
+    })
     .attr('x1',(x.rangeBand()-boxWidth)/2)
     .attr('x2', (x.rangeBand()+boxWidth)/2)
     .attr('y1', function(d){ return y(d3.max(data[d]));})
@@ -780,16 +802,16 @@ $xwiki.ssx.use('data.MendelianResults')##
     .attr('class', 'whisker box-plot')
     .attr('x1', x.rangeBand()/2)
     .attr('x2', x.rangeBand()/2)
-    .attr('y1', function(d){ return y(d3.max(data[d]));})
-    .attr('y2', function(d){ return y(getUpperQuartile(data[d]));});
+    .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(d3.max(data[d]));})
+    .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(getUpperQuartile(data[d]));});
 
   //Max whiskers
   category.append('line')
     .attr('class', 'whisker box-plot')
     .attr('x1', x.rangeBand()/2)
     .attr('x2', x.rangeBand()/2)
-    .attr('y1', function(d){ return y(getLowerQuartile(data[d]));})
-    .attr('y2', function(d){ return y(d3.min(data[d]));});
+    .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(getLowerQuartile(data[d]));})
+    .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(d3.min(data[d]));});
 
   //labels
   var labelX = (x.rangeBand()+boxWidth)/2 + 4;
@@ -850,7 +872,10 @@ $xwiki.ssx.use('data.MendelianResults')##
     .attr('dy', '1.25em')
     .style("text-anchor", "start");
   infoLabel.append('text')
-    .text(function(d) {return 'Mean: ' + roundDecimals(d3.mean(data[d]), 2);})
+    .text(function(d) {
+      var mean = roundDecimals(d3.mean(data[d]), 2) || "";
+      return 'Mean: ' + mean ;
+    })
     .attr('class', 'info-label')
     .attr('dx', '.5em')
     .attr('dy', '2.25em')
@@ -906,14 +931,14 @@ $xwiki.ssx.use('data.MendelianResults')##
   function getLowerQuartile (A){
     if (!A) return null;
     A.sort();
-    var index = Math.round(A.length*0.25)-1;
+    var index = Math.floor(A.length*0.25);
     return A[index];
   }
 
   function getMedian (A){
     if (!A) return null;
     A.sort();
-    var index = Math.round(A.length*0.5)-1;
+    var index = Math.floor(A.length*0.5);
     return A[index];
   }
   function roundDecimals(N, D){
@@ -1254,7 +1279,7 @@ $xwiki.ssx.use('data.MendelianResults')##
 .patient-subResult&gt;td&gt;div{
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
   margin-top:-6px;
-  max-height: 500px;
+  max-height: 700px;
   overflow: hidden;
   transition: max-height 1s;
   z-index:2;
