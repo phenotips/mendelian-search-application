@@ -31,8 +31,8 @@
   <parent>PhenoTips.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1425492481000</date>
-  <contentUpdateDate>1425414170000</contentUpdateDate>
+  <date>1428436178000</date>
+  <contentUpdateDate>1428435733000</contentUpdateDate>
   <version>1.1</version>
   <title>MendelianSearch</title>
   <comment/>
@@ -48,18 +48,37 @@ $xwiki.jsx.use('PhenoTips.TouchscreenEvents')##
 $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 #set ($alleleFreqPrecision = 4)##
 {{html}}
-&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('PhenoTips.MendelianResults')" method='post'&gt;
+&lt;div class='box infomessage mendelian-search-info'&gt;The Gene Genie is a tool used to search for associations between genes and phenotypes. Simply enter a gene symbol and a phenotype and the Gene Genie will search for and score patients based on how well they fit into your hypothesis.&lt;/div&gt;
+&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('data.MendelianResults')" method='post'&gt;
   &lt;div class="form-section gene-section"&gt;
     &lt;p class='search-heading'&gt;Enter the gene you are investigating:&lt;/p&gt;
     &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder='Enter a gene name' value="$!{escapetool.xml($request.gene)}"/&gt;
     &lt;div class='mendelian-search-advanced collapsed'&gt;
         &lt;p class='advanced-option-heading'&gt;Please select the mutation types you want to be included in your search:&lt;/p&gt;
-        ##TODO: auto-list possible variant-effects
-        &lt;ul&gt;
-          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value='MISSENSE' checked='checked'/&gt;Mis-sense&lt;/label&gt;&lt;/li&gt;
-          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value='INS' checked='checked'/&gt;Insertion&lt;/label&gt;&lt;/li&gt;
-          &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value='DEL' checked='checked'/&gt;Deletion&lt;/label&gt;&lt;/li&gt;
-        &lt;/ul&gt;
+        #set($variantEffects = $services.MendelianSearch.getVariantEffects())
+        #if("$!{request.variant-effect}" != '')
+          #set($previousEffects = [])     
+          #foreach($previousEffect in $request.getParameterValues('variant-effect'))
+            #set($discard = $previousEffects.add($previousEffect))
+          #end
+        #end
+        #set($uncheckedEffect = ["UTR3", "UTR5", "SYNONYMOUS", "INTRONIC", "ncRNA_INTRONIC", "UPSTREAM",
+            "DOWNSTREAM", "INTERGENIC"])
+        #if("$!{variantEffects}" != '')
+          &lt;ul class='variant-effects'&gt;
+            #foreach($effect in $variantEffects)
+              #set($checked = '')
+              #if("$!{previousEffects}" != '' &amp;&amp; $previousEffects.contains($effect))
+                #set($checked="checked='checked")
+              #elseif("$!{previousEffects}" == '' &amp;&amp; $uncheckedEffect.contains($effect) == false)
+                #set($checked="checked='checked")
+              #end
+              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value="$effect" $checked/&gt;$effect&lt;/label&gt;&lt;/li&gt;
+            #end
+          &lt;/ul&gt;
+        #else
+          &lt;div class='warningmessage box'&gt;There was an error retrieving possible variant effects. Your search will consider all effects.&lt;/div&gt;
+        #end
         &lt;p class='advanced-option-heading'&gt;Adjust allele frequency cut-offs:&lt;/p&gt;
         &lt;ul&gt;
           #if("$!{request.allele-freq-exac}"=='')
@@ -93,14 +112,15 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
       &lt;/div&gt;
     &lt;/div&gt;
     &lt;div class='mendelian-search-advanced collapsed'&gt;
-      &lt;p class='advanced-option-heading'&gt;Please select the mutation types you want to be included in your search:&lt;/p&gt;
-      &lt;ul&gt;
-        &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='radio' name='phenotype-matching' value='strict' #if( "$!{request.phenotype-matching}" == '' || $request.phenotype-matching == 'strict' )checked='checked' #end/&gt;Use exactly the symptoms specified&lt;/label&gt;&lt;/li&gt;
-        &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='radio' name='phenotype-matching' value='fuzzy' #if("$!{request.phenotype-matching}" == 'fuzzy') checked='checked' #end/&gt;Use similar symptoms in search&lt;/label&gt;&lt;/li&gt;
-      &lt;/ul&gt;
+    &lt;input type='hidden' name='phenotype-matching' value='fuzzy' checked='checked'/&gt;
     &lt;/div&gt;
   &lt;/div&gt;
   &lt;div class='form-section button-section'&gt;
+    &lt;input type='hidden' name='varChr' value=''/&gt;
+    &lt;input type='hidden' name='varPos' value='-1'/&gt;
+    &lt;input type='hidden' name='varRef' value=''/&gt;
+    &lt;input type='hidden' name='varAlt' value=''/&gt;
+    &lt;input type='hidden' name='variantSearch' value='0'/&gt;
     &lt;input type='hidden' name='matchGene' value='1'/&gt;
     &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
     &lt;span class="buttonwrapper"&gt;&lt;a class="button" id="mendelian-advanced-options-button" href='#'&gt;Advanced options&lt;/a&gt;&lt;/span&gt;
@@ -423,28 +443,37 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
     <property>
       <code>#template('colorThemeInit.vm')
 
-form.mendelian-search-form{
+.mendelian-search-form{
   box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
   overflow-y: hidden;
 }
-form.mendelian-search-form &gt; .form-section{
+.mendelian-search-form &gt; .form-section{
     display: inline-block;
+    padding: 1% 0.5%;
     vertical-align: top;
     width: 32%;
-    padding: 1% 0.5%;
 }
-form.mendelian-search-form  .form-section.button-section{
+.mendelian-search-info{
+  display: none;
+}
+.gadget .mendelian-search-info {
+  display: block;
+}
+.gadget .mendelian-search-form &gt; .form-section{
+  width: 99%;
+}
+.mendelian-search-form  .form-section.button-section{
   text-align: center;
 }
-form.mendelian-search-form .form-section.button-section &gt; *{
+.mendelian-search-form .form-section.button-section &gt; *{
   margin-left: 2px;
   margin-right: 2px;
 }
-form.mendelian-search-form .form-section p.search-heading{
+.mendelian-search-form .form-section .search-heading{
   color: $theme.titleColor;
   margin: 0;
 }
-form.mendelian-search-form input.percentage-input {
+.mendelian-search-form input[type="text"].percentage-input {
   width: 4em;
 }
 .mendelian-search-advanced{
@@ -456,13 +485,13 @@ form.mendelian-search-form input.percentage-input {
 .mendelian-search-advanced.collapsed {
   max-height: 0px;
 }
-.mendelian-search-advanced p.advanced-option-heading {
+.mendelian-search-advanced .advanced-option-heading {
   color: $theme.titleColor;
   margin-bottom: 0;
 }
 .mendelian-search-advanced &gt; ul {
   list-style-type: none;
-  margin-top: 0;
+  margin: .2em .2em;
 }
 #mendelian-search-symptoms &gt; .accepted-suggestions{
  margin: 0 !important;
@@ -471,6 +500,19 @@ form.mendelian-search-form input.percentage-input {
   background-color: #FFF;
   border-top: 1px solid #EEE;
   padding-left: .5em;
+}
+.variant-effects {
+  background-color: #FFF;
+  border:  1px solid #DDD;
+  height: 8em;
+  margin-left: 0;
+  overflow-y: scroll;
+}
+
+.variant-effects li {
+  border-bottom: 1px dotted #DDD;
+  font-size: 12px;
+  padding: 5px;
 }</code>
     </property>
     <property>

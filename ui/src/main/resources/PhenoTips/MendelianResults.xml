@@ -21,18 +21,18 @@
 -->
 
 <xwikidoc version="1.1">
-  <web>PhenoTips</web>
+  <web>data</web>
   <name>MendelianResults</name>
   <language/>
   <defaultLanguage/>
   <translation>0</translation>
   <creator>xwiki:XWiki.Admin</creator>
   <creationDate>1424444184000</creationDate>
-  <parent>PhenoTips.MendelianSearch</parent>
+  <parent>data.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1425483164000</date>
-  <contentUpdateDate>1425483164000</contentUpdateDate>
+  <date>1428522465000</date>
+  <contentUpdateDate>1428510855000</contentUpdateDate>
   <version>1.1</version>
   <title>MendelianResults</title>
   <comment/>
@@ -41,13 +41,11 @@
   <hidden>false</hidden>
   <content>{{include document='PhenoTips.MendelianSearch' /}}
 {{velocity}}
-$xwiki.jsx.use('PhenoTips.MendelianResults')##
-$xwiki.jsx.use('PhenoTips.d3')##
-$xwiki.ssx.use('PhenoTips.MendelianResults')##
-#if($request &amp;&amp; $request.getMethod() == 'POST')
-  #set ($gene = $request.getParameter('gene'))
-  #set ($phenotype = $request.getParameterValues('phenotype'))
-    #set ($count = $services.DummyMendelianSearch.count($gene, $phenotype, $request.getParameter('phenotype-matching'), $request.getParameterValues('variant-effect'), $request.getParameter('allele-freq-exac'), $request.getParameter('allele-freq-pc')))
+$xwiki.jsx.use('data.MendelianResults')##
+$xwiki.jsx.use('PhenoTips.d3', {"minify" : false})##
+$xwiki.ssx.use('data.MendelianResults')##
+#if($request &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
+  #set ($count = $services.MendelianSearch.count($request))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
@@ -59,7 +57,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #else
   {{html clean = false}}
 ## hidden element containing the previous request string for use in asynchronous requests
-&lt;form id='hidden-query-form' action='#'&gt;
+&lt;form id='hidden-query-form' action="$request.getRequestURL()" method='post'"&gt;
   &lt;div&gt;
   #foreach($param in $request.getParameterNames())
     #foreach($value in $request.getParameterValues($param))
@@ -71,7 +69,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 &lt;/form&gt;
 &lt;div id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
-  #if($count.size() == 4 )
+  &lt;h4 class='graph-heading'&gt;Overview&lt;/h4&gt;
+  #if($count.size() == 0 )
     &lt;div class='grid-view'&gt;
       &lt;table class = 'grid-visualization'&gt;
         &lt;tr&gt;
@@ -119,8 +118,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         &lt;/tr&gt;
       &lt;/table&gt;
     &lt;/div&gt;
-  #elseif ($count.size() == 2)
-    &lt;input type="hidden" value="$escapetool.xml($count)" id="box-plot-values" /&gt;
+  #else
+    &lt;input type="hidden" value=$count id="box-plot-values" /&gt;
     &lt;svg id='chart'&gt;&lt;/svg&gt;
   #end
   &lt;/div&gt;
@@ -130,10 +129,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 #end
 {{/velocity}}</content>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>0</number>
     <className>XWiki.JavaScriptExtension</className>
-    <guid>30652af7-9a30-419b-9272-4f40b224ea78</guid>
+    <guid>ada3713a-0b08-4c0b-bd4d-c3583d467654</guid>
     <class>
       <name>XWiki.JavaScriptExtension</name>
       <customClass/>
@@ -227,19 +226,20 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
       this.tableHeading = new Element('h4', {'class' : 'table-heading'}).update(this.queryForm.getInputs('hidden', 'title')[0].getValue());
       this.container.insert(this.tableHeading);
-
-      this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
-      this.container.insert(this.tableControls);
-      this.initializeControls();
       
       this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
       this.container.insert(this.resultsTable);
+      this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
+      this.container.insert(this.tableControls);
       this.launchSearch();
     },
 
     initializeControls : function(){
+      var numberOfResults = this._data.length;
+      var fromResult = this.resultsPerPage*(this.page-1)+1;
+      var toResult = Math.min(this.resultsPerPage*this.page, numberOfResults);
 
-      this.resultsSummary = new Element('p').update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+      this.resultsSummary = new Element('p').update("Displaying results " + fromResult + '-' + toResult);
 
       var resultsPerPagePicker = this.generateResultsPerPagePicker();
       var pageSelector = this.generatePageSelector();
@@ -250,11 +250,11 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
     generateResultsPerPagePicker : function(){
       var _this = this;
-      var result = new Element('label', {'class' : 'results-per-page'}).update(_this.strings["control.resultsPerPage.label"]);
+      var result = new Element('p', {'class' : 'results-per-page'}).update(_this.strings["control.resultsPerPage.label"]);
       var select = new Element('select');
       [10, 20, 50].each(function(i) {
         var option = new Element('option', {'value' : i}).insert(i);
-        if (i === _this.DEFAULT_RESULTS_PER_PAGE){
+        if (i === _this.resultsPerPage){
           option.setAttribute('selected', 'selected');
         }
         select.insert(option);
@@ -267,11 +267,22 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     generatePageSelector : function(){
       var _this = this;
       this.page = this.page || this.DEFAULT_PAGE;
-      var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
-      var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
-      var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
 
-      var result = new Element('span', {'class' : 'page-selector'}).update('Page: ').insert(previousButton).insert(currentPageDisplay).insert(nextButton);
+      var displayPrevious = this.page &gt; 1;
+      var displayNext = this._data.length &gt; this.resultsPerPage*this.page;
+
+      var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
+      
+      var result = new Element('p', {'class' : 'page-selector'}).update('Page: ');
+      if(displayPrevious){
+        var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
+        result.insert(previousButton);
+      }
+      result.insert(currentPageDisplay);
+      if (displayNext){
+        var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
+        result.insert(nextButton);
+      }
       return result;
 
     },
@@ -294,7 +305,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       if (isNaN(newValue)){
         return;
       }
-      this.resultsPerPage = newValue;
+      this.resultsPerPage = parseInt(newValue);
       this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
       this.launchSearch();
     },
@@ -312,10 +323,12 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
             }).merge(_this.queryForm.serialize(true)).toObject(),
             method: "POST",
             onCreate : function() {
-              _this.container.addClassName('loading');
+              _this.tableControls.update('');
+              _this.resultsTable.update('&lt;p class="loading"&gt;Searching...&lt;/p&gt;');
             },
             onSuccess: function(response) {
               _this.displayResults(response.responseJSON);
+              _this.initializeControls();
             },
             onComplete : function() {
               _this.addEventListeners();
@@ -327,12 +340,15 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
     displayResults : function (data) {
         var _this = this;
-        this._data = data;
+        this._data = data.results;
 
-        // // Make sure the results are for this query
-        // if (!data.query) {return;}
-        // if (data.query.id != this.query) {return;}
-
+        //HACK: Temporary demo stuff--both categories will be returned to the ui-- must decide on which to use
+        var matchGene = parseInt(this.queryForm.select('input[name="matchGene"]')[0].getValue());
+        if (matchGene){
+          this._data = this._data.matching;
+        } else {
+          this._data = this._data.nonMatching;
+        }
         // Empty the container to make room for the new results
         if (this.resultsTable.childElements()) {
                 this.resultsTable.update('');
@@ -350,25 +366,26 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
                 heading : _this.strings["owner.heading"],
                 display : _this.displayResultOwner.bind(_this)
               },
-              "diagnosis" : {
-                heading : _this.strings["diagnosis.heading"],
-                display : _this.displayResultDiagnosis.bind(_this)
+              "phenotypeScore" : {
+                heading : _this.strings["phenotypeScore.heading"],
+                display : _this.displayResultPhenotypeScore.bind(_this)
               },
-              "more" : {
-                heading : _this.strings["more.heading"],
-                display : _this.displayResultMoreInfo.bind(_this)
+              "numberOfVariants" : {
+                heading : _this.strings["numberOfVariants.heading"],
+                display : _this.displayResultNumberOfVariants.bind(_this)
               }
             };
        
           this._displayTableHeader(columns, this.resultsTable);
 
-          data.results.each(function(r) {
+        this._data.sort(function(a, b){
+          return b.phenotypeScore - a.phenotypeScore;
+        });
+          this._data.each(function(r) {
         _this._displayPatientRow(r, columns, _this.resultsTable);
         _this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
       });
 
-
-      delete this._data;
         },
 
       _displayTableHeader : function (columns, table) {
@@ -405,7 +422,7 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
       displayResultPatientId : function(data) {
         var cell = new Element('td');
-        cell.insert(new Element('p').update(data.id));
+        cell.insert(new Element('p').update(data.patientID));
         return cell;
       },
 
@@ -416,20 +433,15 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
       },
 
-      displayResultDiagnosis : function(data) {
+      displayResultPhenotypeScore : function(data) {
         var cell = new Element('td');
-        cell.insert(new Element('p').update(data.diagnosis));
+        cell.insert(new Element('p').update(Math.round(data.phenotypeScore * 100) / 100));
         return cell;
       },
 
-      displayResultMoreInfo : function(data) {
+      displayResultNumberOfVariants : function(data) {
         var cell = new Element('td');
-        if ((data.genotype.length === 0) &amp;&amp; (data.phenotype.length === 0)) {
-          cell.innerHTML=this.strings["noPhenotypeOrVariants.text"];
-          return cell;
-        }
-        var moreInfoButton = new Element('a', {'href': '#'}).insert(this.strings["showMore.button"]);
-        cell.insert(moreInfoButton);
+        cell.insert(new Element('p').update(data.variants.length));
         return cell;
       },
 
@@ -444,8 +456,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         container.insert(phenotypeContainer);
 
         var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
-        variantContainer.insert(new Element('h6').update(this.strings['patientVaraiantsHeading']));
-        variantContainer.insert(this.generateVariantList(data.genotype));
+        variantContainer.insert(new Element('h6').update(this.strings['patientVariantsHeading']));
+        variantContainer.insert(this.generateVariantList(data.variants));
         container.insert(variantContainer);
 
         row.insert(containerCell.insert(container));
@@ -473,35 +485,63 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       displayVariantListElement : function(variant){
         var _this = this;
         var listElement = new Element('li');
-        listElement.insert("&lt;span class='variant-type'&gt;" + variant.type + "&lt;/span&gt;");
-        
-        var varScore = new Element('div', {'class' : 'variant-score'});
-        varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
-        listElement.insert(varScore);
 
+        var leftColumn = new Element('div', {'class' : 'left'});
+        var rightColumn = new Element('div', {'class' : 'right'});
+        //TODO: link genesymbol to somewhere. Probably UniProt
+        var geneElement = new Element('p', {'class' : 'gene-name'}).update( _this.strings["geneSymbol"]+ ": " + variant.geneSymbol);
+        leftColumn.insert(geneElement);
+        
         if (variant.chr &amp;&amp; variant.position &amp;&amp; variant.ref) {
           var start = variant.position;
           var end = variant.position + variant.ref.length;
-          var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()[0]).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
-          var positionURLFragment = "Chr" + variant.chr.toUpperCase()[0] + ": " + start + "-" + end;
+          var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
+          var positionURLFragment = variant.chr.toUpperCase() + ": " + start + "-" + end;
           var assembly = variant.assembly || "hg19";
           var position = new Element('a', {
             'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
-            'class' : 'button secondary',
+            'class' : 'variant-position',
             'target' : '__blank',
             'title' : _this.strings["variantPositionLinkTitle"]
-          }).update(positionText).wrap('span', {'class' : 'buttonwrapper variant-position'});
-          listElement.insert(position);
+          }).update(positionText);
+          leftColumn.insert(position);
         }
+        
+        var varScore = new Element('div', {'class' : 'variant-score'});
+        varScore.insert("&lt;p&gt;" + this.strings["score.label"] + ": &lt;/p&gt;");
+        varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
+        rightColumn.insert(varScore);
 
-        var displayedRef = (variant.ref.length &gt; 10) ? (variant.ref.substring(0,10)+"...") : variant.ref;
-        var displayedAlt = (variant.alt.length &gt; 10) ? (variant.alt.substring(0,10)+"...") : variant.alt;
-        listElement.insert("&lt;div class='variant-change'&gt;&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;&lt;/div&gt;");
 
+
+        var displayedRef = (variant.ref.length &gt; 5) ? (variant.ref.substring(0,5)+"...") : variant.ref;
+        var displayedAlt = (variant.alt.length &gt; 5) ? (variant.alt.substring(0,5)+"...") : variant.alt;
+        rightColumn.insert("&lt;div class='variant-change'&gt;&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;&lt;/div&gt;");
+        rightColumn.insert("&lt;p class='variant-type'&gt;" + variant.effect + "&lt;/p&gt;");
+        
+        listElement.insert(leftColumn);
+        listElement.insert(rightColumn);
+
+        listElement.insert(_this.generateVariantSearchButton(variant));
+        
         return listElement;
       },
 
-      addEventListeners : function(){
+      generateVariantSearchButton : function(variant) {
+        var _this = this;
+        var button = new Element('div', {'class' : 'variant-search-redo'}).update(this.strings["variantSearchButton"]);
+        button.observe('click', function(b) {
+          _this.queryForm.select('input[name="variantSearch"]')[0].setValue(1);
+          _this.queryForm.select('input[name="varChr"]')[0].setValue(variant.chr);
+          _this.queryForm.select('input[name="varPos"]')[0].setValue(variant.position);
+          _this.queryForm.select('input[name="varRef"]')[0].setValue(variant.ref);
+          _this.queryForm.select('input[name="varAlt"]')[0].setValue(variant.alt);
+          _this.submitHiddenForm();
+        });
+        return button;
+      },
+
+      addEventListeners : function() {
         $$('tr.patient-row').each(function(r){
            r.observe('click', function(){
               var container = this.next().down().down();
@@ -516,43 +556,50 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
              }
           });
         });
-
       },
 
-        strings : {
-          "patientId.heading"   : "ID",
-          "owner.heading"     : "Owner",
-          "diagnosis.heading"   : "Diagnosis",
-          "more.heading"      : "More info",
-          "noPhenotypeOrVariants.text" : "Nothing to display",
-          "showMore.button"   : "More...",
-          "patientSymptom.heading": "Symptoms observed in this patient",
-          'patientVaraiantsHeading': "Relevant variants found in this patient",
-          'variant.position.heading': "Position",
-          'variant.change.heading': "Change",
-          'variant.effect.heading': "Effect",
-          'variant.score.heading' : "Score",
-          "positionPhrase"  : "Chr __CHROMOSOME__: __START__-__STOP__",
-          "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
-          'control.resultsPerPage.label' : 'Results per page: '
-        },
+      submitHiddenForm : function() {
+        this.queryForm.submit();
+      },
 
-        Utils : {
+      strings : {
+        "patientId.heading"   : "ID",
+        "owner.heading"     : "Owner",
+        "phenotypeScore.heading"   : "Phenotype Score",
+        "numberOfVariants.heading" : "Variants observed",
+        "more.heading"      : "More info",
+        "noPhenotypeOrVariants.text" : "Nothing to display",
+        "showMore.button"   : "More...",
+        "patientSymptom.heading": "Symptoms observed in this patient",
+        'patientVariantsHeading': "Variants found in this patient",
+        'variant.position.heading': "Position",
+        'variant.change.heading': "Change",
+        'variant.effect.heading': "Effect",
+        'variant.score.heading' : "Score",
+        'geneSymbol'        : "Gene symbol",
+        'score.label'       : "Exomiser score",
+        "positionPhrase"  : "__CHROMOSOME__:__START__-__STOP__",
+        "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
+        'variantSearchButton'   : "Redo search with this variant",
+        'control.resultsPerPage.label' : 'Results per page: '
+      },
+
+      Utils : {
         generateSegmentedBar : function (count, value) {
-            var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
-            var valueUnit = 1 / count;
-            for (var i = 0; i &lt; count; ++i) {
-              var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
-              var segment = new Element('span', {'class' : 'segmented-unit'}).update(
-                            new Element('span', {
-                              'class' : 'segmented-unit-fill',
-                              'style' : "width: " + segmentFill + "%"
-                            })
-              );
-              bar.insert(segment);
-            }
-            return bar.insert(' ' + Math.round(value * 100) + '%');
+          var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
+          var valueUnit = 1 / count;
+          for (var i = 0; i &lt; count; ++i) {
+            var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
+            var segment = new Element('span', {'class' : 'segmented-unit'}).update(
+                          new Element('span', {
+                            'class' : 'segmented-unit-fill',
+                            'style' : "width: " + segmentFill + "%"
+                          })
+            );
+            bar.insert(segment);
           }
+          return bar.insert(' ' + Math.round(value * 100) + '%');
+        }
       },
   });
   
@@ -571,10 +618,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>1</number>
     <className>XWiki.JavaScriptExtension</className>
-    <guid>6ae6a383-0ab8-401f-98c5-0b651faab168</guid>
+    <guid>bca6c561-900b-46e7-af79-f0b39c574ef0</guid>
     <class>
       <name>XWiki.JavaScriptExtension</name>
       <customClass/>
@@ -652,8 +699,8 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     <property>
       <code>var boxPlotGenerator = function () {
   var data = JSON.parse($('box-plot-values').value);
-  xAxisLabels = ["With Gene Variants", "Without Gene Variants"];
-  chartTitles = ["Displaying Patients With Matching Variants", "Displaying Patients with Non-matching Variants"];
+  xAxisLabels = ["With Variants", "Without Variants"];
+  chartTitles = ["Displaying Patients With Matching Variants", "Displaying Patients With Non-matching Variants"];
   var margin = {top: 20, right: 0, bottom:30, left:50};
   var height = 400-margin.top-margin.bottom;
   var width = 400 - margin.right- margin.left;
@@ -662,7 +709,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
   var y =d3.scale.linear().range([height,0]).domain([0,1]);
   var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
-
 
   var xAxis = d3.svg.axis()
     .scale(x)
@@ -678,7 +724,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .attr('height', height+margin.top+margin.bottom)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 
   var category =chart.selectAll('g').data(Object.keys(data))
     .enter()
@@ -697,13 +742,19 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
       .attr('cx', function(){ return nrmRandom(x.rangeBand(), 0.2);})
       .attr('cy', function(d , i){return y(d);})
       .attr('r','1.5px');
-
+      
   //Median lines
   category.append('line')
-    .attr('class', 'box-plot')
+    .attr('class', function(d){
+      if(data[d].length&lt;5){
+        return "hidden";
+      }else{
+        return "box-plot";
+      }
+    })
     .attr('x1',(x.rangeBand()-boxWidth)/2)
     .attr('x2', (x.rangeBand()+boxWidth)/2)
-    .attr('y1', function(d){ return y(getMedian(data[d]));})
+    .attr('y1', function(d){return y(getMedian(data[d]));})
     .attr('y2', function(d){return y(getMedian(data[d]));});
 
   //Boxes
@@ -711,12 +762,22 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .attr('class', 'box-plot')
     .attr('x', (x.rangeBand()-boxWidth)/2)
     .attr('y', function (d) {return y(getUpperQuartile(data[d]));})
-    .attr('width', boxWidth)
-    .attr('height', function(d) { return y(getLowerQuartile(data[d]))-y(getUpperQuartile(data[d]));});
+    .attr('width', function(d){
+      return data[d].length&lt;5 ? 0 : boxWidth;
+    })
+    .attr('height', function(d) { 
+    return data[d].length&lt; 5 ? 0:y(getLowerQuartile(data[d]))-y(getUpperQuartile(data[d]));
+  });
 
   //Min Lines
   category.append('line')
-    .attr('class', 'box-plot')
+    .attr('class',function(d){
+      if(data[d].length&lt;5){
+        return "hidden";
+      }else{
+        return 'box-plot';
+      }
+    })
     .attr('x1',(x.rangeBand()-boxWidth)/2)
     .attr('x2', (x.rangeBand()+boxWidth)/2)
     .attr('y1', function(d){ return y(d3.min(data[d]));})
@@ -724,7 +785,13 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
 
   //Max Lines
   category.append('line')
-    .attr('class', 'box-plot')
+    .attr('class', function(d){
+      if(data[d].length&lt;5){
+        return "hidden";
+      }else{
+        return 'box-plot';
+      }
+    })
     .attr('x1',(x.rangeBand()-boxWidth)/2)
     .attr('x2', (x.rangeBand()+boxWidth)/2)
     .attr('y1', function(d){ return y(d3.max(data[d]));})
@@ -735,16 +802,16 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .attr('class', 'whisker box-plot')
     .attr('x1', x.rangeBand()/2)
     .attr('x2', x.rangeBand()/2)
-    .attr('y1', function(d){ return y(d3.max(data[d]));})
-    .attr('y2', function(d){ return y(getUpperQuartile(data[d]));});
+    .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(d3.max(data[d]));})
+    .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(getUpperQuartile(data[d]));});
 
   //Max whiskers
   category.append('line')
     .attr('class', 'whisker box-plot')
     .attr('x1', x.rangeBand()/2)
     .attr('x2', x.rangeBand()/2)
-    .attr('y1', function(d){ return y(getLowerQuartile(data[d]));})
-    .attr('y2', function(d){ return y(d3.min(data[d]));});
+    .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(getLowerQuartile(data[d]));})
+    .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(d3.min(data[d]));});
 
   //labels
   var labelX = (x.rangeBand()+boxWidth)/2 + 4;
@@ -755,41 +822,42 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(d3.max(data[d]))+ offsetY;})
-    .text(function(d){ return d3.max(data[d]);})
+    .text(function(d){ return roundDecimals(d3.max(data[d]), 2);})
     .style("text-anchor", "start");
   // UpperQ labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(getUpperQuartile(data[d])) + offsetY;})
-    .text(function(d){ return getUpperQuartile(data[d]);})
+    .text(function(d){ return roundDecimals(getUpperQuartile(data[d]), 2);})
     .style("text-anchor", "start");
   // Median labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(getMedian(data[d])) + offsetY;})
-    .text(function(d){ return getMedian(data[d]);})
+    .text(function(d){ return roundDecimals(getMedian(data[d]), 2);})
     .style("text-anchor", "start");
   //LowerQ labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(getLowerQuartile(data[d])) + offsetY;})
-    .text(function(d){ return getLowerQuartile(data[d]);})
+    .text(function(d){ return roundDecimals(getLowerQuartile(data[d]), 2);})
     .style("text-anchor", "start");
   //Min labels
   category.append('text')
     .attr('class', 'box-label')
     .attr('dx', labelX)
     .attr('dy', function(d){ return y(d3.min(data[d])) + offsetY;})
-    .text(function(d){ return d3.min(data[d]);})
+    .text(function(d){ return roundDecimals(d3.min(data[d]), 2);})
     .style("text-anchor", "start");
 
   //Info labels
   var infoLabel = category.append('g')
     .attr('transform', function(d){
-      return 'translate(0,'+ y(getUpperQuartile(data[d])) +')';
+      var yPos =  (y(getUpperQuartile(data[d])) &gt;  height - y(0.2)) ? y(0.2) : y(getUpperQuartile(data[d]));
+      return 'translate(0,'+ yPos +')';
     });
 
   infoLabel.append('rect')
@@ -804,11 +872,29 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     .attr('dy', '1.25em')
     .style("text-anchor", "start");
   infoLabel.append('text')
-    .text(function(d) {return 'Mean: ' + roundDecimals(d3.mean(data[d]), 2);})
+    .text(function(d) {
+      var mean = roundDecimals(d3.mean(data[d]), 2) || "";
+      return 'Mean: ' + mean ;
+    })
     .attr('class', 'info-label')
     .attr('dx', '.5em')
     .attr('dy', '2.25em')
     .style("text-anchor", "start");
+
+
+  //Axes
+  chart.append("g").attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  chart.append("g").attr("class", "y axis")
+    .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -(height-margin.top)/2)
+      .attr("dy", "-3em")
+      .style("text-anchor", "middle")
+      .text("Phenotypic Similarity Score");
 
   //Hover/Click Boxes
   var clickArea = category.append('rect')
@@ -831,42 +917,32 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
         return chartTitles[i];
       });
 
-  //Axes
-  chart.append("g").attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-
-  chart.append("g").attr("class", "y axis")
-    .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("x", -(height-margin.top)/2)
-      .attr("dy", "-3em")
-      .style("text-anchor", "middle")
-      .text("Phenotypic Similarity Score");
-
   function nrmRandom( mean, std) {
       return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3 * mean *std + mean/2;
   }
 
   function getUpperQuartile (A){
+    if (!A) return null;
     A.sort();
     var index = Math.round(A.length*0.75)-1;
     return A[index];
   }
 
   function getLowerQuartile (A){
+    if (!A) return null;
     A.sort();
-    var index = Math.round(A.length*0.25)-1;
+    var index = Math.floor(A.length*0.25);
     return A[index];
   }
 
   function getMedian (A){
+    if (!A) return null;
     A.sort();
-    var index = Math.round(A.length*0.5)-1;
+    var index = Math.floor(A.length*0.5);
     return A[index];
   }
   function roundDecimals(N, D){
+    if (!N) return null;
     var modifier = Math.pow(10,D);
     return Math.round(N*modifier)/modifier;
   }
@@ -883,10 +959,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>2</number>
     <className>XWiki.JavaScriptExtension</className>
-    <guid>4b4eccd0-5777-482a-9868-6c4fc32c48ae</guid>
+    <guid>5974718a-42b4-4aba-93c1-f4c7eb227902</guid>
     <class>
       <name>XWiki.JavaScriptExtension</name>
       <customClass/>
@@ -963,7 +1039,6 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
     <property>
       <code>(function(){
-    
     function MendelianResultsController() {
       if ($('chart') &amp;&amp;  $('box-plot-values')){
         boxPlotGenerator();
@@ -1028,10 +1103,10 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>0</number>
     <className>XWiki.StyleSheetExtension</className>
-    <guid>41ed21eb-4693-42f5-a950-c282bf9d24bc</guid>
+    <guid>2b621d55-392e-42c5-89c5-b5b408e4ba39</guid>
     <class>
       <name>XWiki.StyleSheetExtension</name>
       <customClass/>
@@ -1119,21 +1194,26 @@ $xwiki.ssx.use('PhenoTips.MendelianResults')##
   margin-left: 400px;
   width: auto;
 }
-div.mendelian-livetable-controls&gt;*{
+.mendelian-livetable-controls &gt; *{
   float: right;
-  font-size: 80%;
+  font-size: 90%;
   margin: 0 1em 0 0;
 }
-div.mendelian-livetable-controls p{
+.mendelian-livetable-controls p:first-child{
   float: left;
 }
-div.mendelian-livetable-controls label.results-per-page{
+.mendelian-livetable-controls .results-per-page{
   margin-right: 0;
 }
 #hidden-query-form{
   display: none;
 }
-table.mendelian-results-table{
+#mendelian-livetable-container .loading {
+    display: block;
+    text-align: center;
+    height: 5em;
+}
+.mendelian-results-table{
   border: none;
   border-collapse: separate;
   border-spacing: 0px 3px ;
@@ -1142,14 +1222,14 @@ table.mendelian-results-table{
   width: 100%;
 }
 
-table.mendelian-results-table tr th {
+.mendelian-results-table tr th {
   background: inherit;
   border: none;
   border-bottom: 1px solid #444;
   vertical-align: bottom;
 }
 
-tr.patient-row td {
+.patient-row td {
   background-color: white;
   border: none;
   border-bottom: 1px solid #EEE;
@@ -1157,15 +1237,14 @@ tr.patient-row td {
   position: relative;
 }
 
-tr.patient-row:hover td {
+.patient-row:hover td {
   cursor: pointer;
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
-
-tr.patient-row:hover td:first-child {
+.patient-row:hover td:first-child {
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
 }
-tr.patient-row:hover td:after, tr.patient-row.expanded td:after {
+.patient-row:hover td:after, .patient-row.expanded td:after {
   background-color: white;
   content: "";
   height: 100%;
@@ -1175,63 +1254,135 @@ tr.patient-row:hover td:after, tr.patient-row.expanded td:after {
   width: 3px;
   z-index: 1;
 }
-
-tr.patient-row.expanded td {
+.patient-row.expanded td {
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
 }
-
-tr.patientrow.expanded td:first-child {
+.patientrow.expanded td:first-child {
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
 }
-
-tr.patient-row div.triRight {
+.patient-row .triRight {
     height: 0;
     width: 0;
     border-left: 8px solid $theme.titleColor;
     border-top: 4px solid transparent;
     border-bottom: 4px solid transparent;
 }
-
-tr.patient-row div.triDown {
-    border-top: 8px solid $theme.titleColor;
-    border-left: 4px solid transparent;
+.patient-row .triDown {
+    border-top: 8px solid $theme.titleColor;   
+    border-left: 4px solid transparent;   
     border-right: 4px solid transparent;
 }
-
-tr.patient-subResult&gt;td{
+.patient-subResult&gt;td{
   border: none;
   padding: 0 5px;
 }
-
-tr.patient-subResult&gt;td&gt;div{
+.patient-subResult&gt;td&gt;div{
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
   margin-top:-6px;
-  max-height: 500px;
+  max-height: 700px;
   overflow: hidden;
   transition: max-height 1s;
   z-index:2;
 }
-
-tr.patient-subResult&gt;td&gt;div.collapsed{
+.patient-subResult&gt;td&gt;.collapsed{
   max-height: 0px;
 }
 
-tr.patient-subResult td&gt;div&gt;div{
+.patient-subResult td&gt;div&gt;div{
   display:inline-block;
   width: 49.5%;
 }
-tr.patient-subResult h6{
+.patient-subResult h6{
+  font-size: larger;
   margin: 15px 0 5px 0;
   padding-left: .5em;
   width: 100%;
 }
-tr.patient-subResult div.patient-phenotype-container{
+.patient-subResult .patient-phenotype-container{
   float: left;
 }
-tr.patient-subResult div.patient-variant-container{
+.patient-subResult .patient-variant-container{
   border-left: 1px #ddd dotted;
   float: right;
-}</code>
+}
+.patient-variant-container ul {
+  list-style: none;
+  margin: 0 1em;
+}
+
+.patient-variant-container li {
+  border-bottom: 1px solid #EEE;
+  overflow: auto;
+  padding: 0.5em .5em;
+}
+
+.patient-variant-container li .left {
+  float: left;
+  width: 50%;
+}
+
+.patient-variant-container li .right {
+  float: right;
+  width: 50%;
+}
+
+.patient-variant-container li &gt; div &gt; *:first-child {
+  font-size: larger;
+  margin: 0;
+}
+
+.variant-score * {
+  display: inline-block;
+  margin-bottom: 0;
+  margin-right: 1em;
+}
+
+.variant-change {
+  text-align: center;
+}
+
+.variant-type {
+  text-align: center;
+}
+
+.variant-position {
+  display: block;
+  overflow-wrap: break-word;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.variant-search-redo {
+  clear: both;
+  text-align: center;
+}
+
+.variant-search-redo:hover {
+  cursor: pointer;
+  color: $theme.linkColor;
+}
+.segmented-bar {
+  color: red;
+  font-size: 75%;
+  white-space: nowrap;
+  width: auto;
+}
+.segmented-bar .segmented-unit {
+  border: 1px solid black;
+  border-radius: 1px;
+  display: inline-block;
+  height: 5px;
+  margin: 0 1px;
+  width: 5px;
+}
+.segmented-bar .segmented-unit-fill {
+  background-color: red;
+  border-radius: 1px;
+  height: 5px;
+  display: block;
+  width: 5px;
+}
+</code>
     </property>
     <property>
       <name>MendelianLivetableStyles</name>
@@ -1244,10 +1395,10 @@ tr.patient-subResult div.patient-variant-container{
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>1</number>
     <className>XWiki.StyleSheetExtension</className>
-    <guid>a055be5a-5518-4a7e-aa8f-b1f804a73bb4</guid>
+    <guid>8ef3bf5f-57ef-4ff2-8577-3de3bcf516e0</guid>
     <class>
       <name>XWiki.StyleSheetExtension</name>
       <customClass/>
@@ -1323,7 +1474,10 @@ tr.patient-subResult div.patient-variant-container{
       <cache>default</cache>
     </property>
     <property>
-      <code>div.grid-view table{
+      <code>h4.graph-heading{
+ margin-top: 0;
+}
+div.grid-view table{
   border-spacing: 0;
   border-collapse: collapse;
   font-family: sans-serif;
@@ -1374,10 +1528,10 @@ div.grid-view td.results-cell{
     </property>
   </object>
   <object>
-    <name>PhenoTips.MendelianResults</name>
+    <name>data.MendelianResults</name>
     <number>2</number>
     <className>XWiki.StyleSheetExtension</className>
-    <guid>11dc2ee0-1e22-4670-a72e-2713011e1322</guid>
+    <guid>405d6425-08d3-4bd2-b8d6-5af2aacb089e</guid>
     <class>
       <name>XWiki.StyleSheetExtension</name>
       <customClass/>
