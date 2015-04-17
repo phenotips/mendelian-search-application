@@ -180,6 +180,9 @@ public class DefaultMendelianSearch implements MendelianSearch
             List<String> dPhenotype = new ArrayList<String>();
             if (!patient.getFeatures().isEmpty()) {
                 for (Feature feature : patient.getFeatures()) {
+                    if (!feature.isPresent()) {
+                        continue;
+                    }
                     OntologyTerm term = this.om.resolveTerm(feature.getId());
                     if (term != null) {
                         dPhenotype.add(term.getName());
