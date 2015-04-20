@@ -168,6 +168,9 @@ public class DefaultMendelianSearch implements MendelianSearch
         }
 
         for (Patient patient : patients) {
+            if (patient == null) {
+                continue;
+            }
             JSONObject patientResult = new JSONObject();
             String patientIDKey = "patientID";
             if (patient.getExternalId() == null || "".equals(patient.getExternalId())) {
