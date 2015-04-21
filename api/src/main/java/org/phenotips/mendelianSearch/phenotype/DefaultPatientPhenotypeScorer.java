@@ -21,6 +21,7 @@ package org.phenotips.mendelianSearch.phenotype;
 
 import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
+import org.phenotips.data.PatientRepository;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyTerm;
 
@@ -28,6 +29,7 @@ import org.xwiki.component.annotation.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +51,9 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     @Inject
     private OntologyManager ontologyManager;
 
+    @Inject
+    private PatientRepository pr;
+
     @Override
     public Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients)
     {
@@ -60,6 +65,22 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
             patientScores.put(patient, this.scorer.getScore(phenotype, this.getPresentPatientTerms(patient)));
         }
         return patientScores;
+    }
+
+    public Map<String, Double> getScoresById(List<OntologyTerm> phenotype, Set<String> ids)
+    {
+        Set<Patient> patients = new HashSet<Patient>();
+        for (String id : ids) {
+            Patient patient = this.pr.getPatientById(id);
+            patients.add(patient);
+        }
+        Map<Patient, Double> patientMap = this.getScores(phenotype, patients);
+
+        Map<String, Double> result = new HashMap<String, Double>();
+        for (Patient patient : patientMap.keySet()) {
+            result.put(patient.getId(), patientMap.get(patient));
+        }
+        return result;
     }
 
     /**

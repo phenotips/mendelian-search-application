@@ -23,7 +23,7 @@ import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 
 import org.xwiki.component.annotation.Role;
 
-import net.sf.json.JSONArray;
+import java.util.List;
 
 /**
  * The main controller for the Mendelian Search Application (aka Gene Genie).
@@ -37,8 +37,8 @@ public interface MendelianSearch
      * The basic search method.
      *
      * @param request the query
-     * @return returns a list of patients binned into two categories: "matching" and "nonMatching"
+     * @return returns a list of patient views
      */
-    JSONArray search(MendelianSearchRequest request);
+    List<PatientView> search(MendelianSearchRequest request);
 
 }

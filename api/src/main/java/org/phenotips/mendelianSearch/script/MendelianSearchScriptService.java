@@ -20,6 +20,7 @@
 package org.phenotips.mendelianSearch.script;
 
 import org.phenotips.mendelianSearch.MendelianSearch;
+import org.phenotips.mendelianSearch.PatientView;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.script.service.ScriptService;
@@ -80,11 +81,13 @@ public class MendelianSearchScriptService implements ScriptService
      * @param rawRequest the request from the UI
      * @return A JSONArray of patients.
      */
-    public JSONObject search(XWikiRequest rawRequest)
+    public JSONArray search(XWikiRequest rawRequest)
     {
         MendelianSearchRequest request = this.buildMendelianSearchRequest(rawRequest);
 
-        return this.ms.search(request);
+        List<PatientView> views = this.ms.search(request);
+
+        return this.convertViewsToJSONArray(views);
     }
 
     /**
@@ -133,9 +136,9 @@ public class MendelianSearchScriptService implements ScriptService
     {
         String[] effects =
         { "MISSENSE", "FS_DELETION", "FS_INSERTION", "NON_FS_DELETION", "NON_FS_INSERTION", "STOPGAIN", "STOPLOSS",
-            "FS_DUPLICATION", "SPLICING", "NON_FS_DUPLICATION", "FS_SUBSTITUTION", "NON_FS_SUBSTITUTION", "STARTLOSS",
-            "ncRNA_EXONIC", "ncRNA_SPLICING", "UTR3", "UTR5", "SYNONYMOUS", "INTRONIC", "ncRNA_INTRONIC", "UPSTREAM",
-            "DOWNSTREAM", "INTERGENIC" };
+        "FS_DUPLICATION", "SPLICING", "NON_FS_DUPLICATION", "FS_SUBSTITUTION", "NON_FS_SUBSTITUTION", "STARTLOSS",
+        "ncRNA_EXONIC", "ncRNA_SPLICING", "UTR3", "UTR5", "SYNONYMOUS", "INTRONIC", "ncRNA_INTRONIC", "UPSTREAM",
+        "DOWNSTREAM", "INTERGENIC" };
         return effects;
 
     }
@@ -158,5 +161,14 @@ public class MendelianSearchScriptService implements ScriptService
         request.set(this.varSearchKey, Integer.parseInt(in.getParameter(this.varSearchKey)));
 
         return request;
+    }
+
+    private JSONArray convertViewsToJSONArray(List<PatientView> views)
+    {
+        JSONArray result = new JSONArray();
+        for (PatientView view : views) {
+            result.add(view.toJSON());
+        }
+        return result;
     }
 }
