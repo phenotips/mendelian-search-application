@@ -19,8 +19,8 @@
  */
 package org.phenotips.mendelianSearch.phenotype;
 
-import org.phenotips.mendelianSearch.phenotype.mocks.MockHPO;
-import org.phenotips.mendelianSearch.phenotype.mocks.MockMIM;
+import org.phenotips.mendelianSearch.mocks.MockHPO;
+import org.phenotips.mendelianSearch.mocks.MockMIM;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyService;
 import org.phenotips.ontology.OntologyTerm;
@@ -50,7 +50,7 @@ public class DefaultPhenotypeScorerTest
 {
     @Rule
     public final MockitoComponentMockingRule<DefaultPhenotypeScorer> mocker =
-    new MockitoComponentMockingRule<DefaultPhenotypeScorer>(DefaultPhenotypeScorer.class);
+        new MockitoComponentMockingRule<DefaultPhenotypeScorer>(DefaultPhenotypeScorer.class);
 
     private OntologyService mim;
 

@@ -17,16 +17,20 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.phenotips.mendelianSearch.genotype;
+package org.phenotips.mendelianSearch.mocks;
+
+import org.phenotips.variantStoreIntegration.VariantStoreService;
+import org.phenotips.variantstore.shared.VariantStoreException;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.phase.InitializationException;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.Future;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -43,7 +47,7 @@ import net.sf.json.JSONObject;
 @Component
 @Named("DummyStore")
 @Singleton
-public class MockVariantStore implements VariantStore
+public class MockVariantStore implements VariantStoreService
 {
     private static final String PATIENT_PREFIX = "P000000";
 
@@ -54,7 +58,6 @@ public class MockVariantStore implements VariantStore
      *
      * @see org.xwiki.component.phase.Initializable#initialize()
      */
-    @Override
     public void initialize() throws InitializationException
     {
         this.patients = new HashMap<String, JSONArray>();
@@ -85,7 +88,7 @@ public class MockVariantStore implements VariantStore
     }
 
     @Override
-    public Map<String, JSONArray> findPatients(String geneSymbol, List<String> variantEffects,
+    public Map<String, JSONArray> getIndividualsWithGene(String geneSymbol, List<String> variantEffects,
         Map<String, Double> alleleFrequencies)
     {
         // its just going to return patients 1 through 5
@@ -98,7 +101,7 @@ public class MockVariantStore implements VariantStore
     }
 
     @Override
-    public JSONArray getTopVariants(String patientId, int k)
+    public JSONArray getTopHarmfullVariants(String patientId, int k)
     {
         int max = (k > this.patients.get(patientId).size()) ? this.patients.get(patientId).size() : k;
         JSONArray result = new JSONArray();
@@ -107,9 +110,19 @@ public class MockVariantStore implements VariantStore
     }
 
     @Override
-    public Set<String> getAllPatientIds()
+    public Map<String, JSONArray> getIndividualsWithVariant(String chr, int pos, String ref, String alt)
     {
-        Set<String> ids = new HashSet<String>();
+        Map<String, JSONArray> result = new HashMap<String, JSONArray>();
+        for (int i = 1; i < 3; i++) {
+            result.put(MockVariantStore.PATIENT_PREFIX + i, this.patients.get(PATIENT_PREFIX + i));
+        }
+        return result;
+    }
+
+    @Override
+    public List<String> getIndividuals()
+    {
+        List<String> ids = new ArrayList<String>();
         for (int i = 1; i < 10; i++) {
             ids.add(MockVariantStore.PATIENT_PREFIX + i);
         }
@@ -117,13 +130,24 @@ public class MockVariantStore implements VariantStore
     }
 
     @Override
-    public Map<String, JSONArray> findPatients(String chr, int pos, String ref, String alt)
+    public void stop()
     {
-        Map<String, JSONArray> result = new HashMap<String, JSONArray>();
-        for (int i = 1; i < 3; i++) {
-            result.put(MockVariantStore.PATIENT_PREFIX + i, this.patients.get(PATIENT_PREFIX + i));
-        }
-        return result;
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Future addIndividual(String id, boolean isPublic, Path file) throws VariantStoreException
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Future removeIndividual(String id) throws VariantStoreException
+    {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }
