@@ -63,4 +63,9 @@ public class MendelianSearchRequest
     {
         return this.requestParams.get(param);
     }
+
+    public String getPhenotypeMatching()
+    {
+        return (String) this.requestParams.get("phenotypeMatching");
+    }
 }

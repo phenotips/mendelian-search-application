@@ -21,7 +21,6 @@ package org.phenotips.mendelianSearch;
 
 import org.phenotips.data.Patient;
 import org.phenotips.data.PatientRepository;
-import org.phenotips.data.permissions.PermissionsManager;
 import org.phenotips.mendelianSearch.phenotype.PatientPhenotypeScorer;
 import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 import org.phenotips.ontology.OntologyManager;
@@ -63,23 +62,16 @@ public class DefaultMendelianSearch implements MendelianSearch
     private PatientRepository pr;
 
     @Inject
-    private PermissionsManager pm;
-
-    @Inject
     private PatientViewFactory pvf;
 
-    private String phenotypeString = "phenotype";
-
-    @SuppressWarnings("unchecked")
     @Override
     public List<PatientView> search(MendelianSearchRequest request)
     {
         Set<String> allIds = this.findValidIds();
-
         Map<String, List<GAVariant>> matchingGenotype = this.findIdsMatchingGenotype(request, allIds);
-
         this.convertExternalKeys(matchingGenotype);
         this.convertExeternalIDSetToInternal(allIds);
+
         Set<String> matchingPhenotype = this.findIdsMatchingPhenotype(request, allIds);
 
         Set<String> matchedIds = new HashSet<String>(matchingGenotype.keySet());
@@ -90,6 +82,38 @@ public class DefaultMendelianSearch implements MendelianSearch
         List<PatientView> views = this.pvf.createPatientViews(matchedIds, matchingGenotype, scores);
 
         return views;
+    }
+
+    @Override
+    public Map<String, Object> getOverview(MendelianSearchRequest request)
+    {
+        Map<String, Object> result = null;
+        if (request.getPhenotypeMatching().equals("fuzzy")) {
+            result = this.getFuzzyOverview(request);
+        }
+        return result;
+    }
+
+    private Map<String, Object> getFuzzyOverview(MendelianSearchRequest request)
+    {
+        Set<String> allIds = this.findValidIds();
+        Map<String, List<GAVariant>> matchingGenotype = this.findIdsMatchingGenotype(request, allIds);
+
+        this.convertExternalKeys(matchingGenotype);
+        this.convertExeternalIDSetToInternal(allIds);
+
+        Set<String> matchingIds = matchingGenotype.keySet();
+        allIds.removeAll(matchingIds);
+        Set<String> nonMatchingIds = allIds;
+
+        Map<String, Double> matchingScores = this.scorePatientPhenotypes(request, matchingIds);
+        Map<String, Double> nonMatchingScores = this.scorePatientPhenotypes(request, nonMatchingIds);
+
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("withGene", matchingScores.values());
+        result.put("withoutGene", nonMatchingScores.values());
+
+        return result;
     }
 
     private void convertExeternalIDSetToInternal(Set<String> ids)
@@ -165,10 +189,10 @@ public class DefaultMendelianSearch implements MendelianSearch
                     (int) request.get("varPos"),
                     (String) request.get("varRef"), (String) request.get("varAlt"));
         } else {
-            matchingVariants =
-                this.variantStore.getIndividualsWithGene((String) request.get("geneSymbol"),
-                    (List<String>) request.get("variantEffects"),
-                    (Map<String, Double>) request.get("alleleFrequencies"));
+            matchingVariants = this.variantStore.getIndividualsWithGene(
+                (String) request.get("geneSymbol"),
+                (List<String>) request.get("variantEffects"),
+                (Map<String, Double>) request.get("alleleFrequencies"));
         }
         if ((int) request.get("matchGene") == 1) {
             return matchingVariants;
@@ -198,4 +222,5 @@ public class DefaultMendelianSearch implements MendelianSearch
         }
         return this.pr.getPatientByExternalId(external).getId();
     }
+
 }

@@ -22,7 +22,6 @@ package org.phenotips.mendelianSearch.mocks;
 import org.phenotips.variantStoreIntegration.VariantStoreService;
 import org.phenotips.variantstore.shared.VariantStoreException;
 
-import org.xwiki.component.annotation.Component;
 import org.xwiki.component.phase.InitializationException;
 
 import java.nio.file.Path;
@@ -32,8 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import org.ga4gh.GAVariant;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -44,9 +42,6 @@ import net.sf.json.JSONObject;
  *
  * @version $Id$
  */
-@Component
-@Named("DummyStore")
-@Singleton
 public class MockVariantStore implements VariantStoreService
 {
     private static final String PATIENT_PREFIX = "P000000";
@@ -88,17 +83,18 @@ public class MockVariantStore implements VariantStoreService
     }
 
     @Override
-    public Map<String, JSONArray> getIndividualsWithGene(String geneSymbol, List<String> variantEffects,
+    public Map<String, List<GAVariant>> getIndividualsWithGene(String geneSymbol, List<String> variantEffects,
         Map<String, Double> alleleFrequencies)
-    {
+        {
         // its just going to return patients 1 through 5
 
         Map<String, JSONArray> result = new HashMap<String, JSONArray>();
         for (int i = 1; i < 6; i++) {
             result.put(MockVariantStore.PATIENT_PREFIX + i, this.patients.get(PATIENT_PREFIX + i));
         }
-        return result;
-    }
+
+        return new HashMap<String, List<GAVariant>>();
+        }
 
     @Override
     public JSONArray getTopHarmfullVariants(String patientId, int k)
@@ -110,13 +106,13 @@ public class MockVariantStore implements VariantStoreService
     }
 
     @Override
-    public Map<String, JSONArray> getIndividualsWithVariant(String chr, int pos, String ref, String alt)
+    public Map<String, List<GAVariant>> getIndividualsWithVariant(String chr, int pos, String ref, String alt)
     {
         Map<String, JSONArray> result = new HashMap<String, JSONArray>();
         for (int i = 1; i < 3; i++) {
             result.put(MockVariantStore.PATIENT_PREFIX + i, this.patients.get(PATIENT_PREFIX + i));
         }
-        return result;
+        return new HashMap<String, List<GAVariant>>();
     }
 
     @Override

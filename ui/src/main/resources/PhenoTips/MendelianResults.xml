@@ -31,8 +31,8 @@
   <parent>data.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1428522465000</date>
-  <contentUpdateDate>1428510855000</contentUpdateDate>
+  <date>1429157040000</date>
+  <contentUpdateDate>1429135996000</contentUpdateDate>
   <version>1.1</version>
   <title>Gene Genie</title>
   <comment/>
@@ -45,7 +45,7 @@ $xwiki.jsx.use('data.MendelianResults')##
 $xwiki.jsx.use('PhenoTips.d3', {"minify" : false})##
 $xwiki.ssx.use('data.MendelianResults')##
 #if($request &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
-  #set ($count = $services.MendelianSearch.count($request))
+  #set ($overview = $services.MendelianSearch.getOverview($request))
   #set ($displayResults = true)
 #else
   #set ($displayResults = false)
@@ -70,7 +70,7 @@ $xwiki.ssx.use('data.MendelianResults')##
 &lt;div id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
   &lt;h4 class='graph-heading'&gt;Overview&lt;/h4&gt;
-  #if($count.size() == 0 )
+  #if($overview.size() == 0 )
     &lt;div class='grid-view'&gt;
       &lt;table class = 'grid-visualization'&gt;
         &lt;tr&gt;
@@ -88,13 +88,13 @@ $xwiki.ssx.use('data.MendelianResults')##
 
           &lt;/td&gt;
           &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$count.getInt('withBoth')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;span class='patient-number'&gt;$overview.getInt('withBoth')&lt;/span&gt;&lt;br/&gt;Patients
             &lt;input type='hidden' name='title' value='Displaying Patients With Matching Phenotypes And Variants'/&gt;
             &lt;input type='hidden' name='matchGene' value='1'/&gt;
             &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
           &lt;/td&gt;
           &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$count.getInt('withPhenotype')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;span class='patient-number'&gt;$overview.getInt('withPhenotype')&lt;/span&gt;&lt;br/&gt;Patients
             &lt;input type='hidden' name='title' value='Displaying Patients With Matching Phenotypes And Non-matching Variants'/&gt;
             &lt;input type='hidden' name='matchGene' value='0'/&gt;
             &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
@@ -104,13 +104,13 @@ $xwiki.ssx.use('data.MendelianResults')##
           &lt;td class='yn-cell'&gt;No
           &lt;/td&gt;
           &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$count.getInt('withGene')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;span class='patient-number'&gt;$overview.getInt('withGene')&lt;/span&gt;&lt;br/&gt;Patients
             &lt;input type='hidden' name='title' value='Displaying Patients With Matching Variants And Non-matching Phenotype'/&gt;
             &lt;input type='hidden' name='matchGene' value='1'/&gt;
             &lt;input type='hidden' name='matchPhenotype' value='0'/&gt;
           &lt;/td&gt;
           &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$count.getInt('withNeither')&lt;/span&gt;&lt;br/&gt;Patients
+            &lt;span class='patient-number'&gt;$overview.getInt('withNeither')&lt;/span&gt;&lt;br/&gt;Patients
             &lt;input type='hidden' name='title' value='Displaying Patients That Did Not Match Either The Symptoms or The Variants'/&gt;
             &lt;input type='hidden' name='matchGene' value='0'/&gt;
             &lt;input type='hidden' name='matchPhenotype' value='0'/&gt;
@@ -119,7 +119,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       &lt;/table&gt;
     &lt;/div&gt;
   #else
-    &lt;input type="hidden" value=$count id="box-plot-values" /&gt;
+    &lt;input type="hidden" value=$overview id="box-plot-values" /&gt;
     &lt;svg id='chart'&gt;&lt;/svg&gt;
   #end
   &lt;/div&gt;
@@ -290,12 +290,12 @@ $xwiki.ssx.use('data.MendelianResults')##
     handleNewPage : function(event, increment){
       event.stop();
       var newPage = this.page + increment;
-      if (newPage&lt;1) {
+      if (newPage &lt; 1) {
         return;
       }
       this.page = newPage;
       $$('div.mendelian-livetable-controls span.current-page')[0].update(newPage);
-      this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+      this.resultsSummary.update("Displaying results " + (this.resultsPerPage * (this.page - 1) + 1) + '-' + (this.resultsPerPage * this.page));
       this.launchSearch();
     },
 
@@ -306,7 +306,7 @@ $xwiki.ssx.use('data.MendelianResults')##
         return;
       }
       this.resultsPerPage = parseInt(newValue);
-      this.resultsSummary.update("Displaying results " + (this.resultsPerPage*(this.page-1)+1) + '-' + (this.resultsPerPage*this.page));
+      this.resultsSummary.update("Displaying results " + (this.resultsPerPage * (this.page - 1) + 1) + '-' + (this.resultsPerPage * this.page));
       this.launchSearch();
     },
 
@@ -327,7 +327,8 @@ $xwiki.ssx.use('data.MendelianResults')##
               _this.resultsTable.update('&lt;p class="loading"&gt;Searching...&lt;/p&gt;');
             },
             onSuccess: function(response) {
-              _this.displayResults(response.responseJSON);
+              _this.preProcessData(response.responseJSON);
+              _this.generateTable();
               _this.initializeControls();
             },
             onComplete : function() {
@@ -338,269 +339,293 @@ $xwiki.ssx.use('data.MendelianResults')##
           });
     },
 
-    displayResults : function (data) {
-        var _this = this;
-        this._data = data.results;
+    //Applies any transformations to the raw response before storing it in this._data returns a variable called displayedData
+    preProcessData : function(data){
+      this._data = data.results;
+    },
 
-        //HACK: Temporary demo stuff--both categories will be returned to the ui-- must decide on which to use
-        var matchGene = parseInt(this.queryForm.select('input[name="matchGene"]')[0].getValue());
-        if (matchGene){
-          this._data = this._data.matching;
-        } else {
-          this._data = this._data.nonMatching;
+    /*Sorts the table's data according to the key specified by the sortData function.
+    *
+    * @param sortTarget A function used to access the property by which to sort.
+    * @param ascending Optional boolean used to specify that data should be sorted in reverse direction.
+    */
+    sortData : function(sortTarget, descending) {
+      var sign = ascending ? 1 : -1;
+      this.data.sort(function(a,b){
+        return sortTarget(a) - sortTarget(b);
+      });
+    },
+
+    generateTable : function() {
+      var _this = this;
+
+      var columns = {
+        "expandTriangle" : {
+          heading : '',
+          display : _this.displayResultExpandTriangle.bind(_this)
+        },
+        "patientId" : {
+          heading : _this.strings["patientId.heading"],
+          display : _this.displayResultPatientId.bind(_this),
+          sortTarget : function(datum){return datum.variants.patientId;}
+        },
+        "owner" : {
+          heading : _this.strings["owner.heading"],
+          display : _this.displayResultOwner.bind(_this),
+          sortTarget : function(datum){return datum.variants.owner;}
+        },
+        "phenotypeScore" : {
+          heading : _this.strings["phenotypeScore.heading"],
+          display : _this.displayResultPhenotypeScore.bind(_this),
+          sortTarget : function(datum){return datum.variants.phenotypeScore;}
+        },
+        "numberOfVariants" : {
+          heading : _this.strings["numberOfVariants.heading"],
+          display : _this.displayResultNumberOfVariants.bind(_this),
+          sortTarget : function(datum){return datum.variants.length;}
         }
-        // Empty the container to make room for the new results
-        if (this.resultsTable.childElements()) {
-                this.resultsTable.update('');
-            }
-            var columns = {
-              "expandTriangle" : {
-                heading : '',
-                display : _this.displayResultExpandTriangle.bind(_this)
-              },
-              "patientId" : {
-                heading : _this.strings["patientId.heading"],
-                display : _this.displayResultPatientId.bind(_this)
-              },
-              "owner" : {
-                heading : _this.strings["owner.heading"],
-                display : _this.displayResultOwner.bind(_this)
-              },
-              "phenotypeScore" : {
-                heading : _this.strings["phenotypeScore.heading"],
-                display : _this.displayResultPhenotypeScore.bind(_this)
-              },
-              "numberOfVariants" : {
-                heading : _this.strings["numberOfVariants.heading"],
-                display : _this.displayResultNumberOfVariants.bind(_this)
-              }
-            };
-       
-          this._displayTableHeader(columns, this.resultsTable);
+      };
 
-        this._data.sort(function(a, b){
-          return b.phenotypeScore - a.phenotypeScore;
-        });
-          this._data.each(function(r) {
+      // Empty the container to make room for the new results
+      if (this.resultsTable.childElements()) {
+        this.resultsTable.update('');
+      }
+
+      this.displayTableHeader(columns, this.resultsTable);
+      this.displayResults(this._data, columns);
+
+    },
+
+    displayResults : function (data, columns) {
+      var _this = this;
+      
+      //Clear table of old results
+      _this.resultsTable.select('.patient-row, .patient-subResult').each(function(e){
+        e.remove();
+      });
+
+      this._data.each(function(r) {
         _this._displayPatientRow(r, columns, _this.resultsTable);
         _this._displayPatientSubTable(r, Object.getOwnPropertyNames(columns).length, _this.resultsTable);
       });
 
-        },
+    },
 
-      _displayTableHeader : function (columns, table) {
-        var row = this._getEmptyRow(table);
-        for (var c in columns) {
-          row.insert(new Element("th", {"class" : c}).update(columns[c].heading));
-        }
-        return row;
-      },
-
-      _getEmptyRow : function(table, className) {
-        var row;
-        if (className) {
-          row = new Element('tr', {'class' : className});
-        } else {
-          row = new Element('tr');
-        }
-        table.insert(row);
-        return row;
-      },
-
-      _displayPatientRow : function(rowData, columns, table){
-        var row = this._getEmptyRow(table, 'patient-row');
-        for (var c in columns) {
-        row.insert(columns[c].display(rowData));
+    displayTableHeader : function (columns, table) {
+      var _this = this;
+      var row = this._getEmptyRow(table);
+      for (var c in columns) {
+        var e = new Element("th", {"class" : c}).update(columns[c].heading);
+        row.insert(e);
       }
       return row;
-      },
+    },
 
-      //the display result functions all return a td element that will be used to display the upper level data for each patient
-      displayResultExpandTriangle : function() {
-        return new Element('td').update('&lt;div class="triRight"&gt;&lt;/div&gt;');
-      },
+    _getEmptyRow : function(table, className) {
+      var row;
+      if (className) {
+        row = new Element('tr', {'class' : className});
+      } else {
+        row = new Element('tr');
+      }
+      table.insert(row);
+      return row;
+    },
 
-      displayResultPatientId : function(data) {
-        var cell = new Element('td');
-        cell.insert(new Element('p').update(data.patientID));
-        return cell;
-      },
+    _displayPatientRow : function(rowData, columns, table){
+      var row = this._getEmptyRow(table, 'patient-row');
+      for (var c in columns) {
+      row.insert(columns[c].display(rowData));
+    }
+    return row;
+    },
 
-      displayResultOwner : function(data) {
-        var cell = new Element('td');
-        cell.insert(new Element('p').update(data.owner));
-        return cell;
+    //the display result functions all return a td element that will be used to display the upper level data for each patient
+    displayResultExpandTriangle : function() {
+      return new Element('td').update('&lt;div class="triRight"&gt;&lt;/div&gt;');
+    },
 
-      },
+    displayResultPatientId : function(data) {
+      var cell = new Element('td');
+      cell.insert(new Element('p').update(data.patientId));
+      return cell;
+    },
 
-      displayResultPhenotypeScore : function(data) {
-        var cell = new Element('td');
-        cell.insert(new Element('p').update(Math.round(data.phenotypeScore * 100) / 100));
-        return cell;
-      },
+    displayResultOwner : function(data) {
+      var cell = new Element('td');
+      cell.insert(new Element('p').update(data.owner));
+      return cell;
 
-      displayResultNumberOfVariants : function(data) {
-        var cell = new Element('td');
-        cell.insert(new Element('p').update(data.variants.length));
-        return cell;
-      },
+    },
 
-      _displayPatientSubTable : function(data, width, table) {
-        var row = this._getEmptyRow(table, 'patient-subResult');
-        var containerCell = new Element('td', {'colspan' : width });
-        var container = new Element('div', {'class' :  'collapsed'});
-        
-        var phenotypeContainer = new Element('div', {'class' : 'patient-phenotype-container'});
-        phenotypeContainer.insert(new Element('h6').update(this.strings['patientSymptom.heading']));
-        phenotypeContainer.insert(this.generatePhenotypeList(data.phenotype));
-        container.insert(phenotypeContainer);
+    displayResultPhenotypeScore : function(data) {
+      var cell = new Element('td');
+      cell.insert(new Element('p').update(Math.round(data.phenotypeScore * 100) / 100));
+      return cell;
+    },
 
-        var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
-        variantContainer.insert(new Element('h6').update(this.strings['patientVariantsHeading']));
-        variantContainer.insert(this.generateVariantList(data.variants));
-        container.insert(variantContainer);
+    displayResultNumberOfVariants : function(data) {
+      var cell = new Element('td');
+      cell.insert(new Element('p').update(data.variants.length));
+      return cell;
+    },
 
-        row.insert(containerCell.insert(container));
-        return row;
-      },
+    _displayPatientSubTable : function(data, width, table) {
+      var row = this._getEmptyRow(table, 'patient-subResult');
+      var containerCell = new Element('td', {'colspan' : width });
+      var container = new Element('div', {'class' :  'collapsed'});
+      
+      var phenotypeContainer = new Element('div', {'class' : 'patient-phenotype-container'});
+      phenotypeContainer.insert(new Element('h6').update(this.strings['patientSymptom.heading']));
+      phenotypeContainer.insert(this.generatePhenotypeList(data.phenotype));
+      container.insert(phenotypeContainer);
 
-      generatePhenotypeList : function(data) {
-        //right now phenotype information is just a list of strings. 
-        var _this = this;
-        var phenotypeList = new Element('ul');
-        data.each(function(e){
-          phenotypeList.insert(new Element('li').update(e));
+      var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
+      variantContainer.insert(new Element('h6').update(this.strings['patientVariantsHeading']));
+      variantContainer.insert(this.generateVariantList(data.variants));
+      container.insert(variantContainer);
+
+      row.insert(containerCell.insert(container));
+      return row;
+    },
+
+    generatePhenotypeList : function(data) {
+      //right now phenotype information is just a list of strings. 
+      var _this = this;
+      var phenotypeList = new Element('ul');
+      data.each(function(e){
+        phenotypeList.insert(new Element('li').update(e));
+      });
+      return phenotypeList;
+    },
+    generateVariantList: function(variants) {
+      //variant keys: "chr", "posisiton" , "ref", "alt" , "effect", "score"
+      var _this = this;
+      var variantList = new Element('ul');
+      variants.each(function(v){
+        variantList.insert(_this.displayVariantListElement(v));
+      });
+      return variantList;
+    },
+    displayVariantListElement : function(variant){
+      var _this = this;
+      var listElement = new Element('li');
+
+      var leftColumn = new Element('div', {'class' : 'left'});
+      var rightColumn = new Element('div', {'class' : 'right'});
+      //TODO: link genesymbol to somewhere. Probably UniProt
+      var geneElement = new Element('p', {'class' : 'gene-name'}).update( _this.strings["geneSymbol"]+ ": " + variant.geneSymbol);
+      leftColumn.insert(geneElement);
+      
+      if (variant.chr &amp;&amp; variant.position &amp;&amp; variant.ref) {
+        var start = variant.position;
+        var end = variant.position + variant.ref.length;
+        var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
+        var positionURLFragment = variant.chr.toUpperCase() + ": " + start + "-" + end;
+        var assembly = variant.assembly || "hg19";
+        var position = new Element('a', {
+          'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
+          'class' : 'variant-position',
+          'target' : '__blank',
+          'title' : _this.strings["variantPositionLinkTitle"]
+        }).update(positionText);
+        leftColumn.insert(position);
+      }
+      
+      var varScore = new Element('div', {'class' : 'variant-score'});
+      varScore.insert("&lt;p&gt;" + this.strings["score.label"] + ": &lt;/p&gt;");
+      varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
+      rightColumn.insert(varScore);
+
+
+
+      var displayedRef = (variant.ref.length &gt; 5) ? (variant.ref.substring(0,5)+"...") : variant.ref;
+      var displayedAlt = (variant.alt.length &gt; 5) ? (variant.alt.substring(0,5)+"...") : variant.alt;
+      rightColumn.insert("&lt;div class='variant-change'&gt;&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;&lt;/div&gt;");
+      rightColumn.insert("&lt;p class='variant-type'&gt;" + variant.effect + "&lt;/p&gt;");
+      
+      listElement.insert(leftColumn);
+      listElement.insert(rightColumn);
+
+      listElement.insert(_this.generateVariantSearchButton(variant));
+      
+      return listElement;
+    },
+
+    generateVariantSearchButton : function(variant) {
+      var _this = this;
+      var button = new Element('div', {'class' : 'variant-search-redo'}).update(this.strings["variantSearchButton"]);
+      button.observe('click', function(b) {
+        _this.queryForm.select('input[name="variantSearch"]')[0].setValue(1);
+        _this.queryForm.select('input[name="varChr"]')[0].setValue(variant.chr);
+        _this.queryForm.select('input[name="varPos"]')[0].setValue(variant.position);
+        _this.queryForm.select('input[name="varRef"]')[0].setValue(variant.ref);
+        _this.queryForm.select('input[name="varAlt"]')[0].setValue(variant.alt);
+        _this.submitHiddenForm();
+      });
+      return button;
+    },
+
+    addEventListeners : function() {
+      $$('tr.patient-row').each(function(r){
+         r.observe('click', function(){
+            var container = this.next().down().down();
+            if(container.hasClassName('collapsed')){
+              container.removeClassName('collapsed');
+              r.addClassName('expanded');
+              r.select('div.triRight')[0].addClassName('triDown');
+            } else {
+               container.addClassName('collapsed');
+              r.removeClassName('expanded');
+              r.select('div.triRight')[0].removeClassName('triDown');
+           }
         });
-        return phenotypeList;
-      },
-      generateVariantList: function(variants) {
-        //variant keys: "chr", "posisiton" , "ref", "alt" , "effect", "score"
-        var _this = this;
-        var variantList = new Element('ul');
-        variants.each(function(v){
-          variantList.insert(_this.displayVariantListElement(v));
-        });
-        return variantList;
-      },
-      displayVariantListElement : function(variant){
-        var _this = this;
-        var listElement = new Element('li');
+      });
+    },
 
-        var leftColumn = new Element('div', {'class' : 'left'});
-        var rightColumn = new Element('div', {'class' : 'right'});
-        //TODO: link genesymbol to somewhere. Probably UniProt
-        var geneElement = new Element('p', {'class' : 'gene-name'}).update( _this.strings["geneSymbol"]+ ": " + variant.geneSymbol);
-        leftColumn.insert(geneElement);
-        
-        if (variant.chr &amp;&amp; variant.position &amp;&amp; variant.ref) {
-          var start = variant.position;
-          var end = variant.position + variant.ref.length;
-          var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
-          var positionURLFragment = variant.chr.toUpperCase() + ": " + start + "-" + end;
-          var assembly = variant.assembly || "hg19";
-          var position = new Element('a', {
-            'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
-            'class' : 'variant-position',
-            'target' : '__blank',
-            'title' : _this.strings["variantPositionLinkTitle"]
-          }).update(positionText);
-          leftColumn.insert(position);
+    submitHiddenForm : function() {
+      this.queryForm.submit();
+    },
+
+    strings : {
+      "patientId.heading"   : "ID",
+      "owner.heading"     : "Owner",
+      "phenotypeScore.heading"   : "Phenotype Score",
+      "numberOfVariants.heading" : "Variants observed",
+      "more.heading"      : "More info",
+      "noPhenotypeOrVariants.text" : "Nothing to display",
+      "showMore.button"   : "More...",
+      "patientSymptom.heading": "Symptoms observed in this patient",
+      'patientVariantsHeading': "Variants found in this patient",
+      'variant.position.heading': "Position",
+      'variant.change.heading': "Change",
+      'variant.effect.heading': "Effect",
+      'variant.score.heading' : "Score",
+      'geneSymbol'        : "Gene symbol",
+      'score.label'       : "Exomiser score",
+      "positionPhrase"  : "__CHROMOSOME__:__START__-__STOP__",
+      "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
+      'variantSearchButton'   : "Redo search with this variant",
+      'control.resultsPerPage.label' : 'Results per page: '
+    },
+
+    Utils : {
+      generateSegmentedBar : function (count, value) {
+        var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
+        var valueUnit = 1 / count;
+        for (var i = 0; i &lt; count; ++i) {
+          var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
+          var segment = new Element('span', {'class' : 'segmented-unit'}).update(
+                        new Element('span', {
+                          'class' : 'segmented-unit-fill',
+                          'style' : "width: " + segmentFill + "%"
+                        })
+          );
+          bar.insert(segment);
         }
-        
-        var varScore = new Element('div', {'class' : 'variant-score'});
-        varScore.insert("&lt;p&gt;" + this.strings["score.label"] + ": &lt;/p&gt;");
-        varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
-        rightColumn.insert(varScore);
-
-
-
-        var displayedRef = (variant.ref.length &gt; 5) ? (variant.ref.substring(0,5)+"...") : variant.ref;
-        var displayedAlt = (variant.alt.length &gt; 5) ? (variant.alt.substring(0,5)+"...") : variant.alt;
-        rightColumn.insert("&lt;div class='variant-change'&gt;&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;&lt;/div&gt;");
-        rightColumn.insert("&lt;p class='variant-type'&gt;" + variant.effect + "&lt;/p&gt;");
-        
-        listElement.insert(leftColumn);
-        listElement.insert(rightColumn);
-
-        listElement.insert(_this.generateVariantSearchButton(variant));
-        
-        return listElement;
-      },
-
-      generateVariantSearchButton : function(variant) {
-        var _this = this;
-        var button = new Element('div', {'class' : 'variant-search-redo'}).update(this.strings["variantSearchButton"]);
-        button.observe('click', function(b) {
-          _this.queryForm.select('input[name="variantSearch"]')[0].setValue(1);
-          _this.queryForm.select('input[name="varChr"]')[0].setValue(variant.chr);
-          _this.queryForm.select('input[name="varPos"]')[0].setValue(variant.position);
-          _this.queryForm.select('input[name="varRef"]')[0].setValue(variant.ref);
-          _this.queryForm.select('input[name="varAlt"]')[0].setValue(variant.alt);
-          _this.submitHiddenForm();
-        });
-        return button;
-      },
-
-      addEventListeners : function() {
-        $$('tr.patient-row').each(function(r){
-           r.observe('click', function(){
-              var container = this.next().down().down();
-              if(container.hasClassName('collapsed')){
-                container.removeClassName('collapsed');
-                r.addClassName('expanded');
-                r.select('div.triRight')[0].addClassName('triDown');
-              } else {
-                 container.addClassName('collapsed');
-                r.removeClassName('expanded');
-                r.select('div.triRight')[0].removeClassName('triDown');
-             }
-          });
-        });
-      },
-
-      submitHiddenForm : function() {
-        this.queryForm.submit();
-      },
-
-      strings : {
-        "patientId.heading"   : "ID",
-        "owner.heading"     : "Owner",
-        "phenotypeScore.heading"   : "Phenotype Score",
-        "numberOfVariants.heading" : "Variants observed",
-        "more.heading"      : "More info",
-        "noPhenotypeOrVariants.text" : "Nothing to display",
-        "showMore.button"   : "More...",
-        "patientSymptom.heading": "Symptoms observed in this patient",
-        'patientVariantsHeading': "Variants found in this patient",
-        'variant.position.heading': "Position",
-        'variant.change.heading': "Change",
-        'variant.effect.heading': "Effect",
-        'variant.score.heading' : "Score",
-        'geneSymbol'        : "Gene symbol",
-        'score.label'       : "Exomiser score",
-        "positionPhrase"  : "__CHROMOSOME__:__START__-__STOP__",
-        "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
-        'variantSearchButton'   : "Redo search with this variant",
-        'control.resultsPerPage.label' : 'Results per page: '
-      },
-
-      Utils : {
-        generateSegmentedBar : function (count, value) {
-          var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
-          var valueUnit = 1 / count;
-          for (var i = 0; i &lt; count; ++i) {
-            var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
-            var segment = new Element('span', {'class' : 'segmented-unit'}).update(
-                          new Element('span', {
-                            'class' : 'segmented-unit-fill',
-                            'style' : "width: " + segmentFill + "%"
-                          })
-            );
-            bar.insert(segment);
-          }
-          return bar.insert(' ' + Math.round(value * 100) + '%');
-        }
-      },
+        return bar.insert(' ' + Math.round(value * 100) + '%');
+      }
+    },
   });
   
   // End PhenoTips augmentation.
@@ -700,14 +725,17 @@ $xwiki.ssx.use('data.MendelianResults')##
       <code>var boxPlotGenerator = function () {
   var data = JSON.parse($('box-plot-values').value);
   xAxisLabels = ["With Variants", "Without Variants"];
-  chartTitles = ["Displaying Patients With Matching Variants", "Displaying Patients With Non-matching Variants"];
+  var chartTitles = {
+    "withGene"    : "Displaying Patients With Matching Variants",
+    "withoutGene" : "Displaying Patients With Non-matching Variants"
+  };
   var margin = {top: 20, right: 0, bottom:30, left:50};
-  var height = 400-margin.top-margin.bottom;
-  var width = 400 - margin.right- margin.left;
+  var height = 400-margin.top - margin.bottom;
+  var width = 400 - margin.right - margin.left;
 
   var boxWidth = 20;
 
-  var y =d3.scale.linear().range([height,0]).domain([0,1]);
+  var y = d3.scale.linear().range([height,0]).domain([0,1]);
   var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
 
   var xAxis = d3.svg.axis()
@@ -725,7 +753,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var category =chart.selectAll('g').data(Object.keys(data))
+  var category = chart.selectAll('g').data(Object.keys(data))
     .enter()
     .append('g')
       .attr('class', 'category')
@@ -746,9 +774,9 @@ $xwiki.ssx.use('data.MendelianResults')##
   //Median lines
   category.append('line')
     .attr('class', function(d){
-      if(data[d].length&lt;5){
+      if (data[d].length&lt;5) {
         return "hidden";
-      }else{
+      } else {
         return "box-plot";
       }
     })
@@ -908,13 +936,16 @@ $xwiki.ssx.use('data.MendelianResults')##
       .attr('type','hidden')
       .attr('name', 'matchGene')
       .attr('value', function(d){
-        return (d==='withGene') ? 1 : 0;
+        return (d === 'withGene') ? 1 : 0;
       });
    inputContainer.append('input')
       .attr('type','hidden')
       .attr('name', 'title')
+      .attr('class', function(d){
+        return (d === 'withGene') ? 'default' : '';
+      })
       .attr('value', function(d, i) {
-        return chartTitles[i];
+        return chartTitles[d];
       });
 
   function nrmRandom( mean, std) {
@@ -1047,7 +1078,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       var container = $('mendelian-livetable-container');
 
       //get the first chart title and add it to the form
-      var titleElement = $$('.category-button input[name="title"]')[0];
+      var titleElement = $$('.category-button input[name="title"].default')[0];
       var chartTitle = titleElement.getAttribute('value');
       queryForm.getInputs('hidden', 'title')[0].setValue(chartTitle);
 

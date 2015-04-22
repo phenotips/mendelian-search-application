@@ -22,6 +22,8 @@ package org.phenotips.mendelianSearch.phenotype;
 import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
 import org.phenotips.data.PatientRepository;
+import org.phenotips.data.permissions.PermissionsManager;
+import org.phenotips.data.permissions.internal.visibility.HiddenVisibility;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyTerm;
 
@@ -52,6 +54,9 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     private OntologyManager ontologyManager;
 
     @Inject
+    PermissionsManager pm;
+
+    @Inject
     private PatientRepository pr;
 
     @Override
@@ -59,7 +64,8 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     {
         Map<Patient, Double> patientScores = new HashMap<Patient, Double>();
         for (Patient patient : patients) {
-            if (patient == null) {
+            if (patient == null
+                || (this.pm.getPatientAccess(patient).getVisibility().compareTo(new HiddenVisibility()) <= 0)) {
                 continue;
             }
             patientScores.put(patient, this.scorer.getScore(phenotype, this.getPresentPatientTerms(patient)));
@@ -67,6 +73,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
         return patientScores;
     }
 
+    @Override
     public Map<String, Double> getScoresById(List<OntologyTerm> phenotype, Set<String> ids)
     {
         Set<Patient> patients = new HashSet<Patient>();
