@@ -21,6 +21,9 @@ package org.phenotips.mendelianSearch.phenotype;
 
 import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
+import org.phenotips.data.PatientRepository;
+import org.phenotips.data.permissions.PermissionsManager;
+import org.phenotips.data.permissions.internal.visibility.HiddenVisibility;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyTerm;
 
@@ -28,6 +31,7 @@ import org.xwiki.component.annotation.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,17 +53,41 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     @Inject
     private OntologyManager ontologyManager;
 
+    @Inject
+    PermissionsManager pm;
+
+    @Inject
+    private PatientRepository pr;
+
     @Override
     public Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients)
     {
         Map<Patient, Double> patientScores = new HashMap<Patient, Double>();
         for (Patient patient : patients) {
-            if (patient == null) {
+            if (patient == null
+                || (this.pm.getPatientAccess(patient).getVisibility().compareTo(new HiddenVisibility()) <= 0)) {
                 continue;
             }
             patientScores.put(patient, this.scorer.getScore(phenotype, this.getPresentPatientTerms(patient)));
         }
         return patientScores;
+    }
+
+    @Override
+    public Map<String, Double> getScoresById(List<OntologyTerm> phenotype, Set<String> ids)
+    {
+        Set<Patient> patients = new HashSet<Patient>();
+        for (String id : ids) {
+            Patient patient = this.pr.getPatientById(id);
+            patients.add(patient);
+        }
+        Map<Patient, Double> patientMap = this.getScores(phenotype, patients);
+
+        Map<String, Double> result = new HashMap<String, Double>();
+        for (Patient patient : patientMap.keySet()) {
+            result.put(patient.getId(), patientMap.get(patient));
+        }
+        return result;
     }
 
     /**

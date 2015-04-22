@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Provides patient oriented methods for computing phenotype scores. Relies heavily on a PhenotypeScorer
+ * Provides patient oriented methods for computing phenotype scores. Relies heavily on a PhenotypeScorer.
  *
  * @version $Id$
  */
@@ -40,12 +40,22 @@ public interface PatientPhenotypeScorer
 
     /**
      * Computes scores between 0 and 1 for each patient in the patients list. Scores are computed against the phenotype
-     * provided in the arguments
+     * provided in the arguments.
      *
      * @param phenotype The phenotype against which to compute
      * @param patients The patients to compute scores for
      * @return A map with patients as keys and double scores as values
      */
     Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients);
+
+    /**
+     * Computes scores between 0 and 1 for each patient in the id set. Scores are computed against the phenotype
+     * provided in the arguments.
+     *
+     * @param phenotype
+     * @param ids
+     * @return A map with patient ids as keys and double scores as values
+     */
+    Map<String, Double> getScoresById(List<OntologyTerm> phenotype, Set<String> ids);
 
 }

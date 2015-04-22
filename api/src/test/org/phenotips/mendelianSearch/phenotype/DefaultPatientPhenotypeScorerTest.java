@@ -21,7 +21,7 @@ package org.phenotips.mendelianSearch.phenotype;
 
 import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
-import org.phenotips.mendelianSearch.phenotype.mocks.MockOntologyTerm;
+import org.phenotips.mendelianSearch.mocks.MockOntologyTerm;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyTerm;
 
@@ -53,7 +53,7 @@ public class DefaultPatientPhenotypeScorerTest
 {
     @Rule
     public final MockitoComponentMockingRule<DefaultPatientPhenotypeScorer> mocker =
-    new MockitoComponentMockingRule<DefaultPatientPhenotypeScorer>(DefaultPatientPhenotypeScorer.class);
+        new MockitoComponentMockingRule<DefaultPatientPhenotypeScorer>(DefaultPatientPhenotypeScorer.class);
 
     private OntologyManager ontologyManager;
 

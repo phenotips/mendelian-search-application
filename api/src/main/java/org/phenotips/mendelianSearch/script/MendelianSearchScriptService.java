@@ -20,12 +20,12 @@
 package org.phenotips.mendelianSearch.script;
 
 import org.phenotips.mendelianSearch.MendelianSearch;
+import org.phenotips.mendelianSearch.PatientView;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.stability.Unstable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -74,17 +74,23 @@ public class MendelianSearchScriptService implements ScriptService
 
     private String altKey = "varAlt";
 
+    private String matchGeneKey = "matchGene";
+
+    private String matchPhenotypeKey = "matchPhenotype";
+
     /**
      * Get a list of patients matching the specified input parameters.
      *
      * @param rawRequest the request from the UI
      * @return A JSONArray of patients.
      */
-    public JSONObject search(XWikiRequest rawRequest)
+    public JSONArray search(XWikiRequest rawRequest)
     {
         MendelianSearchRequest request = this.buildMendelianSearchRequest(rawRequest);
 
-        return this.ms.search(request);
+        List<PatientView> views = this.ms.search(request);
+
+        return this.convertViewsToJSONArray(views);
     }
 
     /**
@@ -97,31 +103,13 @@ public class MendelianSearchScriptService implements ScriptService
      *         'fuzzy' will result in an JSONObject with two keys: "withGene" and "withoutGene". Each key will contain
      *         an array of doubles representing the phenotype scores for patients in each category.
      */
-    public JSONObject count(XWikiRequest rawRequest)
+    public JSONObject getOverview(XWikiRequest rawRequest)
     {
         MendelianSearchRequest request = this.buildMendelianSearchRequest(rawRequest);
 
-        JSONObject searchResult = this.ms.search(request);
-        JSONObject result = new JSONObject();
+        Map<String, Object> overview = this.ms.getOverview(request);
 
-        List<Double> scores = new ArrayList<Double>();
-        String scoreKey = "phenotypeScore";
-
-        JSONArray patients = searchResult.getJSONArray("matching");
-        for (int i = 0; i < patients.size(); i++) {
-            JSONObject patient = patients.getJSONObject(i);
-            scores.add(patient.getDouble(scoreKey));
-        }
-        result.element("withGene", scores);
-
-        scores.clear();
-
-        patients = searchResult.getJSONArray("nonMatching");
-        for (int i = 0; i < patients.size(); i++) {
-            JSONObject patient = patients.getJSONObject(i);
-            scores.add(patient.getDouble(scoreKey));
-        }
-        result.element("withoutGene", scores);
+        JSONObject result = JSONObject.fromObject(overview);
 
         return result;
     }
@@ -156,7 +144,21 @@ public class MendelianSearchScriptService implements ScriptService
         request.set(this.refKey, in.getParameter(this.refKey));
         request.set(this.altKey, in.getParameter(this.altKey));
         request.set(this.varSearchKey, Integer.parseInt(in.getParameter(this.varSearchKey)));
+        request.set("phenotypeMatching", in.getParameter("phenotype-matching"));
+        request.set(this.matchGeneKey, Integer.parseInt(in.getParameter(this.matchGeneKey)));
+        request.set(this.matchPhenotypeKey, Integer.parseInt(in.getParameter(this.matchPhenotypeKey)));
 
         return request;
+    }
+
+    private JSONArray convertViewsToJSONArray(List<PatientView> views)
+    {
+        JSONArray result = new JSONArray();
+        for (PatientView view : views) {
+            if (view.getType().equals("open")) {
+                result.add(view.toJSON());
+            }
+        }
+        return result;
     }
 }

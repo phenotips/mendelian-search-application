@@ -19,10 +19,8 @@
  */
 package org.phenotips.mendelianSearch;
 
-import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
 import org.phenotips.data.PatientRepository;
-import org.phenotips.data.permissions.PermissionsManager;
 import org.phenotips.mendelianSearch.phenotype.PatientPhenotypeScorer;
 import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 import org.phenotips.ontology.OntologyManager;
@@ -40,8 +38,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import org.ga4gh.GAVariant;
 
 /**
  * Default implementation of {@link MendelianSearch}.
@@ -65,15 +62,125 @@ public class DefaultMendelianSearch implements MendelianSearch
     private PatientRepository pr;
 
     @Inject
-    private PermissionsManager pm;
+    private PatientViewFactory pvf;
 
-    private String phenotypeString = "phenotype";
-
-    @SuppressWarnings("unchecked")
     @Override
-    public JSONObject search(MendelianSearchRequest request)
+    public List<PatientView> search(MendelianSearchRequest request)
     {
-        Map<String, JSONArray> matchingVariants;
+        Set<String> allIds = this.findValidIds();
+        Map<String, List<GAVariant>> matchingGenotype = this.findIdsMatchingGenotype(request, allIds);
+        this.convertExternalKeys(matchingGenotype);
+        this.convertExeternalIDSetToInternal(allIds);
+
+        Set<String> matchingPhenotype = this.findIdsMatchingPhenotype(request, allIds);
+
+        Set<String> matchedIds = new HashSet<String>(matchingGenotype.keySet());
+        matchedIds.retainAll(matchingPhenotype);
+
+        Map<String, Double> scores = this.scorePatientPhenotypes(request, matchedIds);
+
+        List<PatientView> views = this.pvf.createPatientViews(matchedIds, matchingGenotype, scores);
+
+        return views;
+    }
+
+    @Override
+    public Map<String, Object> getOverview(MendelianSearchRequest request)
+    {
+        Map<String, Object> result = null;
+        if (request.getPhenotypeMatching().equals("fuzzy")) {
+            result = this.getFuzzyOverview(request);
+        }
+        return result;
+    }
+
+    private Map<String, Object> getFuzzyOverview(MendelianSearchRequest request)
+    {
+        Set<String> allIds = this.findValidIds();
+        Map<String, List<GAVariant>> matchingGenotype = this.findIdsMatchingGenotype(request, allIds);
+
+        this.convertExternalKeys(matchingGenotype);
+        this.convertExeternalIDSetToInternal(allIds);
+
+        Set<String> matchingIds = matchingGenotype.keySet();
+        allIds.removeAll(matchingIds);
+        Set<String> nonMatchingIds = allIds;
+
+        Map<String, Double> matchingScores = this.scorePatientPhenotypes(request, matchingIds);
+        Map<String, Double> nonMatchingScores = this.scorePatientPhenotypes(request, nonMatchingIds);
+
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("withGene", matchingScores.values());
+        result.put("withoutGene", nonMatchingScores.values());
+
+        return result;
+    }
+
+    private void convertExeternalIDSetToInternal(Set<String> ids)
+    {
+        Set<String> externalIds = new HashSet<String>(ids);
+        for (String external : externalIds) {
+            String internal = this.getPatientInternalFromExternal(external);
+            ids.remove(external);
+            ids.add(internal);
+        }
+
+    }
+
+    private void convertExternalKeys(Map<String, List<GAVariant>> matchingGenotype)
+    {
+
+        Set<String> keySet = new HashSet<String>(matchingGenotype.keySet());
+        for (String external : keySet) {
+            String newKey = this.getPatientInternalFromExternal(external);
+            List<GAVariant> newValue = matchingGenotype.get(external);
+            matchingGenotype.remove(external);
+            matchingGenotype.put(newKey, newValue);
+        }
+    }
+
+    private Map<String, Double> scorePatientPhenotypes(MendelianSearchRequest request, Set<String> ids)
+    {
+        @SuppressWarnings("unchecked")
+        List<String> hpoIds = (List<String>) request.get("phenotype");
+
+        // Convert the request list of HPO ids into OntologyTerms
+        List<OntologyTerm> phenotype = new ArrayList<OntologyTerm>();
+        for (String termId : hpoIds) {
+            phenotype.add(this.om.resolveTerm(termId));
+        }
+        return this.patientPhenotypeScorer.getScoresById(phenotype, ids);
+    }
+
+    /**
+     * Filters the inputed set of Ids to those which match the input request
+     *
+     * @param request Phenotype filter parameters should be present in the request
+     * @param ids The set of all valid Ids which may be returned.
+     * @return
+     */
+    private Set<String> findIdsMatchingPhenotype(MendelianSearchRequest request, Set<String> ids)
+    {
+        String matchingType = (String) request.get("phenotypeMatching");
+        if (matchingType == "fuzzy") {
+            return ids;
+        } else if (matchingType == "strict") {
+            // TODO:figure out strict phenotype matching
+        }
+        return ids;
+    }
+
+    /**
+     * Finds a map of Ids to variants which pass the filters specified in the request.
+     *
+     * @param request Variant filter parameters should be specified in the request
+     * @param ids The set of all valid Ids which may be returned.
+     * @return A map of patient ids to variants
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, List<GAVariant>> findIdsMatchingGenotype(MendelianSearchRequest request, Set<String> ids)
+    {
+        Map<String, List<GAVariant>> matchingVariants;
         String variantSearchKey = "variantSearch";
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
         if (request.get(variantSearchKey) != null && (int) request.get(variantSearchKey) == 1) {
@@ -82,134 +189,29 @@ public class DefaultMendelianSearch implements MendelianSearch
                     (int) request.get("varPos"),
                     (String) request.get("varRef"), (String) request.get("varAlt"));
         } else {
-            matchingVariants =
-                this.variantStore.getIndividualsWithGene((String) request.get("geneSymbol"),
-                    (List<String>) request.get("variantEffects"),
-                    (Map<String, Double>) request.get("alleleFrequencies"));
+            matchingVariants = this.variantStore.getIndividualsWithGene(
+                (String) request.get("geneSymbol"),
+                (List<String>) request.get("variantEffects"),
+                (Map<String, Double>) request.get("alleleFrequencies"));
         }
-
-        Set<String> matchingIds = new HashSet<String>(matchingVariants.keySet());
-
-        // Find the set of all IDs or patients in PhenoTips (with variants?)
-        Set<String> nonMatchingIds = this.getNonMatchingIds(matchingIds);
-
-        // Generate variant result for non-matching ids
-        Map<String, JSONArray> nonMatchingVariants = new HashMap<String, JSONArray>();
+        if ((int) request.get("matchGene") == 1) {
+            return matchingVariants;
+        }
+        Set<String> nonMatchingIds = new HashSet<String>(ids);
+        nonMatchingIds.removeAll(matchingVariants.keySet());
+        Map<String, List<GAVariant>> nonMatchingVariants = new HashMap<String, List<GAVariant>>();
         for (String id : nonMatchingIds) {
             nonMatchingVariants.put(id, this.variantStore.getTopHarmfullVariants(id, 5));
         }
-
-        // HACK: variant store returns external ids not internal IDS must convert
-        Set<String> keySet = new HashSet<String>(matchingVariants.keySet());
-        for (String external : keySet) {
-            String newKey = this.getPatientInternalFromExternal(external);
-            JSONArray newValue = matchingVariants.get(external);
-            matchingVariants.remove(external);
-            matchingVariants.put(newKey, newValue);
-        }
-        keySet = new HashSet<String>(nonMatchingVariants.keySet());
-        for (String external : keySet) {
-            String newKey = this.getPatientInternalFromExternal(external);
-            JSONArray newValue = nonMatchingVariants.get(external);
-            nonMatchingVariants.remove(external);
-            nonMatchingVariants.put(newKey, newValue);
-        }
-        keySet = new HashSet<String>(matchingIds);
-        for (String external : keySet) {
-            String internal = this.getPatientInternalFromExternal(external);
-            matchingIds.remove(external);
-            matchingIds.add(internal);
-        }
-        keySet = new HashSet<String>(nonMatchingIds);
-        for (String external : keySet) {
-            String internal = this.getPatientInternalFromExternal(external);
-            nonMatchingIds.remove(external);
-            nonMatchingIds.add(internal);
-        }
-        // End of Hack
-
-        // Convert the request list of HPO ids into OntologyTerms
-        List<OntologyTerm> phenotype = new ArrayList<OntologyTerm>();
-        List<String> hpoIds = (List<String>) request.get(this.phenotypeString);
-        for (String termId : hpoIds) {
-            phenotype.add(this.om.resolveTerm(termId));
-        }
-
-        Set<Patient> matchingPatients = new HashSet<Patient>();
-        Set<Patient> nonMatchingPatients = new HashSet<Patient>();
-        for (String patientId : matchingIds) {
-            matchingPatients.add(this.pr.getPatientById(patientId));
-        }
-        for (String patientId : nonMatchingIds) {
-            nonMatchingPatients.add(this.pr.getPatientById(patientId));
-
-        }
-        Map<Patient, Double> matchingScores = this.patientPhenotypeScorer.getScores(phenotype, matchingPatients);
-        Map<Patient, Double> nonMatchingScores = this.patientPhenotypeScorer.getScores(phenotype, nonMatchingPatients);
-
-        // Create a complex JSON array that will be returned to the user. TODO: This is far from ideal. Each patient
-        // should be represented by a
-        // view similar to the PatientSimilarity view in patient-network which will be able to handle things like
-        // access levels
-        JSONObject result = new JSONObject();
-        result.element("matching", this.generateResult(matchingPatients, matchingVariants, matchingScores));
-        result.element("nonMatching", this.generateResult(nonMatchingPatients, nonMatchingVariants, nonMatchingScores));
-
-        return result;
+        return nonMatchingVariants;
     }
 
-    private JSONArray generateResult(Set<Patient> patients, Map<String, JSONArray> variants,
-        Map<Patient, Double> phenotypeScores)
+    /**
+     * @return a list of all valid patient ids to use in the search
+     */
+    private Set<String> findValidIds()
     {
-        JSONArray result = new JSONArray();
-
-        if (patients.size() == 0 || variants.size() == 0) {
-            return result;
-        }
-
-        for (Patient patient : patients) {
-            if (patient == null) {
-                continue;
-            }
-            JSONObject patientResult = new JSONObject();
-            String patientIDKey = "patientID";
-            if (patient.getExternalId() == null || "".equals(patient.getExternalId())) {
-                patientResult.element(patientIDKey, "-");
-            } else {
-                patientResult.element(patientIDKey, patient.getExternalId());
-            }
-            patientResult.element("variants", variants.get(patient.getId()));
-            patientResult.element("phenotypeScore", phenotypeScores.get(patient));
-            List<String> dPhenotype = new ArrayList<String>();
-            if (!patient.getFeatures().isEmpty()) {
-                for (Feature feature : patient.getFeatures()) {
-                    if (!feature.isPresent()) {
-                        continue;
-                    }
-                    OntologyTerm term = this.om.resolveTerm(feature.getId());
-                    if (term != null) {
-                        dPhenotype.add(term.getName());
-                    }
-                }
-            }
-            patientResult.element(this.phenotypeString, dPhenotype);
-            patientResult.element("owner", this.pm.getPatientAccess(patient).getOwner().getUsername());
-            result.add(patientResult);
-        }
-        return result;
-
-    }
-
-    private Set<String> getNonMatchingIds(Set<String> matchingIds)
-    {
-        Set<String> allIds = new HashSet<String>(this.variantStore.getIndividuals());
-        allIds.removeAll(matchingIds);
-        return allIds;
-    }
-
-    private String getPatientExternalFromInternal(String internal)
-    {
-        return this.pr.getPatientById(internal).getExternalId();
+        return new HashSet<String>(this.variantStore.getIndividuals());
     }
 
     private String getPatientInternalFromExternal(String external)
@@ -220,4 +222,5 @@ public class DefaultMendelianSearch implements MendelianSearch
         }
         return this.pr.getPatientByExternalId(external).getId();
     }
+
 }

@@ -19,40 +19,20 @@
  */
 package org.phenotips.mendelianSearch;
 
-import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
-
 import org.xwiki.component.annotation.Role;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * The main controller for the Mendelian Search Application (aka Gene Genie).
- *
- * @version $Id$
- */
+import org.ga4gh.GAVariant;
+
 @Role
-public interface MendelianSearch
+public interface PatientViewFactory
 {
-    /**
-     * The basic search method.
-     *
-     * @param request the query
-     * @return returns a list of patient views
-     */
-    List<PatientView> search(MendelianSearchRequest request);
+    PatientView createPatientView(String id, List<GAVariant> variants, double score);
 
-    /**
-     * A context specific method which will return different maps depending on the values stored in the request.
-     * Currently supported are:
-     * <ul>
-     * <li>If request fuzzy phenotype searching is requested then respone will be a map with two keys "withGene" and
-     * "withoutGene" which map to arrays of double scores</li>
-     * </ul>
-     *
-     * @param request the query
-     * @return Depending on the request different objects will be returned.
-     */
-    Map<String, Object> getOverview(MendelianSearchRequest request);
+    List<PatientView> createPatientViews(Set<String> ids, Map<String, List<GAVariant>> variantMap,
+        Map<String, Double> scores);
 
 }
