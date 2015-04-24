@@ -21,6 +21,7 @@ package org.phenotips.mendelianSearch.script;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * An object representation of the query made by a user interacting witht the mendelian search application. Just wraps a
@@ -37,6 +38,8 @@ import java.util.Map;
 public class MendelianSearchRequest
 {
     private Map<String, Object> requestParams;
+
+    private String id;
 
     /**
      * Constructor for a new request.
@@ -67,5 +70,15 @@ public class MendelianSearchRequest
     public String getPhenotypeMatching()
     {
         return (String) this.requestParams.get("phenotypeMatching");
+    }
+
+    public String getId()
+    {
+        return id;
+    }
+
+    public void setId(String id)
+    {
+        this.id = id;
     }
 }

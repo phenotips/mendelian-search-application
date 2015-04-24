@@ -17,10 +17,13 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.phenotips.mendelianSearch;
+package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.data.Patient;
 import org.phenotips.data.PatientRepository;
+import org.phenotips.mendelianSearch.MendelianSearch;
+import org.phenotips.mendelianSearch.PatientView;
+import org.phenotips.mendelianSearch.PatientViewFactory;
 import org.phenotips.mendelianSearch.phenotype.PatientPhenotypeScorer;
 import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 import org.phenotips.ontology.OntologyManager;

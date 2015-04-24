@@ -20,6 +20,7 @@
 package org.phenotips.mendelianSearch.script;
 
 import org.phenotips.mendelianSearch.MendelianSearch;
+import org.phenotips.mendelianSearch.MendelianSearchRequestFactory;
 import org.phenotips.mendelianSearch.PatientView;
 
 import org.xwiki.component.annotation.Component;
@@ -55,28 +56,8 @@ public class MendelianSearchScriptService implements ScriptService
     @Inject
     private MendelianSearch ms;
 
-    // The keys
-    private String geneKey = "geneSymbol";
-
-    private String phenotypeKey = "phenotype";
-
-    private String variantEffectsKey = "variantEffects";
-
-    private String alleleFrequenciesKey = "alleleFrequencies";
-
-    private String varSearchKey = "variantSearch";
-
-    private String chrKey = "varChr";
-
-    private String posKey = "varPos";
-
-    private String refKey = "varRef";
-
-    private String altKey = "varAlt";
-
-    private String matchGeneKey = "matchGene";
-
-    private String matchPhenotypeKey = "matchPhenotype";
+    @Inject
+    private MendelianSearchRequestFactory requestFactory;
 
     /**
      * Get a list of patients matching the specified input parameters.
@@ -86,7 +67,7 @@ public class MendelianSearchScriptService implements ScriptService
      */
     public JSONArray search(XWikiRequest rawRequest)
     {
-        MendelianSearchRequest request = this.buildMendelianSearchRequest(rawRequest);
+        MendelianSearchRequest request = this.requestFactory.makeRequest(rawRequest);
 
         List<PatientView> views = this.ms.search(request);
 
@@ -105,7 +86,7 @@ public class MendelianSearchScriptService implements ScriptService
      */
     public JSONObject getOverview(XWikiRequest rawRequest)
     {
-        MendelianSearchRequest request = this.buildMendelianSearchRequest(rawRequest);
+        MendelianSearchRequest request = this.requestFactory.makeRequest(rawRequest);
 
         Map<String, Object> overview = this.ms.getOverview(request);
 
@@ -128,28 +109,6 @@ public class MendelianSearchScriptService implements ScriptService
 
     }
 
-    private MendelianSearchRequest buildMendelianSearchRequest(XWikiRequest in)
-    {
-        MendelianSearchRequest request = new MendelianSearchRequest();
-        request.set(this.geneKey, in.getParameter("gene"));
-        request.set(this.phenotypeKey, Arrays.asList(in.getParameterValues(this.phenotypeKey)));
-        request.set(this.variantEffectsKey, Arrays.asList(in.getParameterValues("variant-effect")));
-
-        Map<String, String> alleleFrequencies = new HashMap<String, String>();
-        alleleFrequencies.put("PhenomeCentral", in.getParameter("allele-freq-pc"));
-        alleleFrequencies.put("EXAC", in.getParameter("allele-freq-exac"));
-        request.set(this.alleleFrequenciesKey, alleleFrequencies);
-        request.set(this.chrKey, in.getParameter(this.chrKey));
-        request.set(this.posKey, Integer.parseInt(in.getParameter(this.posKey)));
-        request.set(this.refKey, in.getParameter(this.refKey));
-        request.set(this.altKey, in.getParameter(this.altKey));
-        request.set(this.varSearchKey, Integer.parseInt(in.getParameter(this.varSearchKey)));
-        request.set("phenotypeMatching", in.getParameter("phenotype-matching"));
-        request.set(this.matchGeneKey, Integer.parseInt(in.getParameter(this.matchGeneKey)));
-        request.set(this.matchPhenotypeKey, Integer.parseInt(in.getParameter(this.matchPhenotypeKey)));
-
-        return request;
-    }
 
     private JSONArray convertViewsToJSONArray(List<PatientView> views)
     {
