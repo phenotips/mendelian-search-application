@@ -364,6 +364,10 @@ $xwiki.ssx.use('data.MendelianResults')##
           heading : '',
           display : _this.displayResultExpandTriangle.bind(_this)
         },
+        "geneStatus" : {
+          heading : '',
+          display : _this.displayResultGeneStatus.bind(_this)
+        },
         "patientId" : {
           heading : _this.strings["patientId.heading"],
           display : _this.displayResultPatientId.bind(_this),
@@ -445,9 +449,27 @@ $xwiki.ssx.use('data.MendelianResults')##
       return new Element('td').update('&lt;div class="triRight"&gt;&lt;/div&gt;');
     },
 
+    displayResultGeneStatus : function(data) {
+    	var status = data.geneStatus;
+    	var cell = new Element('td');
+    	if (status == "candidate") {
+    		cell.update('&lt;span class="fa fa-plus-circle" title="' + this.strings["candidateGene.title"] +'"&gt;&lt;/span&gt;');
+    	} else if (status == "solved") {
+    		cell.update('&lt;span class="fa fa-plus-circle" title="' + this.strings["solvedGene.title"] +'"&gt;&lt;/span&gt;');
+    	} else if (status == "rejected") {
+    		cell.update('&lt;span class="fa fa-minus-circle" title="' + this.strings["rejectedGene.title"] +'"&gt;&lt;/span&gt;');
+    	}
+    	return cell;
+    },
+
     displayResultPatientId : function(data) {
       var cell = new Element('td');
-      cell.insert(new Element('p').update(data.patientId));
+      var patientURL = data.patientURL;
+      var link = new Element('a', {'href' : patientURL, 'target' : '__blank'}).update(data.patientId);
+      link.observe('click', function(){
+      	event.stopPropagation();
+      });
+      cell.insert(link);
       return cell;
     },
 
@@ -606,7 +628,11 @@ $xwiki.ssx.use('data.MendelianResults')##
       "positionPhrase"  : "__CHROMOSOME__:__START__-__STOP__",
       "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
       'variantSearchButton'   : "Redo search with this variant",
-      'control.resultsPerPage.label' : 'Results per page: '
+      'control.resultsPerPage.label' : 'Results per page: ',
+      "candidateGene.title"	: "The queried gene was listed as a candidate gene for this patient.",
+      "solvedGene.title"	: "The queried gene was listed as the solved gene for this patient",
+      "rejectedGene.title"	: "The queried gene was listed as a rejected gene for this patient."
+
     },
 
     Utils : {

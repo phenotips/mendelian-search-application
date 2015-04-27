@@ -19,6 +19,8 @@
  */
 package org.phenotips.mendelianSearch;
 
+import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
+
 import org.xwiki.component.annotation.Role;
 
 import java.util.List;
@@ -30,9 +32,9 @@ import org.ga4gh.GAVariant;
 @Role
 public interface PatientViewFactory
 {
-    PatientView createPatientView(String id, List<GAVariant> variants, double score);
+    PatientView createPatientView(String id, List<GAVariant> variants, double score, MendelianSearchRequest request);
 
     List<PatientView> createPatientViews(Set<String> ids, Map<String, List<GAVariant>> variantMap,
-        Map<String, Double> scores);
+        Map<String, Double> scores, MendelianSearchRequest request);
 
 }
