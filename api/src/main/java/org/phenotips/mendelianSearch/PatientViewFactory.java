@@ -20,6 +20,7 @@
 package org.phenotips.mendelianSearch;
 
 import org.xwiki.component.annotation.Role;
+import org.xwiki.component.phase.Initializable;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Set;
 import org.ga4gh.GAVariant;
 
 @Role
-public interface PatientViewFactory
+public interface PatientViewFactory extends Initializable
 {
     PatientView createPatientView(String id, List<GAVariant> variants, double score);
 

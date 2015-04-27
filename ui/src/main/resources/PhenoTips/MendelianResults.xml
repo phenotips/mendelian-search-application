@@ -447,7 +447,12 @@ $xwiki.ssx.use('data.MendelianResults')##
 
     displayResultPatientId : function(data) {
       var cell = new Element('td');
-      cell.insert(new Element('p').update(data.patientId));
+      var patientURL = data.patientURL;
+      var link = new Element('a', {'href' : patientURL, 'target' : '__blank'}).update(data.patientId);
+      link.observe('click', function(){
+        event.stopPropagation();
+      });
+      cell.insert(link);
       return cell;
     },
 

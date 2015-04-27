@@ -31,6 +31,8 @@ import org.phenotips.mendelianSearch.PatientViewFactory;
 import org.phenotips.ontology.OntologyManager;
 
 import org.xwiki.component.annotation.Component;
+import org.xwiki.component.phase.InitializationException;
+import org.xwiki.context.Execution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.ga4gh.GAVariant;
+
+import com.xpn.xwiki.XWiki;
+import com.xpn.xwiki.XWikiContext;
 
 @Component
 @Singleton
@@ -60,7 +65,21 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     @Inject
     private OntologyManager om;
 
+    @Inject
+    private Execution execution;
+
+    private XWikiContext context;
+
+    private XWiki xWiki;
+
     private final static String undisclosed_marker = "?";
+
+    @Override
+    public void initialize() throws InitializationException
+    {
+        this.context = (XWikiContext) this.execution.getContext().getProperty("xwikicontext");
+        this.xWiki = context.getWiki();
+    }
 
     @Override
     public PatientView createPatientView(String id, List<GAVariant> variants, double phenotypeScore)
@@ -85,7 +104,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     @Override
     public List<PatientView> createPatientViews(Set<String> ids, Map<String, List<GAVariant>> variantMap,
         Map<String, Double> scores)
-        {
+    {
         List<PatientView> result = new ArrayList<PatientView>();
         if (ids == null || ids.isEmpty()) {
             return result;
@@ -96,7 +115,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
             result.add(this.createPatientView(id, variants, phenotypeScore));
         }
         return result;
-        }
+    }
 
     private PatientView generateRestrictedPatientView(Patient patient, List<GAVariant> variants, double phenotypeScore)
     {
@@ -120,6 +139,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         List<String> phenotype = this.getDisplayedPatientPhenotype(patient);
 
         view.setPatientId(id);
+        view.setPatientURL(xWiki.getURL(this.pr.getPatientById(id).getDocument(),"view", this.context));
         view.setOwner(owner);
         view.setPhenotype(phenotype);
         view.setPhenotypeScore(phenotypeScore);
@@ -146,4 +166,6 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         PatientAccess pa = this.pm.getPatientAccess(patient);
         return pa.hasAccessLevel(this.viewAccess) && (pa.getVisibility().compareTo(new HiddenVisibility()) > 0);
     }
+
+
 }
