@@ -30,24 +30,26 @@ import org.phenotips.data.permissions.PermissionsManager;
 import org.phenotips.data.permissions.internal.visibility.HiddenVisibility;
 import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.PatientViewFactory;
+
 import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
-import org.phenotips.ontology.OntologyManager;
 
 import org.xwiki.component.annotation.Component;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.ga4gh.GAVariant;
 
-import net.sf.json.JSONObject;
+import com.xpn.xwiki.XWiki;
+import com.xpn.xwiki.XWikiContext;
 
 @Component
 @Singleton
@@ -64,7 +66,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     private PatientRepository pr;
 
     @Inject
-    private OntologyManager om;
+    private Provider<XWikiContext> xcontext;
 
 
     private final static String undisclosed_marker = "?";
@@ -92,7 +94,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     @Override
     public List<PatientView> createPatientViews(Set<String> ids, Map<String, List<GAVariant>> variantMap,
         Map<String, Double> scores, MendelianSearchRequest request)
-        {
+    {
         List<PatientView> result = new ArrayList<PatientView>();
         if (ids == null || ids.isEmpty()) {
             return result;
@@ -103,7 +105,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
             result.add(this.createPatientView(id, variants, phenotypeScore, request));
         }
         return result;
-        }
+    }
 
     private PatientView generateRestrictedPatientView(Patient patient, List<GAVariant> variants, double phenotypeScore, MendelianSearchRequest request)
     {
@@ -127,12 +129,22 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         List<String> phenotype = this.getDisplayedPatientPhenotype(patient);
 
         view.setPatientId(id);
+        view.setPatientURL(this.getPatientURL(patient));
         view.setGeneStatus(this.getPatientGeneStatus(patient, (String) request.get("geneSymbol")));
         view.setOwner(owner);
+
         view.setPhenotype(phenotype);
         view.setPhenotypeScore(phenotypeScore);
         view.setVariants(variants);
+
         return view;
+    }
+
+    private String getPatientURL(Patient patient)
+    {
+        XWiki xWiki = this.xcontext.get().getWiki();
+        return xWiki.getURL(patient.getDocument(), "view",
+            this.xcontext.get());
     }
 
     private List<String> getDisplayedPatientPhenotype(Patient patient)

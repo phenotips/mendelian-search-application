@@ -467,7 +467,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       var patientURL = data.patientURL;
       var link = new Element('a', {'href' : patientURL, 'target' : '__blank'}).update(data.patientId);
       link.observe('click', function(){
-      	event.stopPropagation();
+        event.stopPropagation();
       });
       cell.insert(link);
       return cell;

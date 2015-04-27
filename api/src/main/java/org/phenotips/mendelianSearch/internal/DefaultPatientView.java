@@ -35,6 +35,8 @@ public class DefaultPatientView implements PatientView
 
     private String patientID;
 
+    private String patientURL;
+
     private String owner;
 
     private double phenotypeScore;
@@ -57,6 +59,7 @@ public class DefaultPatientView implements PatientView
         JSONObject result = new JSONObject();
 
         result.element("patientId", this.patientID);
+        result.element("patientURL", this.patientURL);
         result.element("owner", this.owner);
         result.element("phenotypeScore", this.phenotypeScore);
         result.element("geneStatus", this.geneStatus);
@@ -159,4 +162,13 @@ public class DefaultPatientView implements PatientView
 
     }
 
+    public String getPatientURL()
+    {
+        return patientURL;
+    }
+
+    public void setPatientURL(String patientURL)
+    {
+        this.patientURL = patientURL;
+    }
 }

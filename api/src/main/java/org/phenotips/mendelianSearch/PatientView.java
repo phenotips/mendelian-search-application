@@ -66,6 +66,8 @@ public interface PatientView
 
     void setPatientId(String id);
 
+    void setPatientURL(String patientURL);
+
     void setOwner(String owner);
 
     void setPhenotype(List<String> phenotype);
