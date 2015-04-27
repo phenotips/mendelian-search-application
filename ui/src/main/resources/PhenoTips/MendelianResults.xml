@@ -735,7 +735,8 @@ $xwiki.ssx.use('data.MendelianResults')##
 
   var boxWidth = 20;
 
-  var y = d3.scale.linear().range([height,0]).domain([0,1]);
+  var maxY = findMaxYDomain(data);
+  var y =d3.scale.linear().range([height,0]).domain([0,maxY]);
   var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
 
   var xAxis = d3.svg.axis()
@@ -976,6 +977,12 @@ $xwiki.ssx.use('data.MendelianResults')##
     if (!N) return null;
     var modifier = Math.pow(10,D);
     return Math.round(N*modifier)/modifier;
+  }
+  function findMaxYDomain(data){
+    var allValues = d3.values(data).reduce(function(a,b){
+      return a.concat(b);
+    });
+    return (d3.max(allValues) + 0.1) / 1.1;
   }
 };</code>
     </property>
