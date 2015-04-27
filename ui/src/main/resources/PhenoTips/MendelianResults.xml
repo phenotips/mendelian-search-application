@@ -364,6 +364,10 @@ $xwiki.ssx.use('data.MendelianResults')##
           heading : '',
           display : _this.displayResultExpandTriangle.bind(_this)
         },
+        "geneStatus" : {
+          heading : '',
+          display : _this.displayResultGeneStatus.bind(_this)
+        },
         "patientId" : {
           heading : _this.strings["patientId.heading"],
           display : _this.displayResultPatientId.bind(_this),
@@ -443,6 +447,19 @@ $xwiki.ssx.use('data.MendelianResults')##
     //the display result functions all return a td element that will be used to display the upper level data for each patient
     displayResultExpandTriangle : function() {
       return new Element('td').update('&lt;div class="triRight"&gt;&lt;/div&gt;');
+    },
+
+    displayResultGeneStatus : function(data) {
+    	var status = data.geneStatus;
+    	var cell = new Element('td');
+    	if (status == "candidate") {
+    		cell.update('&lt;span class="fa fa-plus-circle" title="' + this.strings["candidateGene.title"] +'"&gt;&lt;/span&gt;');
+    	} else if (status == "solved") {
+    		cell.update('&lt;span class="fa fa-plus-circle" title="' + this.strings["solvedGene.title"] +'"&gt;&lt;/span&gt;');
+    	} else if (status == "rejected") {
+    		cell.update('&lt;span class="fa fa-minus-circle" title="' + this.strings["rejectedGene.title"] +'"&gt;&lt;/span&gt;');
+    	}
+    	return cell;
     },
 
     displayResultPatientId : function(data) {
@@ -611,7 +628,11 @@ $xwiki.ssx.use('data.MendelianResults')##
       "positionPhrase"  : "__CHROMOSOME__:__START__-__STOP__",
       "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
       'variantSearchButton'   : "Redo search with this variant",
-      'control.resultsPerPage.label' : 'Results per page: '
+      'control.resultsPerPage.label' : 'Results per page: ',
+      "candidateGene.title"	: "The queried gene was listed as a candidate gene for this patient.",
+      "solvedGene.title"	: "The queried gene was listed as the solved gene for this patient",
+      "rejectedGene.title"	: "The queried gene was listed as a rejected gene for this patient."
+
     },
 
     Utils : {
@@ -740,7 +761,8 @@ $xwiki.ssx.use('data.MendelianResults')##
 
   var boxWidth = 20;
 
-  var y = d3.scale.linear().range([height,0]).domain([0,1]);
+  var maxY = findMaxYDomain(data);
+  var y =d3.scale.linear().range([height,0]).domain([0,maxY]);
   var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
 
   var xAxis = d3.svg.axis()
@@ -981,6 +1003,12 @@ $xwiki.ssx.use('data.MendelianResults')##
     if (!N) return null;
     var modifier = Math.pow(10,D);
     return Math.round(N*modifier)/modifier;
+  }
+  function findMaxYDomain(data){
+    var allValues = d3.values(data).reduce(function(a,b){
+      return a.concat(b);
+    });
+    return (d3.max(allValues) + 0.1) / 1.1;
   }
 };</code>
     </property>

@@ -30,12 +30,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.inject.Singleton;
+
 import com.xpn.xwiki.web.XWikiRequest;
 
 /**
  * @Version $Id$
  */
 @Component
+@Singleton
 public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequestFactory
 {
     // The search keys

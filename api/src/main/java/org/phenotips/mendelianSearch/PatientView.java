@@ -75,4 +75,8 @@ public interface PatientView
     void setVariants(List<GAVariant> variants);
 
     void setPhenotypeScore(double phenotypeScore);
+
+    void setGeneStatus(String newStatus);
+
+    String getGeneStatus();
 }

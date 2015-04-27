@@ -45,6 +45,8 @@ public class DefaultPatientView implements PatientView
 
     private List<GAVariant> variants;
 
+    private String geneStatus;
+
     @Override
     public String getType()
     {
@@ -60,6 +62,7 @@ public class DefaultPatientView implements PatientView
         result.element("patientURL", this.patientURL);
         result.element("owner", this.owner);
         result.element("phenotypeScore", this.phenotypeScore);
+        result.element("geneStatus", this.geneStatus);
 
         JSONArray variantJSONs = new JSONArray();
         if (!this.variants.isEmpty()) {
@@ -126,6 +129,18 @@ public class DefaultPatientView implements PatientView
     public void setPhenotypeScore(double phenotypeScore)
     {
         this.phenotypeScore = phenotypeScore;
+    }
+
+    @Override
+    public void setGeneStatus(String newStatus)
+    {
+        this.geneStatus = newStatus;
+    }
+
+    @Override
+    public String getGeneStatus()
+    {
+        return this.geneStatus;
     }
 
     @Override

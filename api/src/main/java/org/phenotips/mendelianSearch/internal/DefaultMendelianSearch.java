@@ -82,7 +82,7 @@ public class DefaultMendelianSearch implements MendelianSearch
 
         Map<String, Double> scores = this.scorePatientPhenotypes(request, matchedIds);
 
-        List<PatientView> views = this.pvf.createPatientViews(matchedIds, matchingGenotype, scores);
+        List<PatientView> views = this.pvf.createPatientViews(matchedIds, matchingGenotype, scores, request);
 
         return views;
     }
