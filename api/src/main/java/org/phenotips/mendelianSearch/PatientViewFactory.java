@@ -29,7 +29,7 @@ import java.util.Set;
 import org.ga4gh.GAVariant;
 
 @Role
-public interface PatientViewFactory extends Initializable
+public interface PatientViewFactory
 {
     PatientView createPatientView(String id, List<GAVariant> variants, double score);
 

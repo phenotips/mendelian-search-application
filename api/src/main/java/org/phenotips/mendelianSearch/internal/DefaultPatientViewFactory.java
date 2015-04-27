@@ -28,11 +28,8 @@ import org.phenotips.data.permissions.PermissionsManager;
 import org.phenotips.data.permissions.internal.visibility.HiddenVisibility;
 import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.PatientViewFactory;
-import org.phenotips.ontology.OntologyManager;
 
 import org.xwiki.component.annotation.Component;
-import org.xwiki.component.phase.InitializationException;
-import org.xwiki.context.Execution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +38,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.ga4gh.GAVariant;
@@ -63,23 +61,9 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     private PatientRepository pr;
 
     @Inject
-    private OntologyManager om;
-
-    @Inject
-    private Execution execution;
-
-    private XWikiContext context;
-
-    private XWiki xWiki;
+    private Provider<XWikiContext> xcontext;
 
     private final static String undisclosed_marker = "?";
-
-    @Override
-    public void initialize() throws InitializationException
-    {
-        this.context = (XWikiContext) this.execution.getContext().getProperty("xwikicontext");
-        this.xWiki = context.getWiki();
-    }
 
     @Override
     public PatientView createPatientView(String id, List<GAVariant> variants, double phenotypeScore)
@@ -139,12 +123,21 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         List<String> phenotype = this.getDisplayedPatientPhenotype(patient);
 
         view.setPatientId(id);
-        view.setPatientURL(xWiki.getURL(this.pr.getPatientById(id).getDocument(),"view", this.context));
+        view.setPatientURL(this.getPatientURL(patient));
         view.setOwner(owner);
+
         view.setPhenotype(phenotype);
         view.setPhenotypeScore(phenotypeScore);
         view.setVariants(variants);
+
         return view;
+    }
+
+    private String getPatientURL(Patient patient)
+    {
+        XWiki xWiki = this.xcontext.get().getWiki();
+        return xWiki.getURL(patient.getDocument(), "view",
+            this.xcontext.get());
     }
 
     private List<String> getDisplayedPatientPhenotype(Patient patient)
