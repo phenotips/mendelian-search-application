@@ -684,13 +684,11 @@ $xwiki.ssx.use('data.MendelianResults')##
       var indexOfSeparator = name.indexOf(';')
       var shortName;
       var longName;
-      if (indexOfSeparator &gt; 0) {
-        shortName = name.substring(indexOfPrettyName, indexOfSeparator);
-        longName = name.replace(';;', ';');
-      } else {
-        shortName = name;
-        longName = name;
-      }
+      indexOfSeparator = (indexOfSeparator > 0) ? indexOfSeparator : name.length;
+
+      shortName = name.substring(indexOfPrettyName, indexOfSeparator);
+      longName = name.replace(';;', ';');
+
       if (id) {
         var idLink = new Element('a', {
           'target': '_blank',
