@@ -22,13 +22,12 @@ package org.phenotips.mendelianSearch.script;
 import org.phenotips.mendelianSearch.MendelianSearch;
 import org.phenotips.mendelianSearch.MendelianSearchRequestFactory;
 import org.phenotips.mendelianSearch.PatientView;
+import org.phenotips.mendelianSearch.internal.MendelianSearchRequest;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.script.service.ScriptService;
 import org.xwiki.stability.Unstable;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

@@ -19,10 +19,9 @@
  */
 package org.phenotips.mendelianSearch;
 
-import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
+import org.phenotips.mendelianSearch.internal.MendelianSearchRequest;
 
 import org.xwiki.component.annotation.Role;
-import org.xwiki.component.phase.Initializable;
 
 import java.util.List;
 import java.util.Map;

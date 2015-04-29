@@ -25,7 +25,6 @@ import org.phenotips.mendelianSearch.MendelianSearch;
 import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.PatientViewFactory;
 import org.phenotips.mendelianSearch.phenotype.PatientPhenotypeScorer;
-import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 import org.phenotips.ontology.OntologyManager;
 import org.phenotips.ontology.OntologyTerm;
 import org.phenotips.variantStoreIntegration.VariantStoreService;

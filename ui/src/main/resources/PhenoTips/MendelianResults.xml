@@ -208,15 +208,15 @@ $xwiki.ssx.use('data.MendelianResults')##
       <cache>default</cache>
     </property>
     <property>
-      <code>var PhenoTips = (function (PhenoTips) {
+      <code>var PhenoTips = (function(PhenoTips) {
   var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
   widgets.MendelianLivetable = Class.create({
-    
-    mendelianLiveTableResultsURL : "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
-    DEFAULT_RESULTS_PER_PAGE : 20,
-    DEFAULT_PAGE : 1,
 
-    initialize : function(queryForm, container){
+    mendelianLiveTableResultsURL: "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
+    DEFAULT_RESULTS_PER_PAGE: 20,
+    DEFAULT_PAGE: 1,
+
+    initialize: function(queryForm, container) {
       this.queryForm = queryForm;
       this.container = container;
       this.container.update('');
@@ -224,20 +224,26 @@ $xwiki.ssx.use('data.MendelianResults')##
       this.page = this.DEFAULT_PAGE;
       this.resultsPerPage = this.DEFAULT_RESULTS_PER_PAGE;
 
-      this.tableHeading = new Element('h4', {'class' : 'table-heading'}).update(this.queryForm.getInputs('hidden', 'title')[0].getValue());
+      this.tableHeading = new Element('h4', {
+        'class': 'table-heading'
+      }).update(this.queryForm.getInputs('hidden', 'title')[0].getValue());
       this.container.insert(this.tableHeading);
-      
-      this.resultsTable = new Element('table', {'class' : 'mendelian-results-table'});
+
+      this.resultsTable = new Element('table', {
+        'class': 'mendelian-results-table'
+      });
       this.container.insert(this.resultsTable);
-      this.tableControls = new Element('div', {'class' : 'mendelian-livetable-controls'});
+      this.tableControls = new Element('div', {
+        'class': 'mendelian-livetable-controls'
+      });
       this.container.insert(this.tableControls);
       this.launchSearch();
     },
 
-    initializeControls : function(){
+    initializeControls: function() {
       var numberOfResults = this._data.length;
-      var fromResult = this.resultsPerPage*(this.page-1)+1;
-      var toResult = Math.min(this.resultsPerPage*this.page, numberOfResults);
+      var fromResult = this.resultsPerPage * (this.page - 1) + 1;
+      var toResult = Math.min(this.resultsPerPage * this.page, numberOfResults);
 
       this.resultsSummary = new Element('p').update("Displaying results " + fromResult + '-' + toResult);
 
@@ -248,13 +254,17 @@ $xwiki.ssx.use('data.MendelianResults')##
       this.tableControls.insert(pageSelector);
     },
 
-    generateResultsPerPagePicker : function(){
+    generateResultsPerPagePicker: function() {
       var _this = this;
-      var result = new Element('p', {'class' : 'results-per-page'}).update(_this.strings["control.resultsPerPage.label"]);
+      var result = new Element('p', {
+        'class': 'results-per-page'
+      }).update(_this.strings["control.resultsPerPage.label"]);
       var select = new Element('select');
       [10, 20, 50].each(function(i) {
-        var option = new Element('option', {'value' : i}).insert(i);
-        if (i === _this.resultsPerPage){
+        var option = new Element('option', {
+          'value': i
+        }).insert(i);
+        if (i === _this.resultsPerPage) {
           option.setAttribute('selected', 'selected');
         }
         select.insert(option);
@@ -264,30 +274,40 @@ $xwiki.ssx.use('data.MendelianResults')##
       return result;
     },
 
-    generatePageSelector : function(){
+    generatePageSelector: function() {
       var _this = this;
       this.page = this.page || this.DEFAULT_PAGE;
 
       var displayPrevious = this.page &gt; 1;
-      var displayNext = this._data.length &gt; this.resultsPerPage*this.page;
+      var displayNext = this._data.length &gt; this.resultsPerPage * this.page;
 
-      var currentPageDisplay = new Element('span', {'class' : 'current-page'}).update(this.page);
-      
-      var result = new Element('p', {'class' : 'page-selector'}).update('Page: ');
-      if(displayPrevious){
-        var previousButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
+      var currentPageDisplay = new Element('span', {
+        'class': 'current-page'
+      }).update(this.page);
+
+      var result = new Element('p', {
+        'class': 'page-selector'
+      }).update('Page: ');
+      if (displayPrevious) {
+        var previousButton = new Element('a', {
+          'class': 'page-selector-button',
+          'href': '#'
+        }).update('&lt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, -1));
         result.insert(previousButton);
       }
       result.insert(currentPageDisplay);
-      if (displayNext){
-        var nextButton = new Element('a', {'class' :  'page-selector-button', 'href' : '#'}).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
+      if (displayNext) {
+        var nextButton = new Element('a', {
+          'class': 'page-selector-button',
+          'href': '#'
+        }).update('&gt;').observe('click', _this.handleNewPage.bindAsEventListener(_this, 1));
         result.insert(nextButton);
       }
       return result;
 
     },
 
-    handleNewPage : function(event, increment){
+    handleNewPage: function(event, increment) {
       event.stop();
       var newPage = this.page + increment;
       if (newPage &lt; 1) {
@@ -299,10 +319,10 @@ $xwiki.ssx.use('data.MendelianResults')##
       this.launchSearch();
     },
 
-    handleResultsPerPageChange : function(event) {
+    handleResultsPerPageChange: function(event) {
       event.stop();
       var newValue = Event.element(event).value;
-      if (isNaN(newValue)){
+      if (isNaN(newValue)) {
         return;
       }
       this.resultsPerPage = parseInt(newValue);
@@ -310,83 +330,96 @@ $xwiki.ssx.use('data.MendelianResults')##
       this.launchSearch();
     },
 
-    launchSearch : function(){
-      if (this.activeSearch) {return;}
-        var _this = this;
-        this.activeSearch = new Ajax.Request(
-          this.mendelianLiveTableResultsURL,
-          {
-            parameters: $H({
-              'outputSyntax' : "plain",
-              'resultsPerPage' : _this.resultsPerPage || _this.DEFAULT_RESULTS_PER_PAGE,
-              'page' : _this.page || _this.DEFAULT_PAGE
-            }).merge(_this.queryForm.serialize(true)).toObject(),
-            method: "POST",
-            onCreate : function() {
-              _this.tableControls.update('');
-              _this.resultsTable.update('&lt;p class="loading"&gt;Searching...&lt;/p&gt;');
-            },
-            onSuccess: function(response) {
-              _this.preProcessData(response.responseJSON);
-              _this.generateTable();
-              _this.initializeControls();
-            },
-            onComplete : function() {
-              _this.addEventListeners();
-              _this.container.removeClassName('loading');
-              _this.activeSearch = false;
-            }
-          });
+    launchSearch: function() {
+      if (this.activeSearch) {
+        return;
+      }
+      var _this = this;
+      this.activeSearch = new Ajax.Request(
+        this.mendelianLiveTableResultsURL, {
+          parameters: $H({
+            'outputSyntax': "plain",
+            'resultsPerPage': _this.resultsPerPage || _this.DEFAULT_RESULTS_PER_PAGE,
+            'page': _this.page || _this.DEFAULT_PAGE
+          }).merge(_this.queryForm.serialize(true)).toObject(),
+          method: "POST",
+          onCreate: function() {
+            _this.tableControls.update('');
+            _this.resultsTable.update('&lt;p class="loading"&gt;Searching...&lt;/p&gt;');
+          },
+          onSuccess: function(response) {
+            _this.preProcessData(response.responseJSON);
+            _this.generateTable();
+            _this.initializeControls();
+          },
+          onComplete: function() {
+            _this.addEventListeners();
+            _this.container.removeClassName('loading');
+            _this.activeSearch = false;
+          }
+        });
     },
 
     //Applies any transformations to the raw response before storing it in this._data returns a variable called displayedData
-    preProcessData : function(data){
+    preProcessData: function(data) {
       this._data = data.results;
     },
 
     /*Sorts the table's data according to the key specified by the sortData function.
-    *
-    * @param sortTarget A function used to access the property by which to sort.
-    * @param ascending Optional boolean used to specify that data should be sorted in reverse direction.
-    */
-    sortData : function(sortTarget, descending) {
+     *
+     * @param sortTarget A function used to access the property by which to sort.
+     * @param ascending Optional boolean used to specify that data should be sorted in reverse direction.
+     */
+    sortData: function(sortTarget, descending) {
       var sign = ascending ? 1 : -1;
-      this.data.sort(function(a,b){
+      this.data.sort(function(a, b) {
         return sortTarget(a) - sortTarget(b);
       });
     },
 
-    generateTable : function() {
+    generateTable: function() {
       var _this = this;
 
       var columns = {
-        "expandTriangle" : {
-          heading : '',
-          display : _this.displayResultExpandTriangle.bind(_this)
+        "expandTriangle": {
+          heading: '',
+          display: _this.displayResultExpandTriangle.bind(_this)
         },
-        "geneStatus" : {
-          heading : '',
-          display : _this.displayResultGeneStatus.bind(_this)
+        "geneStatus": {
+          heading: '',
+          display: _this.displayResultGeneStatus.bind(_this)
         },
-        "patientId" : {
-          heading : _this.strings["patientId.heading"],
-          display : _this.displayResultPatientId.bind(_this),
-          sortTarget : function(datum){return datum.variants.patientId;}
+        "diagnosis": {
+          heading: '',
+          display: _this.displayResultDiagnosis.bind(_this)
         },
-        "owner" : {
-          heading : _this.strings["owner.heading"],
-          display : _this.displayResultOwner.bind(_this),
-          sortTarget : function(datum){return datum.variants.owner;}
+        "patientId": {
+          heading: _this.strings["patientId.heading"],
+          display: _this.displayResultPatientId.bind(_this),
+          sortTarget: function(datum) {
+            return datum.variants.patientId;
+          }
         },
-        "phenotypeScore" : {
-          heading : _this.strings["phenotypeScore.heading"],
-          display : _this.displayResultPhenotypeScore.bind(_this),
-          sortTarget : function(datum){return datum.variants.phenotypeScore;}
+        "owner": {
+          heading: _this.strings["owner.heading"],
+          display: _this.displayResultOwner.bind(_this),
+          sortTarget: function(datum) {
+            return datum.variants.owner;
+          }
         },
-        "numberOfVariants" : {
-          heading : _this.strings["numberOfVariants.heading"],
-          display : _this.displayResultNumberOfVariants.bind(_this),
-          sortTarget : function(datum){return datum.variants.length;}
+        "phenotypeScore": {
+          heading: _this.strings["phenotypeScore.heading"],
+          display: _this.displayResultPhenotypeScore.bind(_this),
+          sortTarget: function(datum) {
+            return datum.variants.phenotypeScore;
+          }
+        },
+        "numberOfVariants": {
+          heading: _this.strings["numberOfVariants.heading"],
+          display: _this.displayResultNumberOfVariants.bind(_this),
+          sortTarget: function(datum) {
+            return datum.variants.length;
+          }
         }
       };
 
@@ -400,11 +433,11 @@ $xwiki.ssx.use('data.MendelianResults')##
 
     },
 
-    displayResults : function (data, columns) {
+    displayResults: function(data, columns) {
       var _this = this;
-      
+
       //Clear table of old results
-      _this.resultsTable.select('.patient-row, .patient-subResult').each(function(e){
+      _this.resultsTable.select('.patient-row, .patient-subResult').each(function(e) {
         e.remove();
       });
 
@@ -415,20 +448,24 @@ $xwiki.ssx.use('data.MendelianResults')##
 
     },
 
-    displayTableHeader : function (columns, table) {
+    displayTableHeader: function(columns, table) {
       var _this = this;
       var row = this._getEmptyRow(table);
       for (var c in columns) {
-        var e = new Element("th", {"class" : c}).update(columns[c].heading);
+        var e = new Element("th", {
+          "class": c
+        }).update(columns[c].heading);
         row.insert(e);
       }
       return row;
     },
 
-    _getEmptyRow : function(table, className) {
+    _getEmptyRow: function(table, className) {
       var row;
       if (className) {
-        row = new Element('tr', {'class' : className});
+        row = new Element('tr', {
+          'class': className
+        });
       } else {
         row = new Element('tr');
       }
@@ -436,86 +473,111 @@ $xwiki.ssx.use('data.MendelianResults')##
       return row;
     },
 
-    _displayPatientRow : function(rowData, columns, table){
+    _displayPatientRow: function(rowData, columns, table) {
       var row = this._getEmptyRow(table, 'patient-row');
       for (var c in columns) {
-      row.insert(columns[c].display(rowData));
-    }
-    return row;
+        row.insert(columns[c].display(rowData));
+      }
+      return row;
     },
 
     //the display result functions all return a td element that will be used to display the upper level data for each patient
-    displayResultExpandTriangle : function() {
+    displayResultExpandTriangle: function() {
       return new Element('td').update('&lt;div class="triRight"&gt;&lt;/div&gt;');
     },
 
-    displayResultGeneStatus : function(data) {
-    	var status = data.geneStatus;
-    	var cell = new Element('td');
-    	if (status == "candidate") {
-    		cell.update('&lt;span class="fa fa-plus-circle" title="' + this.strings["candidateGene.title"] +'"&gt;&lt;/span&gt;');
-    	} else if (status == "solved") {
-    		cell.update('&lt;span class="fa fa-plus-circle" title="' + this.strings["solvedGene.title"] +'"&gt;&lt;/span&gt;');
-    	} else if (status == "rejected") {
-    		cell.update('&lt;span class="fa fa-minus-circle" title="' + this.strings["rejectedGene.title"] +'"&gt;&lt;/span&gt;');
-    	}
-    	return cell;
+    displayResultGeneStatus: function(data) {
+      var status = data.geneStatus;
+      var cell = new Element('td');
+      if (status == "candidate") {
+        cell.update('&lt;span class="fa fa-check-circle" title="' + this.strings["candidateGene.title"] + '"&gt;&lt;/span&gt;');
+      } else if (status == "solved") {
+        cell.update('&lt;span class="fa fa-check-circle" title="' + this.strings["solvedGene.title"] + '"&gt;&lt;/span&gt;');
+      } else if (status == "rejected") {
+        cell.update('&lt;span class="fa fa-times-circle" title="' + this.strings["rejectedGene.title"] + '"&gt;&lt;/span&gt;');
+      }
+      return cell;
     },
 
-    displayResultPatientId : function(data) {
+    displayResultDiagnosis: function(data) {
+      var _this = this;
+      var cell = new Element('td', {
+        'class': 'diagnosis-cell'
+      });
+      if (data.diagnosis.length &gt; 0) {
+        var icon = new Element('span', {
+          'class': "fa fa-stethoscope diagnosis-icon"
+        });
+        cell.diagnosis = data.diagnosis;
+        cell.insert(icon);
+      }
+      return cell;
+    },
+
+    displayResultPatientId: function(data) {
       var cell = new Element('td');
       var patientURL = data.patientURL;
-      var link = new Element('a', {'href' : patientURL, 'target' : '__blank'}).update(data.patientId);
-      link.observe('click', function(){
+      var link = new Element('a', {
+        'href': patientURL,
+        'target': '__blank'
+      }).update(data.patientId);
+      link.observe('click', function() {
         event.stopPropagation();
       });
       cell.insert(link);
       return cell;
     },
 
-    displayResultOwner : function(data) {
+    displayResultOwner: function(data) {
       var cell = new Element('td');
       cell.insert(new Element('p').update(data.owner));
       return cell;
-
     },
 
-    displayResultPhenotypeScore : function(data) {
+    displayResultPhenotypeScore: function(data) {
       var cell = new Element('td');
       cell.insert(new Element('p').update(Math.round(data.phenotypeScore * 100) / 100));
       return cell;
     },
 
-    displayResultNumberOfVariants : function(data) {
+    displayResultNumberOfVariants: function(data) {
       var cell = new Element('td');
       cell.insert(new Element('p').update(data.variants.length));
       return cell;
     },
 
-    _displayPatientSubTable : function(data, width, table) {
+    _displayPatientSubTable: function(data, width, table) {
       var row = this._getEmptyRow(table, 'patient-subResult');
-      var containerCell = new Element('td', {'colspan' : width });
-      var container = new Element('div', {'class' :  'collapsed'});
-      
-      var phenotypeContainer = new Element('div', {'class' : 'patient-phenotype-container'});
+      var containerCell = new Element('td', {
+        'colspan': width
+      });
+      var container = new Element('div', {
+        'class': 'collapsed'
+      });
+
+      var phenotypeContainer = new Element('div', {
+        'class': 'patient-phenotype-container'
+      });
       phenotypeContainer.insert(new Element('h6').update(this.strings['patientSymptom.heading']));
       phenotypeContainer.insert(this.generatePhenotypeList(data.phenotype));
       container.insert(phenotypeContainer);
 
-      var variantContainer = new Element ('div', {'class' :'patient-variant-container'});
+      var variantContainer = new Element('div', {
+        'class': 'patient-variant-container'
+      });
       variantContainer.insert(new Element('h6').update(this.strings['patientVariantsHeading']));
       variantContainer.insert(this.generateVariantList(data.variants));
       container.insert(variantContainer);
 
       row.insert(containerCell.insert(container));
-      return row;
+
     },
 
-    generatePhenotypeList : function(data) {
+    generatePhenotypeList: function(data) {
       //right now phenotype information is just a list of strings. 
       var _this = this;
       var phenotypeList = new Element('ul');
-      data.each(function(e){
+      data.each(function(e) {
         phenotypeList.insert(new Element('li').update(e));
       });
       return phenotypeList;
@@ -524,59 +586,69 @@ $xwiki.ssx.use('data.MendelianResults')##
       //variant keys: "chr", "posisiton" , "ref", "alt" , "effect", "score"
       var _this = this;
       var variantList = new Element('ul');
-      variants.each(function(v){
+      variants.each(function(v) {
         variantList.insert(_this.displayVariantListElement(v));
       });
       return variantList;
     },
-    displayVariantListElement : function(variant){
+    displayVariantListElement: function(variant) {
       var _this = this;
       var listElement = new Element('li');
 
-      var leftColumn = new Element('div', {'class' : 'left'});
-      var rightColumn = new Element('div', {'class' : 'right'});
+      var leftColumn = new Element('div', {
+        'class': 'left'
+      });
+      var rightColumn = new Element('div', {
+        'class': 'right'
+      });
       //TODO: link genesymbol to somewhere. Probably UniProt
-      var geneElement = new Element('p', {'class' : 'gene-name'}).update( _this.strings["geneSymbol"]+ ": " + variant.geneSymbol);
+      var geneElement = new Element('p', {
+        'class': 'gene-name'
+      }).update(_this.strings["geneSymbol"] + ": " + variant.geneSymbol);
       leftColumn.insert(geneElement);
-      
+
       if (variant.chr &amp;&amp; variant.position &amp;&amp; variant.ref) {
         var start = variant.position;
         var end = variant.position + variant.ref.length;
-        var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__",variant.chr.toUpperCase()).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
+        var positionText = _this.strings["positionPhrase"].replace("__CHROMOSOME__", variant.chr.toUpperCase()).replace("__START__", start).replace("__STOP__", '&lt;br/&gt;' + end);
         var positionURLFragment = variant.chr.toUpperCase() + ": " + start + "-" + end;
         var assembly = variant.assembly || "hg19";
         var position = new Element('a', {
-          'href' : 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
-          'class' : 'variant-position',
-          'target' : '__blank',
-          'title' : _this.strings["variantPositionLinkTitle"]
+          'href': 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
+          'class': 'variant-position',
+          'target': '__blank',
+          'title': _this.strings["variantPositionLinkTitle"]
         }).update(positionText);
         leftColumn.insert(position);
       }
-      
-      var varScore = new Element('div', {'class' : 'variant-score'});
+
+      var varScore = new Element('div', {
+        'class': 'variant-score'
+      });
       varScore.insert("&lt;p&gt;" + this.strings["score.label"] + ": &lt;/p&gt;");
       varScore.insert(this.Utils.generateSegmentedBar(5, variant.score));
       rightColumn.insert(varScore);
 
 
 
-      var displayedRef = (variant.ref.length &gt; 5) ? (variant.ref.substring(0,5)+"...") : variant.ref;
-      var displayedAlt = (variant.alt.length &gt; 5) ? (variant.alt.substring(0,5)+"...") : variant.alt;
+      var displayedRef = (variant.ref.length &gt; 5) ? (variant.ref.substring(0, 5) + "...") : variant.ref;
+      var displayedAlt = (variant.alt.length &gt; 5) ? (variant.alt.substring(0, 5) + "...") : variant.alt;
       rightColumn.insert("&lt;div class='variant-change'&gt;&lt;span class='dna-fragment ref'&gt;" + displayedRef + "&lt;/span&gt; → &lt;span class='dna-fragment alt'&gt;" + displayedAlt + "&lt;/span&gt;&lt;/div&gt;");
       rightColumn.insert("&lt;p class='variant-type'&gt;" + variant.effect + "&lt;/p&gt;");
-      
+
       listElement.insert(leftColumn);
       listElement.insert(rightColumn);
 
       listElement.insert(_this.generateVariantSearchButton(variant));
-      
+
       return listElement;
     },
 
-    generateVariantSearchButton : function(variant) {
+    generateVariantSearchButton: function(variant) {
       var _this = this;
-      var button = new Element('div', {'class' : 'variant-search-redo'}).update(this.strings["variantSearchButton"]);
+      var button = new Element('div', {
+        'class': 'variant-search-redo'
+      }).update(this.strings["variantSearchButton"]);
       button.observe('click', function(b) {
         _this.queryForm.select('input[name="variantSearch"]')[0].setValue(1);
         _this.queryForm.select('input[name="varChr"]')[0].setValue(variant.chr);
@@ -588,64 +660,158 @@ $xwiki.ssx.use('data.MendelianResults')##
       return button;
     },
 
-    addEventListeners : function() {
-      $$('tr.patient-row').each(function(r){
-         r.observe('click', function(){
-            var container = this.next().down().down();
-            if(container.hasClassName('collapsed')){
-              container.removeClassName('collapsed');
-              r.addClassName('expanded');
-              r.select('div.triRight')[0].addClassName('triDown');
-            } else {
-               container.addClassName('collapsed');
-              r.removeClassName('expanded');
-              r.select('div.triRight')[0].removeClassName('triDown');
-           }
+    displayDiagnosisBox: function(cell) {
+      var _this = this;
+      var box = new Element('div', {
+        'class': 'diagnosis-box'
+      });
+      box.insert(new Element('span', {
+        'class': 'fa fa-times close-diagnosis-icon'
+      }))
+      var list = new Element('ul');
+      cell.diagnosis.each(function(d) {
+        list.insert(_this.displayOMIMDisorders(d));
+      });
+      box.insert(list);
+      cell.insert(box);
+    },
+
+    displayOMIMDisorders: function(disorder) {
+      var listElement = new Element('li');
+      var name = disorder.name;
+      var id = disorder.id.replace('MIM:', '');
+      var indexOfPrettyName = name.indexOf(' ');
+      var indexOfSeparator = name.indexOf(';')
+      var shortName;
+      var longName;
+      if (indexOfSeparator &gt; 0) {
+        shortName = name.substring(indexOfPrettyName, indexOfSeparator);
+        longName = name.replace(';;', ';');
+      } else {
+        shortName = name;
+        longName = name;
+      }
+      if (id) {
+        var idLink = new Element('a', {
+          'target': '_blank',
+          'href': 'http://www.omim.org/entry/' + id,
+          'title': this.strings['omim.link.title']
+        }).update('[MIM:' + id + ']');
+        listElement.insert(idLink);
+      }
+      listElement.insert('&lt;span title=' + longName + '&gt;' + shortName + '&lt;/span&gt;');
+      return listElement;
+    },
+
+    addEventListeners: function() {
+      $$('tr.patient-row').each(function(r) {
+        r.observe('click', function(event) {
+          var clickedElement = event.element();
+          if (clickedElement.match('a') || event.findElement('.diagnosis-cell')) {
+            return false;
+          }
+          var container = this.next().down().down();
+          if (container.hasClassName('collapsed')) {
+            container.removeClassName('collapsed');
+            r.addClassName('expanded');
+            r.select('div.triRight')[0].addClassName('triDown');
+          } else {
+            container.addClassName('collapsed');
+            r.removeClassName('expanded');
+            r.select('div.triRight')[0].removeClassName('triDown');
+          }
         });
+      });
+      this.addDiagnosisToggleListeners();
+    },
+
+    addDiagnosisToggleListeners: function() {
+      var _this = this;
+
+      _this.onClickDiagnosisCell = _this.onClickDiagnosisCell.bindAsEventListener(_this);
+      _this.onClickCloseDiagnosisBox = _this.onClickCloseDiagnosisBox.bindAsEventListener(_this);
+
+      $$('.mendelian-results-table .diagnosis-cell').each(function(e) {
+        if (e.diagnosis) {
+          e.observe('click', _this.onClickDiagnosisCell);
+        }
       });
     },
 
-    submitHiddenForm : function() {
+    onClickDiagnosisCell: function(event) {
+      var diagnosisCell = event.findElement('.diagnosis-cell');
+      this.displayDiagnosisBox(diagnosisCell);
+      diagnosisCell.stopObserving('click', this.onClickDiagnosisCell);
+      event.stopPropagation();
+      document.observe('click', this.onClickCloseDiagnosisBox);
+    },
+
+    onClickCloseDiagnosisBox: function(event) {
+      var _this = this;
+      if (!event.findElement('.diagnosis-box')) {
+        // There was a click outside the diagnosis-box. Close any open ones and register onClickDiagnosisCell again.
+        $$('.diagnosis-box').each(function(e) {
+          var cell = e.getOffsetParent();
+          e.remove();
+          document.stopObserving('click', _this.onClickCloseDiagnosisBox);
+          cell.observe('click', _this.onClickDiagnosisCell);
+        });
+      } else if (event.element().match('.close-diagnosis-icon')) {
+        //There was a click on the close icon. Close only the clicked one.
+        var e = event.findElement('.diagnosis-box');
+        var cell = e.getOffsetParent();
+        e.remove();
+        cell.observe('click', _this.onClickDiagnosisCell);
+      }
+    },
+
+    submitHiddenForm: function() {
       this.queryForm.submit();
     },
 
-    strings : {
-      "patientId.heading"   : "ID",
-      "owner.heading"     : "Owner",
-      "phenotypeScore.heading"   : "Phenotype Score",
-      "numberOfVariants.heading" : "Variants observed",
-      "more.heading"      : "More info",
-      "noPhenotypeOrVariants.text" : "Nothing to display",
-      "showMore.button"   : "More...",
+    strings: {
+      "patientId.heading": "ID",
+      "owner.heading": "Owner",
+      "phenotypeScore.heading": "Phenotype Score",
+      "numberOfVariants.heading": "Variants observed",
+      "more.heading": "More info",
+      "noPhenotypeOrVariants.text": "Nothing to display",
+      "showMore.button": "More...",
       "patientSymptom.heading": "Symptoms observed in this patient",
       'patientVariantsHeading': "Variants found in this patient",
       'variant.position.heading': "Position",
       'variant.change.heading': "Change",
       'variant.effect.heading': "Effect",
-      'variant.score.heading' : "Score",
-      'geneSymbol'        : "Gene symbol",
-      'score.label'       : "Exomiser score",
-      "positionPhrase"  : "__CHROMOSOME__:__START__-__STOP__",
-      "variantPositionLinkTitle" : 'Visualize in the UCSC Genome Browser',
-      'variantSearchButton'   : "Redo search with this variant",
-      'control.resultsPerPage.label' : 'Results per page: ',
-      "candidateGene.title"	: "The queried gene was listed as a candidate gene for this patient.",
-      "solvedGene.title"	: "The queried gene was listed as the solved gene for this patient",
-      "rejectedGene.title"	: "The queried gene was listed as a rejected gene for this patient."
+      'variant.score.heading': "Score",
+      'geneSymbol': "Gene symbol",
+      'score.label': "Exomiser score",
+      "positionPhrase": "__CHROMOSOME__:__START__-__STOP__",
+      "variantPositionLinkTitle": 'Visualize in the UCSC Genome Browser',
+      'variantSearchButton': "Redo search with this variant",
+      'control.resultsPerPage.label': 'Results per page: ',
+      "candidateGene.title": "The queried gene was listed as a candidate gene for this patient.",
+      "solvedGene.title": "The queried gene was listed as the solved gene for this patient",
+      "rejectedGene.title": "The queried gene was listed as a rejected gene for this patient.",
+      "omim.link.title": "Read about this disorder on OMIM"
 
     },
 
-    Utils : {
-      generateSegmentedBar : function (count, value) {
-        var bar = new Element('div', {'class' : 'segmented-bar', title : Math.round(value * 100) + '%' || ''});
+    Utils: {
+      generateSegmentedBar: function(count, value) {
+        var bar = new Element('div', {
+          'class': 'segmented-bar',
+          title: Math.round(value * 100) + '%' || ''
+        });
         var valueUnit = 1 / count;
         for (var i = 0; i &lt; count; ++i) {
           var segmentFill = Math.round(100 * Math.min(Math.max((value - i * valueUnit) / valueUnit, 0), 1));
-          var segment = new Element('span', {'class' : 'segmented-unit'}).update(
-                        new Element('span', {
-                          'class' : 'segmented-unit-fill',
-                          'style' : "width: " + segmentFill + "%"
-                        })
+          var segment = new Element('span', {
+            'class': 'segmented-unit'
+          }).update(
+            new Element('span', {
+              'class': 'segmented-unit-fill',
+              'style': "width: " + segmentFill + "%"
+            })
           );
           bar.insert(segment);
         }
@@ -653,7 +819,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       }
     },
   });
-  
+
   // End PhenoTips augmentation.
   return PhenoTips;
 }(PhenoTips || {}));</code>
@@ -1273,9 +1439,9 @@ $xwiki.ssx.use('data.MendelianResults')##
   display: none;
 }
 #mendelian-livetable-container .loading {
-    display: block;
-    text-align: center;
-    height: 5em;
+  display: block;
+  text-align: center;
+  height: 5em;
 }
 .mendelian-results-table{
   border: none;
@@ -1325,16 +1491,16 @@ $xwiki.ssx.use('data.MendelianResults')##
   box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.8);
 }
 .patient-row .triRight {
-    height: 0;
-    width: 0;
-    border-left: 8px solid $theme.titleColor;
-    border-top: 4px solid transparent;
-    border-bottom: 4px solid transparent;
+  height: 0;
+  width: 0;
+  border-left: 8px solid $theme.titleColor;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
 }
 .patient-row .triDown {
-    border-top: 8px solid $theme.titleColor;   
-    border-left: 4px solid transparent;   
-    border-right: 4px solid transparent;
+  border-top: 8px solid $theme.titleColor;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
 }
 .patient-subResult&gt;td{
   border: none;
@@ -1446,7 +1612,74 @@ $xwiki.ssx.use('data.MendelianResults')##
   display: block;
   width: 5px;
 }
-</code>
+
+/****************
+*****************
+Diagnosis Box Styles
+*****************
+****************/
+.mendelian-results-table .diagnosis-box{
+  background-color: white;
+  bottom: 160%;
+  box-shadow: 0 0 3px 0 rgba(0,0,0,0.8);
+  color: initial;
+  cursor: default;
+  left: -170px;
+  position: absolute;
+  text-align: left;
+  width: 350px;
+  z-index: 2;
+}
+.mendelian-results-table .diagnosis-box ul {
+  list-style: none;
+  margin-left: 1em;
+}
+.patient-row td.diagnosis-cell {
+  padding: 2px;
+  text-align: center;
+}
+.diagnosis-cell&gt;span {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+.diagnosis-cell:hover {
+  color: $theme.linkColor;
+}
+/* The pop-up triangle */
+.mendelian-results-table .diagnosis-box::after {
+  border-left: 25px solid transparent;
+  border-right: 25px solid transparent;
+  border-top: 20px solid white;
+  bottom: -20px;
+  content: '';
+  display: block;
+  height: 0;
+  left: 150px;
+  position: absolute;
+  width: 0;
+}
+/* The pop-up triangle's shadow */
+.mendelian-results-table .diagnosis-box::before {
+  border-left: 26px solid transparent;
+  border-right: 26px solid transparent;
+  border-top: 21px solid rgba(0,0,0,0.3);
+  bottom: -22px;
+  content: '';
+  display: block;
+  height: 0;
+  left: 149px;
+  position: absolute;
+  width: 0;
+}
+.close-diagnosis-icon:hover {
+  color: rgb(200, 0, 0);
+  cursor: pointer;
+}
+.close-diagnosis-icon {
+  float: right;
+  padding: 5px;
+}</code>
     </property>
     <property>
       <name>MendelianLivetableStyles</name>

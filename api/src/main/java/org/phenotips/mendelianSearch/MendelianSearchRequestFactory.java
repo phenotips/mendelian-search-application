@@ -19,7 +19,7 @@
  */
 package org.phenotips.mendelianSearch;
 
-import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
+import org.phenotips.mendelianSearch.internal.MendelianSearchRequest;
 
 import org.xwiki.component.annotation.Role;
 
