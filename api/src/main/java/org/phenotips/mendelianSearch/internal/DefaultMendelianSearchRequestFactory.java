@@ -21,7 +21,6 @@
 package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.mendelianSearch.MendelianSearchRequestFactory;
-import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 
 import org.xwiki.component.annotation.Component;
 

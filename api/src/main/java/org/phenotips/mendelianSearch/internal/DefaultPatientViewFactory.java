@@ -19,10 +19,10 @@
  */
 package org.phenotips.mendelianSearch.internal;
 
+import org.phenotips.data.Disorder;
 import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
 import org.phenotips.data.PatientData;
-import org.phenotips.data.PatientDataController;
 import org.phenotips.data.PatientRepository;
 import org.phenotips.data.permissions.AccessLevel;
 import org.phenotips.data.permissions.PatientAccess;
@@ -30,8 +30,6 @@ import org.phenotips.data.permissions.PermissionsManager;
 import org.phenotips.data.permissions.internal.visibility.HiddenVisibility;
 import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.PatientViewFactory;
-
-import org.phenotips.mendelianSearch.script.MendelianSearchRequest;
 
 import org.xwiki.component.annotation.Component;
 
@@ -132,6 +130,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         view.setPatientURL(this.getPatientURL(patient));
         view.setGeneStatus(this.getPatientGeneStatus(patient, (String) request.get("geneSymbol")));
         view.setOwner(owner);
+        view.setDiagnosis(this.getPatientDiagnosis(patient));
 
         view.setPhenotype(phenotype);
         view.setPhenotypeScore(phenotypeScore);
@@ -187,7 +186,6 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         return "";
     }
 
-
     private List<String> getPatientGenes(Patient patient, String name)
     {
         List<String> result = new ArrayList<String>();
@@ -200,7 +198,6 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         }
         return result;
     }
-
 
     private boolean isGeneSolved(Patient patient, String geneSymbol)
     {
@@ -215,4 +212,17 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         }
         return false;
     }
+
+    private List<Disorder> getPatientDiagnosis(Patient patient)
+    {
+        List<Disorder> result = new ArrayList<Disorder>();
+        Set<? extends Disorder> disorders = patient.getDisorders();
+        if(!disorders.isEmpty()) {
+            for (Disorder dis : disorders) {
+                result.add(dis);
+            }
+        }
+        return result;
+    }
+
 }

@@ -19,13 +19,16 @@
  */
 package org.phenotips.mendelianSearch.internal;
 
+import org.phenotips.data.Disorder;
 import org.phenotips.mendelianSearch.PatientView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.ga4gh.GAVariant;
 
+import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -47,6 +50,8 @@ public class DefaultPatientView implements PatientView
 
     private String geneStatus;
 
+    private List<Disorder> diagnosis;
+
     @Override
     public String getType()
     {
@@ -63,6 +68,7 @@ public class DefaultPatientView implements PatientView
         result.element("owner", this.owner);
         result.element("phenotypeScore", this.phenotypeScore);
         result.element("geneStatus", this.geneStatus);
+        result.element("diagnosis", this.disordersToJSON(this.diagnosis));
 
         JSONArray variantJSONs = new JSONArray();
         if (!this.variants.isEmpty()) {
@@ -72,6 +78,21 @@ public class DefaultPatientView implements PatientView
         }
         result.element("variants", variantJSONs);
         result.element("phenotype", this.phenotype);
+        return result;
+    }
+
+    private List<JSONObject> disordersToJSON(List<Disorder> diagnosis)
+    {
+        List<JSONObject> result = new ArrayList<JSONObject>();
+        if (diagnosis == null ||diagnosis.isEmpty()){
+            return result;
+        }
+        for(Disorder disorder : diagnosis){
+            JSONObject disorderJSON = new JSONObject();
+            disorderJSON.element("id", disorder.getId());
+            disorderJSON.element("name", disorder.getName());
+            result.add(disorderJSON);
+        }
         return result;
     }
 
@@ -137,7 +158,6 @@ public class DefaultPatientView implements PatientView
         this.geneStatus = newStatus;
     }
 
-    @Override
     public String getGeneStatus()
     {
         return this.geneStatus;
@@ -159,7 +179,6 @@ public class DefaultPatientView implements PatientView
     public void setPatientId(String id)
     {
         this.patientID = id;
-
     }
 
     public String getPatientURL()
@@ -167,8 +186,20 @@ public class DefaultPatientView implements PatientView
         return patientURL;
     }
 
+    @Override
     public void setPatientURL(String patientURL)
     {
         this.patientURL = patientURL;
+    }
+
+    public List<Disorder> getDiagnosis()
+    {
+        return diagnosis;
+    }
+
+    @Override
+    public void setDiagnosis(List<Disorder> diagnosis)
+    {
+        this.diagnosis = diagnosis;
     }
 }

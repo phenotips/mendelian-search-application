@@ -19,6 +19,8 @@
  */
 package org.phenotips.mendelianSearch;
 
+import org.phenotips.data.Disorder;
+
 import java.util.List;
 
 import org.ga4gh.GAVariant;
@@ -78,5 +80,6 @@ public interface PatientView
 
     void setGeneStatus(String newStatus);
 
-    String getGeneStatus();
+    void setDiagnosis(List<Disorder> diagnosis);
+
 }
