@@ -66,6 +66,8 @@ public class DefaultPatientViewFactoryTest
 
     private AccessLevel viewAccess;
 
+    private MendelianSearchRequest request;
+
     @Before
     public void setup() throws ComponentLookupException
     {
@@ -74,6 +76,8 @@ public class DefaultPatientViewFactoryTest
         this.om = this.mocker.getInstance(OntologyManager.class);
         this.pm = this.mocker.getInstance(PermissionsManager.class);
         this.viewAccess = this.mocker.getInstance(AccessLevel.class, "view");
+
+        request = mock(MendelianSearchRequest.class);
     }
 
     @Test
@@ -120,7 +124,7 @@ public class DefaultPatientViewFactoryTest
 
         Mockito.doReturn(mockFeatures).when(p).getFeatures();
 
-        PatientView result = this.mocker.getComponentUnderTest().createPatientView(id, variants, score);
+        PatientView result = this.mocker.getComponentUnderTest().createPatientView(id, variants, score, this.request);
         JSONObject resultJSON = result.toJSON();
         assertEquals(result.getType(), "open");
         assertEquals(resultJSON.get("patientId"), "123");
@@ -180,7 +184,7 @@ public class DefaultPatientViewFactoryTest
 
         Mockito.doReturn(mockFeatures).when(p).getFeatures();
 
-        PatientView result = this.mocker.getComponentUnderTest().createPatientView(id, variants, score);
+        PatientView result = this.mocker.getComponentUnderTest().createPatientView(id, variants, score, this.request);
         JSONObject resultJSON = result.toJSON();
         assertEquals(result.getType(), "restricted");
         assertEquals(resultJSON.get("patientId"), "?");
@@ -231,7 +235,7 @@ public class DefaultPatientViewFactoryTest
 
         Mockito.doReturn(mockFeatures).when(p).getFeatures();
 
-        PatientView result = this.mocker.getComponentUnderTest().createPatientView(id, variants, score);
+        PatientView result = this.mocker.getComponentUnderTest().createPatientView(id, variants, score, this.request);
         JSONObject resultJSON = result.toJSON();
         assertEquals(result.getType(), "open");
         assertEquals(resultJSON.get("patientId"), "123");
