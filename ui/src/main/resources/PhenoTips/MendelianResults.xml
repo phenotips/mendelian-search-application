@@ -400,13 +400,15 @@ $xwiki.ssx.use('data.MendelianResults')##
           display: _this.displayResultPhenotypeScore.bind(_this),
           sortable: 'phenotypeScore'
 
-        },
-        "numberOfVariants": {
-          heading: _this.strings["numberOfVariants.heading"],
-          display: _this.displayResultNumberOfVariants.bind(_this),
-
         }
       };
+      //conditional column -- Displaying the number of variants is irrelevant when not matching the gene
+      if(this.queryForm.select('input[name="matchGene"]')[0].getValue() == 1){
+      	columns["numberOfVariants"] = {
+         heading: _this.strings["numberOfVariants.heading"],
+         display: _this.displayResultNumberOfVariants.bind(_this),
+      	};
+      }
 
       // Empty the container to make room for the new results
       if (this.resultsTable.childElements()) {
@@ -965,7 +967,7 @@ $xwiki.ssx.use('data.MendelianResults')##
   var boxWidth = 20;
 
   var maxY = findMaxYDomain(data);
-  var y =d3.scale.linear().range([height,0]).domain([0,maxY]);
+  var y = d3.scale.linear().range([height,0]).domain([0,maxY]).nice();
   var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
 
   var xAxis = d3.svg.axis()
@@ -1114,7 +1116,9 @@ $xwiki.ssx.use('data.MendelianResults')##
   //Info labels
   var infoLabel = category.append('g')
     .attr('transform', function(d){
-      var yPos =  (y(getUpperQuartile(data[d])) &gt;  height - y(0.2)) ? y(0.2) : y(getUpperQuartile(data[d]));
+      var yCoord = y(getUpperQuartile(data[d]));
+      var maxYCoord = y.range()[0] * 4/5;
+      var yPos = (yCoord &gt;  maxYCoord) ? maxYCoord : yCoord;
       return 'translate(0,'+ yPos +')';
     });
 
@@ -1131,7 +1135,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     .style("text-anchor", "start");
   infoLabel.append('text')
     .text(function(d) {
-      var mean = roundDecimals(d3.mean(data[d]), 2) || "";
+      var mean = roundDecimals(d3.mean(data[d]), 2);
       return 'Mean: ' + mean ;
     })
     .attr('class', 'info-label')
@@ -1150,7 +1154,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     .append("text")
       .attr("transform", "rotate(-90)")
       .attr("x", -(height-margin.top)/2)
-      .attr("dy", "-3em")
+      .attr("dy", "-3.5em")
       .style("text-anchor", "middle")
       .text("Phenotypic Similarity Score");
 
@@ -1203,7 +1207,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     return A[index];
   }
   function roundDecimals(N, D){
-    if (!N) return null;
+    if (!N) return 0;
     var modifier = Math.pow(10,D);
     return Math.round(N*modifier)/modifier;
   }
