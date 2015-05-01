@@ -20,26 +20,26 @@
 
 package org.phenotips.mendelianSearch.internal;
 
+import org.phenotips.mendelianSearch.PatientView;
+
 import org.xwiki.component.manager.ComponentLookupException;
-import org.xwiki.test.mockito.MockitoComponentMockingRule;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import net.sf.json.JSONObject;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * @Version $Id$
  */
 public class PatientViewUtilsTest
 {
-    @Rule
-    public final MockitoComponentMockingRule<PatientViewUtils> mocker =
-        new MockitoComponentMockingRule<PatientViewUtils>(PatientViewUtils.class);
 
     @Test
     public void testSortJSONs() throws ComponentLookupException
@@ -62,22 +62,46 @@ public class PatientViewUtilsTest
         testJSON.add(o3);
         testJSON.add(o1);
 
-        PatientViewUtils utils = mocker.getComponentUnderTest();
-
-        utils.sortPatientViewJSONs(testJSON, NAME_STRING, true);
+        PatientViewUtils.sortPatientViewJSONs(testJSON, NAME_STRING, true);
         Assert.assertEquals(testJSON.get(0), o2);
         Assert.assertEquals(testJSON.get(2), o3);
 
-        utils.sortPatientViewJSONs(testJSON, NAME_STRING, false);
+        PatientViewUtils.sortPatientViewJSONs(testJSON, NAME_STRING, false);
         Assert.assertEquals(testJSON.get(0), o3);
         Assert.assertEquals(testJSON.get(2), o2);
 
-        utils.sortPatientViewJSONs(testJSON, SCORE_STRING, true);
+        PatientViewUtils.sortPatientViewJSONs(testJSON, SCORE_STRING, true);
         Assert.assertEquals(testJSON.get(0), o1);
         Assert.assertEquals(testJSON.get(2), o2);
 
-        utils.sortPatientViewJSONs(testJSON, SCORE_STRING, false);
+        PatientViewUtils.sortPatientViewJSONs(testJSON, SCORE_STRING, false);
         Assert.assertEquals(testJSON.get(0), o2);
         Assert.assertEquals(testJSON.get(2), o1);
+    }
+
+    @Test
+    public void testPaginatePatientViews(){
+        String POSITION_STRING = "pos";
+        List<JSONObject> views = new ArrayList<JSONObject>();
+        for (int i = 1; i < 100; i++){
+            JSONObject mockViewJSON = new JSONObject();
+            //In order to test pagination the mocked view will return its index when .values() is called.
+            mockViewJSON.element(POSITION_STRING, "" + i);
+            views.add(mockViewJSON);
+        }
+
+        List<JSONObject> testViews = PatientViewUtils.paginatePatientViewJSON(views, 3, 20);
+        Assert.assertEquals(20, testViews.size());
+        Assert.assertEquals("41", testViews.get(0).get(POSITION_STRING));
+        Assert.assertEquals("60", testViews.get(19).get(POSITION_STRING));
+
+        testViews = PatientViewUtils.paginatePatientViewJSON(views, 1000, 15);
+        Assert.assertEquals("91", testViews.get(0).get(POSITION_STRING));
+        Assert.assertEquals("99", testViews.get(testViews.size()-1).get(POSITION_STRING));
+
+        testViews = PatientViewUtils.paginatePatientViewJSON(views, 1, 1000);
+        Assert.assertEquals(99, testViews.size());
+        Assert.assertEquals("1", testViews.get(0).get(POSITION_STRING));
+        Assert.assertEquals("99", testViews.get(98).get(POSITION_STRING));
     }
 }

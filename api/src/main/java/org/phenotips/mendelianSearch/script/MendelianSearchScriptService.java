@@ -39,7 +39,6 @@ import javax.inject.Singleton;
 
 import com.xpn.xwiki.web.XWikiRequest;
 
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 /**
@@ -60,8 +59,7 @@ public class MendelianSearchScriptService implements ScriptService
     @Inject
     private MendelianSearchRequestFactory requestFactory;
 
-    @Inject
-    PatientViewUtils pvUtils;
+
 
     /**
      * Get a list of patients matching the specified input parameters.
@@ -69,21 +67,30 @@ public class MendelianSearchScriptService implements ScriptService
      * @param rawRequest the request from the UI
      * @return A JSONArray of patients.
      */
-    public List<JSONObject> search(XWikiRequest rawRequest)
+    public JSONObject search(XWikiRequest rawRequest)
     {
+        JSONObject response = new JSONObject();
+        JSONObject metaData = new JSONObject();
+
         MendelianSearchRequest request = this.requestFactory.makeRequest(rawRequest);
 
         List<PatientView> views = this.ms.search(request);
-
-
-
         List<JSONObject> patientJSONs = this.convertViewsToArrayOfJSON(views);
+        metaData.element("numberOfResults", patientJSONs.size());
 
+        //Sort data
         String sortKey = (request.get("sort") != null) ? (String) request.get("sort") : "patientId";
         boolean ascending = (request.get("asc") != null) ? (boolean) request.get("asc") : true;
-        this.pvUtils.sortPatientViewJSONs(patientJSONs,sortKey, ascending);
+        PatientViewUtils.sortPatientViewJSONs(patientJSONs, sortKey, ascending);
 
-        return patientJSONs;
+        //Paginate data
+        int page = (request.get("page") != null) ? (int) request.get("page") : 1;
+        int resultsPerPage = (request.get("resultsPerPage") != null) ? (int) request.get("resultsPerPage") : 20;
+        patientJSONs = PatientViewUtils.paginatePatientViewJSON(patientJSONs, page, resultsPerPage);
+
+        response.element("meta", metaData);
+        response.element("patients", patientJSONs);
+        return response;
     }
 
     /**
@@ -126,10 +133,11 @@ public class MendelianSearchScriptService implements ScriptService
     {
         List<JSONObject> result = new ArrayList<JSONObject>();
         for (PatientView view : views) {
-            if (view.getType().equals("open")) {
+            if (view.values().equals("open")) {
                 result.add(view.toJSON());
             }
         }
         return result;
     }
+
 }

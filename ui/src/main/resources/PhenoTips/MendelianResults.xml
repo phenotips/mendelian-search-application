@@ -245,11 +245,10 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     initializeControls: function() {
-      var numberOfResults = this._data.length;
       var fromResult = this.resultsPerPage * (this.page - 1) + 1;
-      var toResult = Math.min(this.resultsPerPage * this.page, numberOfResults);
+      var toResult = Math.min(this.resultsPerPage * this.page, this.numberOfResults);
 
-      this.resultsSummary = new Element('p').update("Displaying results " + fromResult + '-' + toResult);
+      this.resultsSummary = new Element('p').update("Displaying results " + fromResult + ' - ' + toResult + " of " + this.numberOfResults);
 
       var resultsPerPagePicker = this.generateResultsPerPagePicker();
       var pageSelector = this.generatePageSelector();
@@ -283,7 +282,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       this.page = this.page || this.DEFAULT_PAGE;
 
       var displayPrevious = this.page &gt; 1;
-      var displayNext = this._data.length &gt; this.resultsPerPage * this.page;
+      var displayNext = this.numberOfResults &gt; this.resultsPerPage * this.page;
 
       var currentPageDisplay = new Element('span', {
         'class': 'current-page'
@@ -368,7 +367,8 @@ $xwiki.ssx.use('data.MendelianResults')##
 
     //Applies any transformations to the raw response before storing it in this._data returns a variable called displayedData
     preProcessData: function(data) {
-      this._data = data.results;
+      this._data = data.results.patients;
+      this.numberOfResults = data.results.meta.numberOfResults;
     },
 
     generateTable: function() {
@@ -487,12 +487,12 @@ $xwiki.ssx.use('data.MendelianResults')##
 
     //the display result functions all return a td element that will be used to display the upper level data for each patient
     displayResultExpandTriangle: function() {
-      return new Element('td').update('&lt;div class="triRight"&gt;&lt;/div&gt;');
+      return new Element('td', {'class' : 'fixed-width'}).update('&lt;div class="triRight"&gt;&lt;/div&gt;');
     },
 
     displayResultGeneStatus: function(data) {
       var status = data.geneStatus;
-      var cell = new Element('td');
+      var cell = new Element('td', {'class' : 'fixed-width'});
       if (status == "candidate") {
         cell.update('&lt;span class="fa fa-check-circle" title="' + this.strings["candidateGene.title"] + '"&gt;&lt;/span&gt;');
       } else if (status == "solved") {
@@ -506,7 +506,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     displayResultDiagnosis: function(data) {
       var _this = this;
       var cell = new Element('td', {
-        'class': 'diagnosis-cell'
+        'class': 'diagnosis-cell fixed-width'
       });
       if (data.diagnosis.length &gt; 0) {
         var icon = new Element('span', {
@@ -706,13 +706,13 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     addEventListeners: function() {
-      this.addExpandCollapsePatientRow();
+    	this.addExpandCollapsePatientRow();
       this.addDiagnosisToggleListeners();
       this.addSortFunction();
     },
 
     addExpandCollapsePatientRow :function(){
-      $$('tr.patient-row').each(function(r) {
+			$$('tr.patient-row').each(function(r) {
         r.observe('click', function(event) {
           var clickedElement = event.element();
           if (clickedElement.match('a') || event.findElement('.diagnosis-cell')) {
@@ -790,6 +790,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     onClickSortHeader: function(event){
     	var e = event.findElement('th');
     	var sortKey = e.tableSortKey;
+    	this.page = this.DEFAULT_PAGE;
     	if (!this.sortKey || this.sortKey != sortKey) {
     		this.sortKey = sortKey;
     		this.sortAsc = true;
@@ -1509,7 +1510,9 @@ $xwiki.ssx.use('data.MendelianResults')##
   padding: 5px;
   position: relative;
 }
-
+.patient-row td.fixed-width{
+  width: 1em;
+}
 .patient-row:hover td {
   cursor: pointer;
   box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.8);
