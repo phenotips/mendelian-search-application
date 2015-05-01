@@ -67,6 +67,10 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
 
     private String ascKey = "asc";
 
+    private String pageKey = "page";
+
+    private String resultsPerPageKey = "resultsPerPage";
+
     //The view keys
 
     private String matchGeneKey = "matchGene";
@@ -95,9 +99,13 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
         request.set(this.phenotypeMatchingKey, rawRequest.getParameter("phenotype-matching"));
         request.set(this.matchGeneKey, Integer.parseInt(rawRequest.getParameter(this.matchGeneKey)));
         request.set(this.matchPhenotypeKey, Integer.parseInt(rawRequest.getParameter(this.matchPhenotypeKey)));
-        request.set(this.sortKey, rawRequest.getParameter(this.sortKey));
-        request.set(this.ascKey, Boolean.parseBoolean(rawRequest.getParameter(this.ascKey)));
 
+        if (rawRequest.getParameter(this.pageKey) != null) {
+            request.set(this.sortKey, rawRequest.getParameter(this.sortKey));
+            request.set(this.ascKey, Boolean.parseBoolean(rawRequest.getParameter(this.ascKey)));
+            request.set(this.pageKey, Integer.parseInt(rawRequest.getParameter(this.pageKey)));
+            request.set(this.resultsPerPageKey, Integer.parseInt(rawRequest.getParameter(this.resultsPerPageKey)));
+        }
         return request;
     }
 

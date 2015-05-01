@@ -24,18 +24,19 @@ import org.phenotips.mendelianSearch.PatientView;
 
 import org.xwiki.component.annotation.Component;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 import javax.inject.Singleton;
 
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
 /**
  * @Version $Id$
  */
 
-@Component(roles = { PatientViewUtils.class })
 @Singleton
 public class PatientViewUtils
 {
@@ -58,5 +59,18 @@ public class PatientViewUtils
                 }
             }
         };
+    }
+
+    public static List<JSONObject> paginatePatientViewJSON (List<JSONObject> views, int page, int elementsPerPage) {
+        int startIndex = (page-1) * (elementsPerPage);
+        int stopIndex = startIndex + elementsPerPage;
+        if (startIndex > views.size()){
+            startIndex = elementsPerPage * (views.size() / elementsPerPage);
+        }
+        if (stopIndex > views.size()){
+            stopIndex = views.size();
+        }
+        List<PatientView> result = new ArrayList<PatientView>();
+        return views.subList(startIndex, stopIndex);
     }
 }
