@@ -51,16 +51,6 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
 
     private String alleleFrequenciesKey = "alleleFrequencies";
 
-    private String varSearchKey = "variantSearch";
-
-    private String chrKey = "varChr";
-
-    private String posKey = "varPos";
-
-    private String refKey = "varRef";
-
-    private String altKey = "varAlt";
-
     private String sortKey = "sort";
 
     private String ascKey = "asc";
@@ -89,11 +79,6 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
         alleleFrequencies.put("EXAC", rawRequest.getParameter("allele-freq-exac"));
 
         request.set(this.alleleFrequenciesKey, alleleFrequencies);
-        request.set(this.chrKey, rawRequest.getParameter(this.chrKey));
-        request.set(this.posKey, Integer.parseInt(rawRequest.getParameter(this.posKey)));
-        request.set(this.refKey, rawRequest.getParameter(this.refKey));
-        request.set(this.altKey, rawRequest.getParameter(this.altKey));
-        request.set(this.varSearchKey, Integer.parseInt(rawRequest.getParameter(this.varSearchKey)));
         request.set(this.phenotypeMatchingKey, rawRequest.getParameter("phenotype-matching"));
         request.set(this.matchGeneKey, Integer.parseInt(rawRequest.getParameter(this.matchGeneKey)));
         request.set(this.matchPhenotypeKey, Integer.parseInt(rawRequest.getParameter(this.matchPhenotypeKey)));

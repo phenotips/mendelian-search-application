@@ -183,17 +183,10 @@ public class DefaultMendelianSearch implements MendelianSearch
         Map<String, List<GAVariant>> matchingVariants;
         String variantSearchKey = "variantSearch";
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
-        if (request.get(variantSearchKey) != null && (int) request.get(variantSearchKey) == 1) {
-            matchingVariants =
-                this.variantStore.getIndividualsWithVariant((String) request.get("varChr"),
-                    (int) request.get("varPos"),
-                    (String) request.get("varRef"), (String) request.get("varAlt"));
-        } else {
-            matchingVariants = this.variantStore.getIndividualsWithGene(
-                (String) request.get("geneSymbol"),
-                (List<String>) request.get("variantEffects"),
-                (Map<String, Double>) request.get("alleleFrequencies"));
-        }
+        matchingVariants = this.variantStore.getIndividualsWithGene(
+            (String) request.get("geneSymbol"),
+            (List<String>) request.get("variantEffects"),
+            (Map<String, Double>) request.get("alleleFrequencies"));      
         if ((int) request.get("matchGene") == 1) {
             return matchingVariants;
         }

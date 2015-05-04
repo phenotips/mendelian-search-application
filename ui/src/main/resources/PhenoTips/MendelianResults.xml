@@ -632,11 +632,12 @@ $xwiki.ssx.use('data.MendelianResults')##
         var assembly = variant.assembly || "hg19";
         var position = new Element('a', {
           'href': 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
-          'class': 'variant-position',
+          'class': 'variant-position button secondary',
           'target': '__blank',
           'title': _this.strings["variantPositionLinkTitle"]
         }).update(positionText);
         leftColumn.insert(position);
+        position.wrap(new Element('span', {'class' : 'buttonwrapper'}));
       }
 
       var varScore = new Element('div', {
@@ -656,25 +657,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       listElement.insert(leftColumn);
       listElement.insert(rightColumn);
 
-      listElement.insert(_this.generateVariantSearchButton(variant));
-
       return listElement;
-    },
-
-    generateVariantSearchButton: function(variant) {
-      var _this = this;
-      var button = new Element('div', {
-        'class': 'variant-search-redo'
-      }).update(this.strings["variantSearchButton"]);
-      button.observe('click', function(b) {
-        _this.queryForm.select('input[name="variantSearch"]')[0].setValue(1);
-        _this.queryForm.select('input[name="varChr"]')[0].setValue(variant.chr);
-        _this.queryForm.select('input[name="varPos"]')[0].setValue(variant.position);
-        _this.queryForm.select('input[name="varRef"]')[0].setValue(variant.ref);
-        _this.queryForm.select('input[name="varAlt"]')[0].setValue(variant.alt);
-        _this.submitHiddenForm();
-      });
-      return button;
     },
 
     displayDiagnosisBox: function(cell) {
@@ -815,10 +798,6 @@ $xwiki.ssx.use('data.MendelianResults')##
         }
       }
       this.launchSearch();
-    },
-
-    submitHiddenForm: function() {
-      this.queryForm.submit();
     },
 
     strings: {
@@ -1643,15 +1622,6 @@ $xwiki.ssx.use('data.MendelianResults')##
   word-wrap: break-word;
 }
 
-.variant-search-redo {
-  clear: both;
-  text-align: center;
-}
-
-.variant-search-redo:hover {
-  cursor: pointer;
-  color: $theme.linkColor;
-}
 .segmented-bar {
   color: red;
   font-size: 75%;
