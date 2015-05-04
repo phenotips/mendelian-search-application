@@ -20,9 +20,8 @@ package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.mendelianSearch.PatientView;
 
-import org.xwiki.component.annotation.Component;
-
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class PatientViewUtils
 {
     public static void sortPatientViewJSONs(List<JSONObject> views, String key, boolean ascending)
     {
-        views.sort(generateComparator(key, ascending));
+        Collections.sort(views, generateComparator(key, ascending));
     }
 
     private static Comparator<JSONObject> generateComparator(final String key, final boolean ascending){

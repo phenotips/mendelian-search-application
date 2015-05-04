@@ -131,7 +131,7 @@ public class MendelianSearchScriptService implements ScriptService
     {
         List<JSONObject> result = new ArrayList<JSONObject>();
         for (PatientView view : views) {
-            if (view.values().equals("open")) {
+            if (view.getType().equals("open")) {
                 result.add(view.toJSON());
             }
         }

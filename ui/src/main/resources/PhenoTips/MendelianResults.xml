@@ -213,8 +213,8 @@ $xwiki.ssx.use('data.MendelianResults')##
     mendelianLiveTableResultsURL: "${xwiki.getURL('PhenoTips.MendelianLivetableResults', 'get')}",
     DEFAULT_RESULTS_PER_PAGE: 20,
     DEFAULT_PAGE: 1,
-    DEFAULT_SORT_KEY: "patientId",
-    DEFAUL_SORT_ASC: true,
+    DEFAULT_SORT_KEY: "phenotypeScore",
+    DEFAUL_SORT_ASC: false,
 
     initialize: function(queryForm, container) {
       this.queryForm = queryForm;
@@ -316,7 +316,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       }
       this.page = newPage;
       $$('div.mendelian-livetable-controls span.current-page')[0].update(newPage);
-      this.resultsSummary.update("Displaying results " + (this.resultsPerPage * (this.page - 1) + 1) + '-' + (this.resultsPerPage * this.page));
+      this.updateResultsSummary();
       this.launchSearch();
     },
 
@@ -327,8 +327,21 @@ $xwiki.ssx.use('data.MendelianResults')##
         return;
       }
       this.resultsPerPage = parseInt(newValue);
-      this.resultsSummary.update("Displaying results " + (this.resultsPerPage * (this.page - 1) + 1) + '-' + (this.resultsPerPage * this.page));
+
+      //Check to make sure that the current page is still valid with the new results per page. If not decrement the page.
+      if ( this.getFirstResultIndex() &gt; this.numberOfResults){
+        this.page = Math.ceil(this.numberOfResults / this.resultsPerPage);
+      }
+      this.updateResultsSummary();
       this.launchSearch();
+    },
+
+    getFirstResultIndex : function(){
+      return (this.page - 1) * this.resultsPerPage + 1;
+    },
+
+    updateResultsSummary : function(){
+      this.resultsSummary.update("Displaying results " + (this.getFirstResultIndex()) + '-' + (this.resultsPerPage * this.page));
     },
 
     launchSearch: function() {
@@ -404,10 +417,10 @@ $xwiki.ssx.use('data.MendelianResults')##
       };
       //conditional column -- Displaying the number of variants is irrelevant when not matching the gene
       if(this.queryForm.select('input[name="matchGene"]')[0].getValue() == 1){
-      	columns["numberOfVariants"] = {
+        columns["numberOfVariants"] = {
          heading: _this.strings["numberOfVariants.heading"],
          display: _this.displayResultNumberOfVariants.bind(_this),
-      	};
+        };
       }
 
       // Empty the container to make room for the new results
@@ -443,9 +456,9 @@ $xwiki.ssx.use('data.MendelianResults')##
           "class": c
         }).update(columns[c].heading);
         if(columns[c].sortable){
-        	e.addClassName('sortable');
-        	e.tableSortKey = columns[c].sortable;
-        	_this.insertHeaderSortIcon(e);
+            e.addClassName('sortable');
+            e.tableSortKey = columns[c].sortable;
+            _this.insertHeaderSortIcon(e);
         }
         row.insert(e);
       }
@@ -453,15 +466,15 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     insertHeaderSortIcon :function(header) {
-    	if (header.tableSortKey == this.sortKey){
-    		if (this.sortAsc) {
-    			header.insert(" &lt;span class ='fa fa-caret-up'&gt;&lt;/span&gt;");
-    		} else {
-    			header.insert(" &lt;span class ='fa fa-caret-down'&gt;&lt;/span&gt;");
-    		}
-    	} else {
-    		header.insert(" &lt;span class ='fa fa-sort'&gt;&lt;/span&gt;");
-    	}
+      if (header.tableSortKey == this.sortKey){
+        if (this.sortAsc) {
+          header.insert(" &lt;span class ='fa fa-caret-up'&gt;&lt;/span&gt;");
+        } else {
+          header.insert(" &lt;span class ='fa fa-caret-down'&gt;&lt;/span&gt;");
+        }
+      } else {
+        header.insert(" &lt;span class ='fa fa-sort'&gt;&lt;/span&gt;");
+      }
     },
 
     _getEmptyRow: function(table, className) {
@@ -578,7 +591,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     generatePhenotypeList: function(data) {
-      //right now phenotype information is just a list of strings. 
+      //right now phenotype information is just a list of strings.
       var _this = this;
       var phenotypeList = new Element('ul');
       data.each(function(e) {
@@ -706,13 +719,13 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     addEventListeners: function() {
-    	this.addExpandCollapsePatientRow();
+      this.addExpandCollapsePatientRow();
       this.addDiagnosisToggleListeners();
       this.addSortFunction();
     },
 
     addExpandCollapsePatientRow :function(){
-			$$('tr.patient-row').each(function(r) {
+      $$('tr.patient-row').each(function(r) {
         r.observe('click', function(event) {
           var clickedElement = event.element();
           if (clickedElement.match('a') || event.findElement('.diagnosis-cell')) {
@@ -746,7 +759,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     onClickDiagnosisCell: function(event) {
-    	this.closeAllOpenDiagnosisBoxes();
+        this.closeAllOpenDiagnosisBoxes();
       var diagnosisCell = event.findElement('.diagnosis-cell');
       this.displayDiagnosisBox(diagnosisCell);
       diagnosisCell.stopObserving('click', this.onClickDiagnosisCell);
@@ -756,8 +769,8 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     closeAllOpenDiagnosisBoxes : function(){
-    	var _this = this;
-    	$$('.diagnosis-box').each(function(e) {
+        var _this = this;
+        $$('.diagnosis-box').each(function(e) {
           var cell = e.getOffsetParent();
           e.remove();
           cell.observe('click', _this.onClickDiagnosisCell);
@@ -780,28 +793,28 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     addSortFunction : function() {
-    	var _this = this;
-    	var sortableHeaders= this.resultsTable.select('th.sortable');
-    	sortableHeaders.each(function(header){
-    		header.observe('click', _this.onClickSortHeader.bindAsEventListener(_this));
-    	});
+        var _this = this;
+        var sortableHeaders= this.resultsTable.select('th.sortable');
+        sortableHeaders.each(function(header){
+            header.observe('click', _this.onClickSortHeader.bindAsEventListener(_this));
+        });
     },
 
     onClickSortHeader: function(event){
-    	var e = event.findElement('th');
-    	var sortKey = e.tableSortKey;
-    	this.page = this.DEFAULT_PAGE;
-    	if (!this.sortKey || this.sortKey != sortKey) {
-    		this.sortKey = sortKey;
-    		this.sortAsc = true;
-    	} else {
-    		if(this.sortAsc){
-    			this.sortAsc = false;
-    		} else {
-    			this.sortAsc = true;
-    		}
-    	}
-    	this.launchSearch();
+      var e = event.findElement('th');
+      var sortKey = e.tableSortKey;
+      this.page = this.DEFAULT_PAGE;
+      if (!this.sortKey || this.sortKey != sortKey) {
+        this.sortKey = sortKey;
+        this.sortAsc = true;
+      } else {
+        if(this.sortAsc){
+          this.sortAsc = false;
+        } else {
+          this.sortAsc = true;
+        }
+      }
+      this.launchSearch();
     },
 
     submitHiddenForm: function() {
@@ -967,7 +980,7 @@ $xwiki.ssx.use('data.MendelianResults')##
   var boxWidth = 20;
 
   var maxY = findMaxYDomain(data);
-  var y = d3.scale.linear().range([height,0]).domain([0,maxY]).nice();
+  var y =d3.scale.linear().range([height,0]).domain([0,maxY]).nice();
   var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
 
   var xAxis = d3.svg.axis()
