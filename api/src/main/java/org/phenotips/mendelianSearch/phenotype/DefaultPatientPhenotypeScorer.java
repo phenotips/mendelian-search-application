@@ -52,7 +52,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     private OntologyManager ontologyManager;
 
     @Inject
-    PermissionsManager pm;
+    private PermissionsManager pm;
 
     @Inject
     private PatientRepository pr;

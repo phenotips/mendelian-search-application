@@ -30,5 +30,11 @@ import com.xpn.xwiki.web.XWikiRequest;
 @Role
 public interface MendelianSearchRequestFactory
 {
+    /**
+     * Converts an {@link XWikiRequest} to a {@link MendelianSearchRequest}.
+     * Performs necessary sanitation to the incoming request.
+     * @param rawRequest The request sent by the ui.
+     * @return the mendelian search request to be used in the query.
+     */
     MendelianSearchRequest makeRequest(XWikiRequest rawRequest);
 }

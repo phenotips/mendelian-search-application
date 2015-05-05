@@ -88,7 +88,7 @@ public class DefaultMendelianSearch implements MendelianSearch
     public Map<String, Object> getOverview(MendelianSearchRequest request)
     {
         Map<String, Object> result = null;
-        if (request.getPhenotypeMatching().equals("fuzzy")) {
+        if ("fuzzy".equals(request.get("phenotypeMatching"))) {
             result = this.getFuzzyOverview(request);
         }
         return result;
@@ -153,7 +153,7 @@ public class DefaultMendelianSearch implements MendelianSearch
     }
 
     /**
-     * Filters the inputed set of Ids to those which match the input request
+     * Filters a set of Ids to those which match the input request.
      *
      * @param request Phenotype filter parameters should be present in the request
      * @param ids The set of all valid Ids which may be returned.
@@ -161,12 +161,7 @@ public class DefaultMendelianSearch implements MendelianSearch
      */
     private Set<String> findIdsMatchingPhenotype(MendelianSearchRequest request, Set<String> ids)
     {
-        String matchingType = (String) request.get("phenotypeMatching");
-        if (matchingType == "fuzzy") {
-            return ids;
-        } else if (matchingType == "strict") {
-            // TODO:figure out strict phenotype matching
-        }
+        //Right now only the matching type 'fuzzy' so just return the ids.
         return ids;
     }
 
@@ -186,7 +181,8 @@ public class DefaultMendelianSearch implements MendelianSearch
         matchingVariants = this.variantStore.getIndividualsWithGene(
             (String) request.get("geneSymbol"),
             (List<String>) request.get("variantEffects"),
-            (Map<String, Double>) request.get("alleleFrequencies"));      
+            (Map<String, Double>) request.get("alleleFrequencies"));
+
         if ((int) request.get("matchGene") == 1) {
             return matchingVariants;
         }

@@ -50,8 +50,8 @@ public interface PatientPhenotypeScorer
      * Computes scores between 0 and 1 for each patient in the id set. Scores are computed against the phenotype
      * provided in the arguments.
      *
-     * @param phenotype
-     * @param ids
+     * @param phenotype The phenotype against which to compute
+     * @param ids A valid set of patient internal ids
      * @return A map with patient ids as keys and double scores as values
      */
     Map<String, Double> getScoresById(List<OntologyTerm> phenotype, Set<String> ids);

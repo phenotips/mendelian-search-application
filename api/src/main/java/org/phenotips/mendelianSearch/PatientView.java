@@ -25,6 +25,11 @@ import org.ga4gh.GAVariant;
 
 import net.sf.json.JSONObject;
 
+/**
+ * A container to be used to store patient information for the mendelian search application.
+ * Allows different fields to be set and provides a method to summarize patient in a JSON object.
+ * @version $Id$
+ */
 public interface PatientView
 {
 
@@ -50,7 +55,7 @@ public interface PatientView
      *                  "ref"       : <String reference bases>,
      *                  "alt"       : <String alternate bases or "-">,
      *                  "score"     : <Double exomiser score>,
-     *                  "effect"    : <String predicted gene effect
+     *                  "effect"    : <String predicted gene effect>
      *              },
      *              ...
      *          ]
@@ -62,22 +67,58 @@ public interface PatientView
      */
     JSONObject toJSON();
 
+    /**
+     * Set the patient view type.
+     * @param type 'restricted' or 'open'
+     */
     void setType(String type);
 
+    /**
+     * Set the patient id.
+     * @param id a valid phenotips internal id
+     */
     void setPatientId(String id);
 
+    /**
+     * Set the url to the patient document.
+     * @param patientURL a valid url
+     */
     void setPatientURL(String patientURL);
 
+    /**
+     * Set the patient owner.
+     * @param owner The owner of the patient.
+     */
     void setOwner(String owner);
 
+    /**
+     * Set the patient phenotype.
+     * @param phenotype A list of pretty name symptoms.
+     */
     void setPhenotype(List<String> phenotype);
 
+    /**
+     * Set the patient variants.
+     * @param variants a list of variants.
+     */
     void setVariants(List<GAVariant> variants);
 
+    /**
+     * Set the patient phenotype.
+     * @param phenotypeScore score between 0 and 1.
+     */
     void setPhenotypeScore(double phenotypeScore);
 
+    /**
+     * Set the gene status for the patient.
+     * @param newStatus 'solved', 'candidate' or 'rejected'
+     */
     void setGeneStatus(String newStatus);
 
+    /**
+     * Set the patient diagnosis.
+     * @param diagnosis A list of disorders to add to the patient view.
+     */
     void setDiagnosis(List<Disorder> diagnosis);
 
 }

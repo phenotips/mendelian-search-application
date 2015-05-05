@@ -47,18 +47,32 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Default implementation of {@link PatientPhenotypeScorer}.
+ * @version $Id$
+ */
 public class DefaultPatientPhenotypeScorerTest
 {
+
+    private static Map<String, OntologyTerm> testOntologyTerms;
+
+    /**
+     * The component under test.
+     */
     @Rule
     public final MockitoComponentMockingRule<DefaultPatientPhenotypeScorer> mocker =
         new MockitoComponentMockingRule<DefaultPatientPhenotypeScorer>(DefaultPatientPhenotypeScorer.class);
 
+    //Reference to the OntologyManager used by the component.
     private OntologyManager ontologyManager;
 
+    //Reference to the PhenotypeScorer used by the component.
     private PhenotypeScorer scorer;
 
-    private static Map<String, OntologyTerm> testOntologyTerms;
-
+    /**
+     * Before each test, mock the scorer and ontology manager methods.
+     * @throws ComponentLookupException If the test component cannot be found
+     */
     @SuppressWarnings("unchecked")
     @Before
     public void setup() throws ComponentLookupException
@@ -75,6 +89,9 @@ public class DefaultPatientPhenotypeScorerTest
 
     }
 
+    /**
+     *  Tests for normal behaviour on a list of three patients with varying present features
+     */
     @Test
     public void testNormalPatientList() throws ComponentLookupException
     {
@@ -113,6 +130,9 @@ public class DefaultPatientPhenotypeScorerTest
         assertEquals(numPatients, result.size());
     }
 
+    /**
+     * Sets up a mocked HPO ontology for use in tests
+     */
     @BeforeClass
     public static void setupOntology() throws ComponentLookupException, CacheException
     {

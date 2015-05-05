@@ -19,17 +19,10 @@ package org.phenotips.mendelianSearch.internal;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * An object representation of the query made by a user interacting witht the mendelian search application. Just wraps a
- * map. Currently used keys:
- * <ul>
- * <li>geneSymbol</li>
- * <li>phenotype</li>
- * <li>variantEffects</li>
- * <li>alleleFrequencies</li>
- * </ul>
+ * map.
  *
  * @version $Id$
  */
@@ -65,16 +58,17 @@ public class MendelianSearchRequest
         return this.requestParams.get(param);
     }
 
-    public String getPhenotypeMatching()
-    {
-        return (String) this.requestParams.get("phenotypeMatching");
-    }
-
+    /**
+     * @return the unique id of this request.
+     */
     public String getId()
     {
         return id;
     }
 
+    /**
+     * @param id set the id of this request. Should be unique.
+     */
     public void setId(String id)
     {
         this.id = id;

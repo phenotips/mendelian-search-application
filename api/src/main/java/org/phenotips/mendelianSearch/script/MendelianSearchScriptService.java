@@ -77,13 +77,17 @@ public class MendelianSearchScriptService implements ScriptService
         metaData.element("numberOfResults", patientJSONs.size());
 
         //Sort data
-        String sortKey = (request.get("sort") != null) ? (String) request.get("sort") : "patientId";
-        boolean ascending = (request.get("asc") != null) ? (boolean) request.get("asc") : true;
+        String sortString = "sort";
+        String ascendingString = "asc";
+        String sortKey = (request.get(sortString) != null) ? (String) request.get(sortString) : "patientId";
+        boolean ascending = (request.get(ascendingString) != null) ? (boolean) request.get(ascendingString) : true;
         PatientViewUtils.sortPatientViewJSONs(patientJSONs, sortKey, ascending);
 
         //Paginate data
-        int page = (request.get("page") != null) ? (int) request.get("page") : 1;
-        int resultsPerPage = (request.get("resultsPerPage") != null) ? (int) request.get("resultsPerPage") : 20;
+        String pageString = "page";
+        int page = (request.get(pageString) != null) ? (int) request.get(pageString) : 1;
+        String resultsPerPageString = "resultsPerPage";
+        int resultsPerPage = (request.get(resultsPerPageString) != null) ? (int) request.get(resultsPerPageString) : 20;
         patientJSONs = PatientViewUtils.paginatePatientViewJSON(patientJSONs, page, resultsPerPage);
 
         response.element("meta", metaData);
@@ -131,7 +135,7 @@ public class MendelianSearchScriptService implements ScriptService
     {
         List<JSONObject> result = new ArrayList<JSONObject>();
         for (PatientView view : views) {
-            if (view.getType().equals("open")) {
+            if ("open".equals(view.getType())) {
                 result.add(view.toJSON());
             }
         }

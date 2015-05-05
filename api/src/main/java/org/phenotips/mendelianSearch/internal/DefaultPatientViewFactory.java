@@ -47,10 +47,18 @@ import org.ga4gh.GAVariant;
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
 
+/**
+ * Default implementation of {@link PatientViewFactory}.
+ * @version $Id$
+ */
 @Component
 @Singleton
 public class DefaultPatientViewFactory implements PatientViewFactory
 {
+    private static final String UNDISCLOSED_MARKER = "?";
+
+    private static final String SOLVED_STRING = "solved";
+
     @Inject
     private PermissionsManager pm;
 
@@ -64,11 +72,9 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     @Inject
     private Provider<XWikiContext> xcontext;
 
-
-    private final static String undisclosed_marker = "?";
-
     @Override
-    public PatientView createPatientView(String id, List<GAVariant> variants, double phenotypeScore, MendelianSearchRequest request)
+    public PatientView createPatientView(String id, List<GAVariant> variants, double phenotypeScore,
+        MendelianSearchRequest request)
     {
         PatientView view;
         Patient patient = this.pr.getPatientById(id);
@@ -103,19 +109,21 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         return result;
     }
 
-    private PatientView generateRestrictedPatientView(Patient patient, List<GAVariant> variants, double phenotypeScore, MendelianSearchRequest request)
+    private PatientView generateRestrictedPatientView(Patient patient, List<GAVariant> variants,
+        double phenotypeScore, MendelianSearchRequest request)
     {
         PatientView view = new DefaultPatientView();
         view.setType("restricted");
-        view.setPatientId(undisclosed_marker);
-        view.setOwner(undisclosed_marker);
+        view.setPatientId(UNDISCLOSED_MARKER);
+        view.setOwner(UNDISCLOSED_MARKER);
         view.setPhenotype(new ArrayList<String>());
         view.setPhenotypeScore(phenotypeScore);
         view.setVariants(new ArrayList<GAVariant>());
         return view;
     }
 
-    private PatientView generateOpenPatientView(Patient patient, List<GAVariant> variants, double phenotypeScore, MendelianSearchRequest request)
+    private PatientView generateOpenPatientView(Patient patient, List<GAVariant> variants,
+        double phenotypeScore, MendelianSearchRequest request)
     {
         PatientView view = new DefaultPatientView();
         view.setType("open");
@@ -168,8 +176,8 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     {
         List<String> candidateGenes = this.getPatientGenes(patient, "genes");
 
-        if ( this.isGeneSolved(patient, geneSymbol)){
-            return "solved";
+        if (this.isGeneSolved(patient, geneSymbol)) {
+            return SOLVED_STRING;
         }
 
         if (candidateGenes.contains(geneSymbol)) {
@@ -199,10 +207,9 @@ public class DefaultPatientViewFactory implements PatientViewFactory
 
     private boolean isGeneSolved(Patient patient, String geneSymbol)
     {
-        String solvedString = "solved";
-        PatientData solvedData = patient.getData(solvedString);
-        if(solvedData != null) {
-            if ("1".equals(solvedData.get(solvedString))) {
+        PatientData solvedData = patient.getData(SOLVED_STRING);
+        if (solvedData != null) {
+            if ("1".equals(solvedData.get(SOLVED_STRING))) {
                 if (geneSymbol.equals(solvedData.get("solved__gene_id"))) {
                     return true;
                 }
@@ -215,7 +222,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     {
         List<Disorder> result = new ArrayList<Disorder>();
         Set<? extends Disorder> disorders = patient.getDisorders();
-        if(!disorders.isEmpty()) {
+        if (!disorders.isEmpty()) {
             for (Disorder dis : disorders) {
                 result.add(dis);
             }

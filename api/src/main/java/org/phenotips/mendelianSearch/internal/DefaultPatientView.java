@@ -26,10 +26,14 @@ import java.util.Map;
 
 import org.ga4gh.GAVariant;
 
-import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+/**
+ * Default patient view for storing response information.
+ *
+ * @version $Id$
+ */
 public class DefaultPatientView implements PatientView
 {
     private String type;
@@ -49,6 +53,13 @@ public class DefaultPatientView implements PatientView
     private String geneStatus;
 
     private List<Disorder> diagnosis;
+
+    /**
+     * Empty constructor for a DefaultPatientView.
+     */
+    public DefaultPatientView()
+    {
+    }
 
     @Override
     public String getType()
@@ -71,7 +82,7 @@ public class DefaultPatientView implements PatientView
         JSONArray variantJSONs = new JSONArray();
         if (!this.variants.isEmpty()) {
             for (GAVariant v : this.variants) {
-                variantJSONs.add(this.GAVariantToJSON(v));
+                variantJSONs.add(this.convertGAVariantToJSON(v));
             }
         }
         result.element("variants", variantJSONs);
@@ -82,10 +93,10 @@ public class DefaultPatientView implements PatientView
     private List<JSONObject> disordersToJSON(List<Disorder> diagnosis)
     {
         List<JSONObject> result = new ArrayList<JSONObject>();
-        if (diagnosis == null ||diagnosis.isEmpty()){
+        if (diagnosis == null || diagnosis.isEmpty()) {
             return result;
         }
-        for(Disorder disorder : diagnosis){
+        for (Disorder disorder : diagnosis) {
             JSONObject disorderJSON = new JSONObject();
             disorderJSON.element("id", disorder.getId());
             disorderJSON.element("name", disorder.getName());
@@ -94,7 +105,7 @@ public class DefaultPatientView implements PatientView
         return result;
     }
 
-    private JSONObject GAVariantToJSON(GAVariant rawV)
+    private JSONObject convertGAVariantToJSON(GAVariant rawV)
     {
         JSONObject v = new JSONObject();
         v.put("position", rawV.getStart());
@@ -102,11 +113,13 @@ public class DefaultPatientView implements PatientView
         v.put("chr", rawV.getReferenceName());
         // We are only showing the first possible alternates.
         List<String> alternates = rawV.getAlternateBases();
+        String alternateValue;
         if (alternates != null && !alternates.isEmpty()) {
-            v.put("alt", alternates.get(0));
+            alternateValue = alternates.get(0);
         } else {
-            v.put("alt", "");
+            alternateValue = "";
         }
+        v.put("alt", alternateValue);
 
         Map<String, List<String>> rawVInfo = rawV.getInfo();
 
@@ -126,10 +139,6 @@ public class DefaultPatientView implements PatientView
         }
 
         return v;
-    }
-
-    public DefaultPatientView()
-    {
     }
 
     @Override
@@ -156,11 +165,6 @@ public class DefaultPatientView implements PatientView
         this.geneStatus = newStatus;
     }
 
-    public String getGeneStatus()
-    {
-        return this.geneStatus;
-    }
-
     @Override
     public void setPhenotype(List<String> phenotype)
     {
@@ -179,20 +183,10 @@ public class DefaultPatientView implements PatientView
         this.patientID = id;
     }
 
-    public String getPatientURL()
-    {
-        return patientURL;
-    }
-
     @Override
     public void setPatientURL(String patientURL)
     {
         this.patientURL = patientURL;
-    }
-
-    public List<Disorder> getDiagnosis()
-    {
-        return diagnosis;
     }
 
     @Override

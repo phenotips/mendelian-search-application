@@ -18,38 +18,44 @@
 
 package org.phenotips.mendelianSearch.internal;
 
-import org.phenotips.mendelianSearch.PatientView;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.inject.Singleton;
-
-import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
 /**
- * @Version $Id$
+ * Static utility class for handling patient views.
+ * @version $Id$
  */
-
-@Singleton
-public class PatientViewUtils
+public final class PatientViewUtils
 {
+
+    private PatientViewUtils()
+    {
+        throw new AssertionError();
+    }
+    /**
+     * Sorts JSON objects using a specified key.
+     * @param views The patient view JSON objects to be sorted.
+     * @param key The key in the JSON object which maps to the value to be sorted.
+     * @param ascending True if sort order should be ascending, flase for descending.
+     */
     public static void sortPatientViewJSONs(List<JSONObject> views, String key, boolean ascending)
     {
         Collections.sort(views, generateComparator(key, ascending));
     }
 
-    private static Comparator<JSONObject> generateComparator(final String key, final boolean ascending){
+    private static Comparator<JSONObject> generateComparator(final String key, final boolean ascending) {
         return new Comparator<JSONObject>()
         {
             @Override
             public int compare(JSONObject pv1, JSONObject pv2)
             {
                 int compareVal = pv1.get(key).toString().compareTo(pv2.get(key).toString());
-                if(ascending) {
+                if (ascending) {
                     return compareVal;
                 } else {
                     return (-compareVal);
@@ -58,16 +64,26 @@ public class PatientViewUtils
         };
     }
 
-    public static List<JSONObject> paginatePatientViewJSON (List<JSONObject> views, int page, int elementsPerPage) {
-        int startIndex = (page-1) * (elementsPerPage);
+    /**
+     * Trims a list of JSONs based on inputed page and results per page.
+     * This method is out of bounds safe and will return the last possible page if index is too high.
+     * @param views The list of patient view jsons to be paginated.
+     * @param page The page number.
+     * @param elementsPerPage The number of JSONs to be returned in the final list.
+     * @return The trimmed list of JSON objects representing the specified page.
+     */
+    public static List<JSONObject> paginatePatientViewJSON(List<JSONObject> views, int page, int elementsPerPage) {
+        if (page < 1 || elementsPerPage < 1) {
+            return new ArrayList<JSONObject>();
+        }
+        int startIndex = (page - 1) * (elementsPerPage);
         int stopIndex = startIndex + elementsPerPage;
-        if (startIndex > views.size()){
+        if (startIndex > views.size()) {
             startIndex = elementsPerPage * (views.size() / elementsPerPage);
         }
-        if (stopIndex > views.size()){
+        if (stopIndex > views.size()) {
             stopIndex = views.size();
         }
-        List<PatientView> result = new ArrayList<PatientView>();
         return views.subList(startIndex, stopIndex);
     }
 }

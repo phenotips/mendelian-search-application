@@ -27,11 +27,31 @@ import java.util.Set;
 
 import org.ga4gh.GAVariant;
 
+/**
+ * Factory for creating {@link PatientView}.
+ * @version $Id$
+ */
 @Role
 public interface PatientViewFactory
 {
+    /**
+     * Create a single patient view.
+     * @param id The patient internal id
+     * @param variants The variants associated with this patient.
+     * @param score The phenotype score of this patient
+     * @param request The request that provides context to the patient view.
+     * @return The patient view
+     */
     PatientView createPatientView(String id, List<GAVariant> variants, double score, MendelianSearchRequest request);
 
+    /**
+     * Create multiple patient views. Note that the ids specified in the params must be consistent.
+     * @param ids A set of valid patient ids.
+     * @param variantMap A map from patient id to list of variants
+     * @param scores A map of patient id to phenotype score
+     * @param request The request that provides context to the patient view.
+     * @return A list of patient views.
+     */
     List<PatientView> createPatientViews(Set<String> ids, Map<String, List<GAVariant>> variantMap,
         Map<String, Double> scores, MendelianSearchRequest request);
 

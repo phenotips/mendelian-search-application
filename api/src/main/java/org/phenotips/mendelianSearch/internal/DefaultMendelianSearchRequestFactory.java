@@ -32,12 +32,13 @@ import javax.inject.Singleton;
 import com.xpn.xwiki.web.XWikiRequest;
 
 /**
- * @Version $Id$
+ * @version $Id$
  */
 @Component
 @Singleton
 public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequestFactory
 {
+
     // The search keys
     private String requestId = "id";
 
@@ -92,7 +93,8 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
         return request;
     }
 
-    private String generateRequestId(){
+    private String generateRequestId()
+    {
         return UUID.randomUUID().toString();
     }
 }
