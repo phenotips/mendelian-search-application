@@ -17,9 +17,9 @@
  */
 package org.phenotips.mendelianSearch.phenotype;
 
-import org.phenotips.ontology.OntologyManager;
-import org.phenotips.ontology.OntologyService;
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.vocabulary.OntologyManager;
+import org.phenotips.vocabulary.OntologyService;
+import org.phenotips.vocabulary.OntologyTerm;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.phase.Initializable;
@@ -27,6 +27,7 @@ import org.xwiki.component.phase.InitializationException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +55,9 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
 
     /** Small value used to round things too close to 0 or 1. */
     private static final double EPS = 1e-9;
+
+    /** A string variable for "id".*/
+    private static final String ID_STRING = "id";
 
     /** Pre-computed term information content (-logp), for each node t (i.e. t.inf). */
     private Map<OntologyTerm, Double> termICs;
@@ -88,22 +92,80 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
         this.logger.info("Initialized.");
     }
 
+    @Override
+    public double getScore(List<OntologyTerm> p1, List<OntologyTerm> p2) {
+        return this.getScore(p1, p2, true);
+    }
+
+    @Override
+    public double getScoreAgainstReference(List<OntologyTerm> query, List<OntologyTerm> reference) {
+        return this.getScore(query, reference, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> getDetailedMatches(List<OntologyTerm> q, List<OntologyTerm> m) {
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        double maxIC;
+
+        //This is a far from optimal greedy approach to creating matches.
+        // Each trait (qt) from q is matched with its best match in m (mt). mt is then removed from m.
+        // So although mt may be the best match for qt, qt may not be the best match for mt.
+        for (OntologyTerm t : q) {
+            if (m.isEmpty()) {
+                break;
+            }
+            maxIC = 0;
+            OntologyTerm bestMatch = null;
+            OntologyTerm lcs = null;
+            for (OntologyTerm tPrime :  m) {
+                OntologyTerm tempLcs = this.findBestCommonAncestor(t, tPrime);
+                if (tempLcs != null && this.termICs.get(tempLcs) > maxIC) {
+                    lcs = tempLcs;
+                    maxIC = this.termICs.get(tempLcs);
+                    bestMatch = tPrime;
+                }
+            }
+            if (bestMatch != null && lcs != null) {
+                m.remove(bestMatch);
+                Map<String, Object> matchView = this.createMatchView(t, bestMatch, lcs);
+                result.add(matchView);
+            }
+        }
+        return result;
+    }
+
+    private Map<String, Object> createMatchView(OntologyTerm a, OntologyTerm b, OntologyTerm lcs)
+    {
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("a", this.getTermData(a));
+        result.put("b", this.getTermData(b));
+        result.put("lcs", this.getTermData(lcs));
+        return result;
+    }
+
     /**
      * Get the phenotypic similarity score for two sets of phenotypes.
+     * The value of symmetric determines the method in which the similarity is calculated:
+     * <ul>
+     *      <li>{@code true} Match and ref are treated equally.
+     *          The IC of the intersection is divided by the IC of the union.</li>
+     *      <li>{@code false} Match is compared to ref.
+     *          The IC of the intersection is divided by the IC of the the reference.</li>
+     * </ul>
+     * @param match the first set of HPO terms Used as the match list
+     * @param ref the second set of HPO terms. Used as the reference list.
+     * @param symmetric Defines the denominator for the score calculation.
      *
-     * @param p1 the first set of HPO terms
-     * @param p2 the second set of HPO terms
      * @return the similarity score, between 0 (a poor match) and 1 (a good match)
      */
-    @Override
-    public double getScore(List<OntologyTerm> p1, List<OntologyTerm> p2)
+    private Double getScore(List<OntologyTerm> match, List<OntologyTerm> ref, boolean symmetric)
     {
-        if (p1.isEmpty() || p2.isEmpty()) {
+        if (match.isEmpty() || ref.isEmpty()) {
             return 0.0;
         } else {
             // Get ancestors for both patients
-            Set<OntologyTerm> refAncestors = getAncestors(p1);
-            Set<OntologyTerm> matchAncestors = getAncestors(p2);
+            Set<OntologyTerm> refAncestors = getAncestors(ref);
+            Set<OntologyTerm> matchAncestors = getAncestors(match);
 
             if (refAncestors.isEmpty() || matchAncestors.isEmpty()) {
                 return 0.0;
@@ -116,10 +178,44 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
                 Set<OntologyTerm> allAncestors = new HashSet<OntologyTerm>();
                 allAncestors.addAll(refAncestors);
                 allAncestors.addAll(matchAncestors);
+                Double denominator = symmetric ? getTermICs(allAncestors) : getTermICs(refAncestors);
 
-                return getTermICs(commonAncestors) / getTermICs(allAncestors);
+                return getTermICs(commonAncestors) / denominator;
             }
         }
+    }
+
+
+    private Map<String, Object> getTermData(OntologyTerm term)
+    {
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put(ID_STRING, term.getId());
+        result.put("IC", this.termICs.get(term));
+        result.put("label", term.getName());
+        return result;
+    }
+
+    private OntologyTerm findBestCommonAncestor(OntologyTerm t, OntologyTerm tPrime)
+    {
+
+        Set<OntologyTerm> allAncestors = getAncestors(Collections.singletonList(t));
+        Set<OntologyTerm> tPrimeAncestors = getAncestors(Collections.singletonList(tPrime));
+
+        allAncestors.retainAll(tPrimeAncestors);
+        if (allAncestors.isEmpty()) {
+            return null;
+        }
+
+        double maxTermIC = 0;
+        OntologyTerm bestCommonAncestor = null;
+        for (OntologyTerm ancestor : allAncestors) {
+            Double ic  = this.termICs.get(ancestor);
+            if (ic != null && ic > maxTermIC) {
+                maxTermIC = this.termICs.get(ancestor);
+                bestCommonAncestor = ancestor;
+            }
+        }
+        return bestCommonAncestor;
     }
 
     /**
@@ -194,7 +290,7 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     private Collection<OntologyTerm> queryAllTerms(OntologyService ontology)
     {
         Map<String, String> queryAll = new HashMap<String, String>();
-        queryAll.put("id", "*");
+        queryAll.put(ID_STRING, "*");
         Map<String, String> queryAllParams = new HashMap<String, String>();
         queryAllParams.put(CommonParams.ROWS, String.valueOf(ontology.size()));
         Collection<OntologyTerm> results = ontology.search(queryAll, queryAllParams);

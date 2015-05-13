@@ -23,9 +23,9 @@ import org.phenotips.mendelianSearch.MendelianSearch;
 import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.PatientViewFactory;
 import org.phenotips.mendelianSearch.phenotype.PatientPhenotypeScorer;
-import org.phenotips.ontology.OntologyManager;
-import org.phenotips.ontology.OntologyTerm;
 import org.phenotips.variantStoreIntegration.VariantStoreService;
+import org.phenotips.vocabulary.OntologyManager;
+import org.phenotips.vocabulary.OntologyTerm;
 
 import org.xwiki.component.annotation.Component;
 

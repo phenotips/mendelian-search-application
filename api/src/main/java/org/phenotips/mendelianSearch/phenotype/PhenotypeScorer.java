@@ -17,11 +17,12 @@
  */
 package org.phenotips.mendelianSearch.phenotype;
 
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.vocabulary.OntologyTerm;
 
 import org.xwiki.component.annotation.Role;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tool used to compute a similarity score between 0 and 1 for two sets of phenotypes. A phenotypeScorer does only is
@@ -40,4 +41,39 @@ public interface PhenotypeScorer
      * @return the similarity score, between 0 (a poor match) and 1 (a good match)
      */
     double getScore(List<OntologyTerm> p1, List<OntologyTerm> p2);
+
+    /**
+     * Gets the phenotypic similarity score asymmetrically.
+     * This differs from the getScore method by asking, "How well does the query match with the reference?"
+     * @param query the first set of HPO terms
+     * @param reference the second set of HPO terms
+     * @return the similarity score, between 0 (a poor match) and 1 (a good match)
+     */
+    double getScoreAgainstReference(List<OntologyTerm> query, List<OntologyTerm> reference);
+
+    /** Returns a map of detailed matches between the terms in q and m.
+     *  Matches are stored in Maps with the following structure:
+     *  {
+     *      a:{
+     *          id:,
+     *          IC:,
+     *          label:,
+     *      },
+     *      b:{
+     *          id:,
+     *          IC:,
+     *          label:,
+     *      },
+     *      lcs:{
+     *          id:,
+     *          IC:,
+     *          label:,
+     *      }
+     *  }
+     *
+     * @param q the first set of HPO terms
+     * @param m the second set of HPO terms
+     * @return A detailed view of matches.
+     */
+    List<Map<String, Object>> getDetailedMatches(List<OntologyTerm> q, List<OntologyTerm> m);
 }
