@@ -18,7 +18,7 @@
 package org.phenotips.mendelianSearch.phenotype;
 
 import org.phenotips.data.Patient;
-import org.phenotips.vocabulary.OntologyTerm;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import org.xwiki.component.annotation.Role;
 
@@ -44,7 +44,7 @@ public interface PatientPhenotypeScorer
      * @param patients The patients to compute scores for
      * @return A map with patients as keys and double scores as values
      */
-    Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients);
+    Map<Patient, Double> getScores(List<VocabularyTerm> phenotype, Set<Patient> patients);
 
     /**
      * Computes scores between 0 and 1 for each patient in the id set. Scores are computed against the phenotype
@@ -54,6 +54,6 @@ public interface PatientPhenotypeScorer
      * @param ids A valid set of patient internal ids
      * @return A map with patient ids as keys and double scores as values
      */
-    Map<String, Double> getScoresById(List<OntologyTerm> phenotype, Set<String> ids);
+    Map<String, Double> getScoresById(List<VocabularyTerm> phenotype, Set<String> ids);
 
 }

@@ -17,8 +17,8 @@
  */
 package org.phenotips.mendelianSearch.mocks;
 
-import org.phenotips.ontology.OntologyService;
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.vocabulary.Vocabulary;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,97 +30,97 @@ import java.util.Set;
 /**
  * @version $Id$
  */
-public class MockHPO implements OntologyService
+public class MockHPO implements Vocabulary
 {
-    private Map<String, OntologyTerm> ontology;
+    private Map<String, VocabularyTerm> vocabulary;
 
     public MockHPO()
     {
-        this.ontology = new HashMap<String, OntologyTerm>();
-        Set<OntologyTerm> ancestors = new HashSet<OntologyTerm>();
-        OntologyTerm all = new MockOntologyTerm("HP:0000001", Collections.<OntologyTerm>emptySet(),
-            Collections.<OntologyTerm>emptySet());
+        this.vocabulary = new HashMap<String, VocabularyTerm>();
+        Set<VocabularyTerm> ancestors = new HashSet<VocabularyTerm>();
+        VocabularyTerm all = new MockVocabularyTerm("HP:0000001", Collections.<VocabularyTerm>emptySet(),
+            Collections.<VocabularyTerm>emptySet());
         ancestors.add(all);
-        this.ontology.put("HP:0000001", all);
-        OntologyTerm phenotypes =
-            new MockOntologyTerm("HP:0000118", Collections.singleton(all), new HashSet<OntologyTerm>(ancestors));
+        this.vocabulary.put("HP:0000001", all);
+        VocabularyTerm phenotypes =
+            new MockVocabularyTerm("HP:0000118", Collections.singleton(all), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(phenotypes);
-        this.ontology.put("HP:0000118", phenotypes);
+        this.vocabulary.put("HP:0000118", phenotypes);
 
-        OntologyTerm abnormalNS =
-            new MockOntologyTerm("HP:0000707", Collections.singleton(phenotypes), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm abnormalNS =
+            new MockVocabularyTerm("HP:0000707", Collections.singleton(phenotypes), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalNS);
-        this.ontology.put("HP:0000707", abnormalNS);
+        this.vocabulary.put("HP:0000707", abnormalNS);
 
-        OntologyTerm abnormalCNS =
-            new MockOntologyTerm("HP:0002011", Collections.singleton(abnormalNS), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm abnormalCNS =
+            new MockVocabularyTerm("HP:0002011", Collections.singleton(abnormalNS), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalCNS);
-        this.ontology.put("HP:0002011", abnormalCNS);
+        this.vocabulary.put("HP:0002011", abnormalCNS);
 
-        OntologyTerm abnormalHMF =
-            new MockOntologyTerm("HP:0011446", Collections.singleton(abnormalCNS), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm abnormalHMF =
+            new MockVocabularyTerm("HP:0011446", Collections.singleton(abnormalCNS), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalHMF);
-        this.ontology.put("HP:0011446", abnormalHMF);
+        this.vocabulary.put("HP:0011446", abnormalHMF);
 
-        OntologyTerm cognImp =
-            new MockOntologyTerm("HP:0100543", Collections.singleton(abnormalHMF), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm cognImp =
+            new MockVocabularyTerm("HP:0100543", Collections.singleton(abnormalHMF), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(cognImp);
-        this.ontology.put("HP:0100543", cognImp);
+        this.vocabulary.put("HP:0100543", cognImp);
 
-        OntologyTerm intDis =
-            new MockOntologyTerm("HP:0001249", Collections.singleton(cognImp), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm intDis =
+            new MockVocabularyTerm("HP:0001249", Collections.singleton(cognImp), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(intDis);
-        this.ontology.put("HP:0001249", intDis);
+        this.vocabulary.put("HP:0001249", intDis);
 
-        OntologyTerm mildIntDis =
-            new MockOntologyTerm("HP:0001256", Collections.singleton(intDis), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm mildIntDis =
+            new MockVocabularyTerm("HP:0001256", Collections.singleton(intDis), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(mildIntDis);
-        this.ontology.put("HP:0001256", mildIntDis);
+        this.vocabulary.put("HP:0001256", mildIntDis);
 
         ancestors.clear();
         ancestors.add(all);
         ancestors.add(phenotypes);
 
-        OntologyTerm abnormalSkelS =
-            new MockOntologyTerm("HP:0000924", Collections.singleton(phenotypes), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm abnormalSkelS =
+            new MockVocabularyTerm("HP:0000924", Collections.singleton(phenotypes), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalSkelS);
-        this.ontology.put("HP:0000924", abnormalSkelS);
+        this.vocabulary.put("HP:0000924", abnormalSkelS);
 
-        OntologyTerm abnormalSkelM =
-            new MockOntologyTerm("HP:0011842", Collections.singleton(abnormalSkelS), new HashSet<OntologyTerm>(
+        VocabularyTerm abnormalSkelM =
+            new MockVocabularyTerm("HP:0011842", Collections.singleton(abnormalSkelS), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(abnormalSkelM);
-        this.ontology.put("HP:0011842", abnormalSkelM);
+        this.vocabulary.put("HP:0011842", abnormalSkelM);
 
-        OntologyTerm abnormalJointMorph =
-            new MockOntologyTerm("HP:0001367", Collections.singleton(abnormalSkelM), new HashSet<OntologyTerm>(
+        VocabularyTerm abnormalJointMorph =
+            new MockVocabularyTerm("HP:0001367", Collections.singleton(abnormalSkelM), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(abnormalJointMorph);
-        this.ontology.put("HP:0001367", abnormalJointMorph);
+        this.vocabulary.put("HP:0001367", abnormalJointMorph);
 
-        OntologyTerm abnormalJointMob =
-            new MockOntologyTerm("HP:0011729", Collections.singleton(abnormalJointMorph), new HashSet<OntologyTerm>(
+        VocabularyTerm abnormalJointMob =
+            new MockVocabularyTerm("HP:0011729", Collections.singleton(abnormalJointMorph), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(abnormalJointMob);
-        this.ontology.put("HP:0011729", abnormalJointMob);
+        this.vocabulary.put("HP:0011729", abnormalJointMob);
 
-        OntologyTerm jointHyperm =
-            new MockOntologyTerm("HP:0001382", Collections.singleton(abnormalJointMob), new HashSet<OntologyTerm>(
+        VocabularyTerm jointHyperm =
+            new MockVocabularyTerm("HP:0001382", Collections.singleton(abnormalJointMob), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(jointHyperm);
-        this.ontology.put("HP:0001382", jointHyperm);
+        this.vocabulary.put("HP:0001382", jointHyperm);
     }
 
     @Override
-    public OntologyTerm getTerm(String id)
+    public VocabularyTerm getTerm(String id)
     {
-        return this.ontology.get(id);
+        return this.vocabulary.get(id);
     }
 
     @Override
-    public Set<OntologyTerm> getTerms(Collection<String> ids)
+    public Set<VocabularyTerm> getTerms(Collection<String> ids)
     {
-        return new HashSet<OntologyTerm>(this.ontology.values());
+        return new HashSet<VocabularyTerm>(this.vocabulary.values());
     }
 
     /**
@@ -130,9 +130,9 @@ public class MockHPO implements OntologyService
      * @return
      */
     @Override
-    public Set<OntologyTerm> search(Map<String, ?> fieldValues)
+    public Set<VocabularyTerm> search(Map<String, ?> fieldValues)
     {
-        return new HashSet<OntologyTerm>(this.ontology.values());
+        return new HashSet<VocabularyTerm>(this.vocabulary.values());
     }
 
     /**
@@ -143,13 +143,13 @@ public class MockHPO implements OntologyService
      * @return
      */
     @Override
-    public Set<OntologyTerm> search(Map<String, ?> fieldValues, Map<String, String> queryOptions)
+    public Set<VocabularyTerm> search(Map<String, ?> fieldValues, Map<String, String> queryOptions)
     {
-        return new HashSet<OntologyTerm>(this.ontology.values());
+        return new HashSet<VocabularyTerm>(this.vocabulary.values());
     }
 
     /**
-     * Non-functional search method. Always returns the size of the ontology.
+     * Non-functional search method. Always returns the size of the vocabulary.
      *
      * @param fieldValues Ignored
      * @return
@@ -157,7 +157,7 @@ public class MockHPO implements OntologyService
     @Override
     public long count(Map<String, ?> fieldValues)
     {
-        return this.ontology.size();
+        return this.vocabulary.size();
     }
 
     @Override
@@ -167,31 +167,31 @@ public class MockHPO implements OntologyService
     }
 
     @Override
-    public long getDistance(OntologyTerm fromTerm, OntologyTerm toTerm)
+    public long getDistance(VocabularyTerm fromTerm, VocabularyTerm toTerm)
     {
         // TODO Auto-generated method stub
         return 0;
     }
 
     /**
-     * !IMPORTANT! Returns the KeySet of the ontology rather than aliases. Useful for testing.
+     * !IMPORTANT! Returns the KeySet of the vocabulary rather than aliases. Useful for testing.
      *
      * @return
      */
     @Override
     public Set<String> getAliases()
     {
-        return this.ontology.keySet();
+        return this.vocabulary.keySet();
     }
 
     @Override
     public long size()
     {
-        return this.ontology.size();
+        return this.vocabulary.size();
     }
 
     @Override
-    public int reindex(String ontologyUrl)
+    public int reindex(String vocabularyUrl)
     {
         return 0;
     }
@@ -210,7 +210,7 @@ public class MockHPO implements OntologyService
     }
 
     @Override
-    public Set<OntologyTerm> termSuggest(String query, Integer rows, String sort, String customFq)
+    public Set<VocabularyTerm> termSuggest(String query, Integer rows, String sort, String customFq)
     {
         return null;
     }

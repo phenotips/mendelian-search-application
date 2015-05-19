@@ -25,7 +25,7 @@ import org.phenotips.data.permissions.Owner;
 import org.phenotips.data.permissions.PatientAccess;
 import org.phenotips.data.permissions.PermissionsManager;
 import org.phenotips.mendelianSearch.PatientView;
-import org.phenotips.ontology.OntologyManager;
+import org.phenotips.vocabulary.VocabularyManager;
 
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.test.mockito.MockitoComponentMockingRule;
@@ -60,7 +60,7 @@ public class DefaultPatientViewFactoryTest
 
     private PatientRepository pr;
 
-    private OntologyManager om;
+    private VocabularyManager om;
 
     private AccessLevel viewAccess;
 
@@ -71,7 +71,7 @@ public class DefaultPatientViewFactoryTest
     {
         MockitoAnnotations.initMocks(this);
         this.pr = this.mocker.getInstance(PatientRepository.class);
-        this.om = this.mocker.getInstance(OntologyManager.class);
+        this.om = this.mocker.getInstance(VocabularyManager.class);
         this.pm = this.mocker.getInstance(PermissionsManager.class);
         this.viewAccess = this.mocker.getInstance(AccessLevel.class, "view");
 

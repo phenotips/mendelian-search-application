@@ -22,8 +22,8 @@ import org.phenotips.data.Patient;
 import org.phenotips.data.PatientRepository;
 import org.phenotips.data.permissions.PermissionsManager;
 import org.phenotips.data.permissions.internal.visibility.HiddenVisibility;
-import org.phenotips.vocabulary.OntologyManager;
-import org.phenotips.vocabulary.OntologyTerm;
+import org.phenotips.vocabulary.VocabularyManager;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import org.xwiki.component.annotation.Component;
 
@@ -47,9 +47,9 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     @Inject
     private PhenotypeScorer scorer;
 
-    /** Provides access to the term ontology. */
+    /** Provides access to the term vocabulary. */
     @Inject
-    private OntologyManager ontologyManager;
+    private VocabularyManager vocabularyManager;
 
     @Inject
     private PermissionsManager pm;
@@ -58,7 +58,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     private PatientRepository pr;
 
     @Override
-    public Map<Patient, Double> getScores(List<OntologyTerm> phenotype, Set<Patient> patients)
+    public Map<Patient, Double> getScores(List<VocabularyTerm> phenotype, Set<Patient> patients)
     {
         Map<Patient, Double> patientScores = new HashMap<Patient, Double>();
         for (Patient patient : patients) {
@@ -72,7 +72,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     }
 
     @Override
-    public Map<String, Double> getScoresById(List<OntologyTerm> phenotype, Set<String> ids)
+    public Map<String, Double> getScoresById(List<VocabularyTerm> phenotype, Set<String> ids)
     {
         Set<Patient> patients = new HashSet<Patient>();
         for (String id : ids) {
@@ -94,9 +94,9 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
      * @param patient
      * @return a collection of terms present in the patient
      */
-    private List<OntologyTerm> getPresentPatientTerms(Patient patient)
+    private List<VocabularyTerm> getPresentPatientTerms(Patient patient)
     {
-        List<OntologyTerm> terms = new ArrayList<OntologyTerm>();
+        List<VocabularyTerm> terms = new ArrayList<>();
         if (patient.getFeatures().isEmpty()) {
             return terms;
         }
@@ -105,7 +105,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
                 continue;
             }
 
-            OntologyTerm term = this.ontologyManager.resolveTerm(feature.getId());
+            VocabularyTerm term = this.vocabularyManager.resolveTerm(feature.getId());
             if (term != null) {
                 // Only add resolvable terms
                 terms.add(term);

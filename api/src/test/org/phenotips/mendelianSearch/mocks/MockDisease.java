@@ -17,8 +17,8 @@
  */
 package org.phenotips.mendelianSearch.mocks;
 
-import org.phenotips.ontology.OntologyService;
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.vocabulary.Vocabulary;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ import java.util.Set;
 
 import net.sf.json.JSON;
 
-public class MockDisease implements OntologyTerm
+public class MockDisease implements VocabularyTerm
 {
     private Map<String, Object> data;
 
@@ -59,27 +59,27 @@ public class MockDisease implements OntologyTerm
     }
 
     @Override
-    public Set<OntologyTerm> getParents()
+    public Set<VocabularyTerm> getParents()
     {
         return null;
     }
 
     @Override
-    public Set<OntologyTerm> getAncestors()
+    public Set<VocabularyTerm> getAncestors()
     {
         return null;
     }
 
     @Override
-    public Set<OntologyTerm> getAncestorsAndSelf()
+    public Set<VocabularyTerm> getAncestorsAndSelf()
     {
-        Set<OntologyTerm> result = new HashSet<OntologyTerm>();
+        Set<VocabularyTerm> result = new HashSet<VocabularyTerm>();
         result.add(this);
         return result;
     }
 
     @Override
-    public long getDistanceTo(OntologyTerm other)
+    public long getDistanceTo(VocabularyTerm other)
     {
         return 0;
     }
@@ -91,7 +91,7 @@ public class MockDisease implements OntologyTerm
     }
 
     @Override
-    public OntologyService getOntology()
+    public Vocabulary getOntology()
     {
         return null;
     }

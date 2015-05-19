@@ -17,9 +17,9 @@
  */
 package org.phenotips.mendelianSearch.phenotype;
 
-import org.phenotips.vocabulary.OntologyManager;
-import org.phenotips.vocabulary.OntologyService;
-import org.phenotips.vocabulary.OntologyTerm;
+import org.phenotips.vocabulary.Vocabulary;
+import org.phenotips.vocabulary.VocabularyManager;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.phase.Initializable;
@@ -60,14 +60,14 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     private static final String ID_STRING = "id";
 
     /** Pre-computed term information content (-logp), for each node t (i.e. t.inf). */
-    private Map<OntologyTerm, Double> termICs;
+    private Map<VocabularyTerm, Double> termICs;
 
     @Inject
     private Logger logger;
 
-    /** Provides access to the term ontology. */
+    /** Provides access to the term vocabulary. */
     @Inject
-    private OntologyManager ontologyManager;
+    private VocabularyManager vocabularyManager;
 
     @Override
     public void initialize() throws InitializationException
@@ -75,16 +75,16 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
         this.logger.info("Initializing...");
 
         // Load the OMIM/HPO mappings
-        OntologyService mim = this.ontologyManager.getOntology("MIM");
-        OntologyService hpo = this.ontologyManager.getOntology("HPO");
-        OntologyTerm hpRoot = hpo.getTerm(HP_ROOT);
+        Vocabulary mim = this.vocabularyManager.getVocabulary("MIM");
+        Vocabulary hpo = this.vocabularyManager.getVocabulary("HPO");
+        VocabularyTerm hpRoot = hpo.getTerm(HP_ROOT);
 
         // Pre-compute HPO descendant lookups
-        Map<OntologyTerm, Collection<OntologyTerm>> termChildren = getChildrenMap(hpo);
-        Map<OntologyTerm, Collection<OntologyTerm>> termDescendants = getDescendantsMap(hpRoot, termChildren);
+        Map<VocabularyTerm, Collection<VocabularyTerm>> termChildren = getChildrenMap(hpo);
+        Map<VocabularyTerm, Collection<VocabularyTerm>> termDescendants = getDescendantsMap(hpRoot, termChildren);
 
         // Compute prior frequencies of phenotypes (based on disease frequencies and phenotype prevalence)
-        Map<OntologyTerm, Double> termFreq = getTermFrequencies(mim, hpo, termDescendants.keySet());
+        Map<VocabularyTerm, Double> termFreq = getTermFrequencies(mim, hpo, termDescendants.keySet());
 
         // Pre-compute term information content (-logp), for each node t (i.e. t.inf).
         this.termICs = findTermICs(termFreq, termDescendants);
@@ -93,32 +93,32 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     }
 
     @Override
-    public double getScore(List<OntologyTerm> p1, List<OntologyTerm> p2) {
+    public double getScore(List<VocabularyTerm> p1, List<VocabularyTerm> p2) {
         return this.getScore(p1, p2, true);
     }
 
     @Override
-    public double getScoreAgainstReference(List<OntologyTerm> query, List<OntologyTerm> reference) {
+    public double getScoreAgainstReference(List<VocabularyTerm> query, List<VocabularyTerm> reference) {
         return this.getScore(query, reference, false);
     }
 
     @Override
-    public List<Map<String, Object>> getDetailedMatches(List<OntologyTerm> q, List<OntologyTerm> m) {
+    public List<Map<String, Object>> getDetailedMatches(List<VocabularyTerm> q, List<VocabularyTerm> m) {
         List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
         double maxIC;
 
         //This is a far from optimal greedy approach to creating matches.
         // Each trait (qt) from q is matched with its best match in m (mt). mt is then removed from m.
         // So although mt may be the best match for qt, qt may not be the best match for mt.
-        for (OntologyTerm t : q) {
+        for (VocabularyTerm t : q) {
             if (m.isEmpty()) {
                 break;
             }
             maxIC = 0;
-            OntologyTerm bestMatch = null;
-            OntologyTerm lcs = null;
-            for (OntologyTerm tPrime :  m) {
-                OntologyTerm tempLcs = this.findBestCommonAncestor(t, tPrime);
+            VocabularyTerm bestMatch = null;
+            VocabularyTerm lcs = null;
+            for (VocabularyTerm tPrime :  m) {
+                VocabularyTerm tempLcs = this.findBestCommonAncestor(t, tPrime);
                 if (tempLcs != null && this.termICs.get(tempLcs) > maxIC) {
                     lcs = tempLcs;
                     maxIC = this.termICs.get(tempLcs);
@@ -134,7 +134,7 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
         return result;
     }
 
-    private Map<String, Object> createMatchView(OntologyTerm a, OntologyTerm b, OntologyTerm lcs)
+    private Map<String, Object> createMatchView(VocabularyTerm a, VocabularyTerm b, VocabularyTerm lcs)
     {
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("a", this.getTermData(a));
@@ -158,24 +158,24 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
      *
      * @return the similarity score, between 0 (a poor match) and 1 (a good match)
      */
-    private Double getScore(List<OntologyTerm> match, List<OntologyTerm> ref, boolean symmetric)
+    private Double getScore(List<VocabularyTerm> match, List<VocabularyTerm> ref, boolean symmetric)
     {
         if (match.isEmpty() || ref.isEmpty()) {
             return 0.0;
         } else {
             // Get ancestors for both patients
-            Set<OntologyTerm> refAncestors = getAncestors(ref);
-            Set<OntologyTerm> matchAncestors = getAncestors(match);
+            Set<VocabularyTerm> refAncestors = getAncestors(ref);
+            Set<VocabularyTerm> matchAncestors = getAncestors(match);
 
             if (refAncestors.isEmpty() || matchAncestors.isEmpty()) {
                 return 0.0;
             } else {
                 // Score overlapping ancestors
-                Set<OntologyTerm> commonAncestors = new HashSet<OntologyTerm>();
+                Set<VocabularyTerm> commonAncestors = new HashSet<VocabularyTerm>();
                 commonAncestors.addAll(refAncestors);
                 commonAncestors.retainAll(matchAncestors);
 
-                Set<OntologyTerm> allAncestors = new HashSet<OntologyTerm>();
+                Set<VocabularyTerm> allAncestors = new HashSet<VocabularyTerm>();
                 allAncestors.addAll(refAncestors);
                 allAncestors.addAll(matchAncestors);
                 Double denominator = symmetric ? getTermICs(allAncestors) : getTermICs(refAncestors);
@@ -186,7 +186,7 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     }
 
 
-    private Map<String, Object> getTermData(OntologyTerm term)
+    private Map<String, Object> getTermData(VocabularyTerm term)
     {
         Map<String, Object> result = new HashMap<String, Object>();
         result.put(ID_STRING, term.getId());
@@ -195,11 +195,11 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
         return result;
     }
 
-    private OntologyTerm findBestCommonAncestor(OntologyTerm t, OntologyTerm tPrime)
+    private VocabularyTerm findBestCommonAncestor(VocabularyTerm t, VocabularyTerm tPrime)
     {
 
-        Set<OntologyTerm> allAncestors = getAncestors(Collections.singletonList(t));
-        Set<OntologyTerm> tPrimeAncestors = getAncestors(Collections.singletonList(tPrime));
+        Set<VocabularyTerm> allAncestors = getAncestors(Collections.singletonList(t));
+        Set<VocabularyTerm> tPrimeAncestors = getAncestors(Collections.singletonList(tPrime));
 
         allAncestors.retainAll(tPrimeAncestors);
         if (allAncestors.isEmpty()) {
@@ -207,8 +207,8 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
         }
 
         double maxTermIC = 0;
-        OntologyTerm bestCommonAncestor = null;
-        for (OntologyTerm ancestor : allAncestors) {
+        VocabularyTerm bestCommonAncestor = null;
+        for (VocabularyTerm ancestor : allAncestors) {
             Double ic  = this.termICs.get(ancestor);
             if (ic != null && ic > maxTermIC) {
                 maxTermIC = this.termICs.get(ancestor);
@@ -224,10 +224,10 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
      * @param terms (should include implied ancestors) that are present in the patient
      * @return the total IC for all the terms
      */
-    private double getTermICs(Collection<OntologyTerm> terms)
+    private double getTermICs(Collection<VocabularyTerm> terms)
     {
         double cost = 0;
-        for (OntologyTerm term : terms) {
+        for (VocabularyTerm term : terms) {
             Double ic = this.termICs.get(term);
             if (ic == null) {
                 ic = 0.0;
@@ -238,15 +238,15 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     }
 
     /**
-     * Return the set of terms implied by a collection of features in the ontology.
+     * Return the set of terms implied by a collection of features in the vocabulary.
      *
      * @param terms a collection of terms
-     * @return all provided OntologyTerm terms and their ancestors
+     * @return all provided VocabularyTerm terms and their ancestors
      */
-    private Set<OntologyTerm> getAncestors(Collection<OntologyTerm> terms)
+    private Set<VocabularyTerm> getAncestors(Collection<VocabularyTerm> terms)
     {
-        Set<OntologyTerm> ancestors = new HashSet<OntologyTerm>();
-        for (OntologyTerm term : terms) {
+        Set<VocabularyTerm> ancestors = new HashSet<VocabularyTerm>();
+        for (VocabularyTerm term : terms) {
             // Add all ancestors
             if (term != null) {
                 ancestors.addAll(term.getAncestorsAndSelf());
@@ -256,60 +256,61 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     }
 
     /**
-     * Return a mapping from OntologyTerms to their children in the given ontology.
+     * Return a mapping from VocabularyTerms to their children in the given vocabulary.
      *
-     * @param ontology the ontology
-     * @return a map from each term to the children in ontology
+     * @param vocabulary the vocabulary
+     * @return a map from each term to the children in vocabulary
      */
-    private Map<OntologyTerm, Collection<OntologyTerm>> getChildrenMap(OntologyService ontology)
+    private Map<VocabularyTerm, Collection<VocabularyTerm>> getChildrenMap(Vocabulary vocabulary)
     {
-        Map<OntologyTerm, Collection<OntologyTerm>> children = new HashMap<OntologyTerm, Collection<OntologyTerm>>();
-        this.logger.info("Getting all children of ontology terms...");
-        Collection<OntologyTerm> terms = queryAllTerms(ontology);
-        for (OntologyTerm term : terms) {
-            for (OntologyTerm parent : term.getParents()) {
+        Map<VocabularyTerm, Collection<VocabularyTerm>> children =
+            new HashMap<VocabularyTerm, Collection<VocabularyTerm>>();
+        this.logger.info("Getting all children of vocabulary terms...");
+        Collection<VocabularyTerm> terms = queryAllTerms(vocabulary);
+        for (VocabularyTerm term : terms) {
+            for (VocabularyTerm parent : term.getParents()) {
                 // Add term to parent's set of children
-                Collection<OntologyTerm> parentChildren = children.get(parent);
+                Collection<VocabularyTerm> parentChildren = children.get(parent);
                 if (parentChildren == null) {
-                    parentChildren = new ArrayList<OntologyTerm>();
+                    parentChildren = new ArrayList<VocabularyTerm>();
                     children.put(parent, parentChildren);
                 }
                 parentChildren.add(term);
             }
         }
-        this.logger.info(String.format("cached children of %d ontology terms.", children.size()));
+        this.logger.info(String.format("cached children of %d vocabulary terms.", children.size()));
         return children;
     }
 
     /**
-     * Return all terms in the ontology.
+     * Return all terms in the vocabulary.
      *
-     * @param ontology the ontology to query
-     * @return a Collection of all OntologyTerms in the ontology
+     * @param vocabulary the vocabulary to query
+     * @return a Collection of all VocabularyTerms in the vocabulary
      */
-    private Collection<OntologyTerm> queryAllTerms(OntologyService ontology)
+    private Collection<VocabularyTerm> queryAllTerms(Vocabulary vocabulary)
     {
         Map<String, String> queryAll = new HashMap<String, String>();
         queryAll.put(ID_STRING, "*");
         Map<String, String> queryAllParams = new HashMap<String, String>();
-        queryAllParams.put(CommonParams.ROWS, String.valueOf(ontology.size()));
-        Collection<OntologyTerm> results = ontology.search(queryAll, queryAllParams);
+        queryAllParams.put(CommonParams.ROWS, String.valueOf(vocabulary.size()));
+        Collection<VocabularyTerm> results = vocabulary.search(queryAll, queryAllParams);
         this.logger.info(String.format("  ... found %d entries.", results.size()));
         return results;
     }
 
     /**
-     * Return a mapping from OntologyTerms to their descendants in the part of the ontology under root.
+     * Return a mapping from VocabularyTerms to their descendants in the part of the vocabulary under root.
      *
-     * @param root the root of the ontology to explore
-     * @param termChildren a map from each ontology term to its children
-     * @return a map from each term to the descendants in ontology
+     * @param root the root of the vocabulary to explore
+     * @param termChildren a map from each vocabulary term to its children
+     * @return a map from each term to the descendants in vocabulary
      */
-    private Map<OntologyTerm, Collection<OntologyTerm>> getDescendantsMap(OntologyTerm root,
-        Map<OntologyTerm, Collection<OntologyTerm>> termChildren)
+    private Map<VocabularyTerm, Collection<VocabularyTerm>> getDescendantsMap(VocabularyTerm root,
+        Map<VocabularyTerm, Collection<VocabularyTerm>> termChildren)
     {
-        Map<OntologyTerm, Collection<OntologyTerm>> termDescendants =
-            new HashMap<OntologyTerm, Collection<OntologyTerm>>();
+        Map<VocabularyTerm, Collection<VocabularyTerm>> termDescendants =
+            new HashMap<VocabularyTerm, Collection<VocabularyTerm>>();
         setDescendantsMap(root, termChildren, termDescendants);
         return termDescendants;
     }
@@ -317,25 +318,25 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     /**
      * Helper method to recursively fill a map with the descendants of all terms under a root term.
      *
-     * @param root the root of the ontology to explore
-     * @param termChildren a map from each ontology term to its children
+     * @param root the root of the vocabulary to explore
+     * @param termChildren a map from each vocabulary term to its children
      * @param termDescendants a partially-complete map of terms to descendants, filled in by this method
      */
-    private void setDescendantsMap(OntologyTerm root, Map<OntologyTerm, Collection<OntologyTerm>> termChildren,
-        Map<OntologyTerm, Collection<OntologyTerm>> termDescendants)
+    private void setDescendantsMap(VocabularyTerm root, Map<VocabularyTerm, Collection<VocabularyTerm>> termChildren,
+        Map<VocabularyTerm, Collection<VocabularyTerm>> termDescendants)
     {
         if (termDescendants.containsKey(root)) {
             return;
         }
         // Compute descendants from children
-        Collection<OntologyTerm> descendants = new HashSet<OntologyTerm>();
-        Collection<OntologyTerm> children = termChildren.get(root);
+        Collection<VocabularyTerm> descendants = new HashSet<VocabularyTerm>();
+        Collection<VocabularyTerm> children = termChildren.get(root);
         if (children != null) {
-            for (OntologyTerm child : children) {
+            for (VocabularyTerm child : children) {
                 // Recurse on child
                 setDescendantsMap(child, termChildren, termDescendants);
                 // On return, termDescendants[child] should be non-null
-                Collection<OntologyTerm> childDescendants = termDescendants.get(child);
+                Collection<VocabularyTerm> childDescendants = termDescendants.get(child);
                 if (childDescendants != null) {
                     descendants.addAll(childDescendants);
                 } else {
@@ -350,27 +351,27 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     /**
      * Return the observed frequency distribution across provided HPO terms seen in MIM.
      *
-     * @param mim the MIM ontology with diseases and symptom frequencies
-     * @param hpo the human phenotype ontology
+     * @param mim the MIM vocabulary with diseases and symptom frequencies
+     * @param hpo the human phenotype vocabulary
      * @param allowedTerms only frequencies for a subset of these terms will be returned
-     * @return a map from OntologyTerm to the absolute frequency (sum over all terms ~1)
+     * @return a map from VocabularyTerm to the absolute frequency (sum over all terms ~1)
      */
     @SuppressWarnings("unchecked")
-    private Map<OntologyTerm, Double> getTermFrequencies(OntologyService mim, OntologyService hpo,
-        Collection<OntologyTerm> allowedTerms)
+    private Map<VocabularyTerm, Double> getTermFrequencies(Vocabulary mim, Vocabulary hpo,
+        Collection<VocabularyTerm> allowedTerms)
     {
-        Map<OntologyTerm, Double> termFreq = new HashMap<OntologyTerm, Double>();
+        Map<VocabularyTerm, Double> termFreq = new HashMap<VocabularyTerm, Double>();
         double freqDenom = 0.0;
         // Add up frequencies of each term across diseases
-        Collection<OntologyTerm> diseases = queryAllTerms(mim);
-        Set<OntologyTerm> ignoredSymptoms = new HashSet<OntologyTerm>();
-        for (OntologyTerm disease : diseases) {
+        Collection<VocabularyTerm> diseases = queryAllTerms(mim);
+        Set<VocabularyTerm> ignoredSymptoms = new HashSet<VocabularyTerm>();
+        for (VocabularyTerm disease : diseases) {
             // Get a Collection<String> of symptom HP IDs, or null
             Object symptomNames = disease.get("actual_symptom");
             if (symptomNames != null) {
                 if (symptomNames instanceof Collection<?>) {
                     for (String symptomName : ((Collection<String>) symptomNames)) {
-                        OntologyTerm symptom = hpo.getTerm(symptomName);
+                        VocabularyTerm symptom = hpo.getTerm(symptomName);
                         if (!allowedTerms.contains(symptom)) {
                             ignoredSymptoms.add(symptom);
                             continue;
@@ -399,7 +400,7 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
 
         this.logger.info("Normalizing term frequency distribution...");
         // Normalize all the term frequencies to be a proper distribution
-        for (Map.Entry<OntologyTerm, Double> entry : termFreq.entrySet()) {
+        for (Map.Entry<VocabularyTerm, Double> entry : termFreq.entrySet()) {
             entry.setValue(limitProb(entry.getValue() / freqDenom));
         }
 
@@ -418,25 +419,25 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     }
 
     /**
-     * Return the information content of each OntologyTerm in termFreq.
+     * Return the information content of each VocabularyTerm in termFreq.
      *
-     * @param termFreq the absolute frequency of each OntologyTerm
-     * @param termDescendants the descendants of each OntologyTerm
+     * @param termFreq the absolute frequency of each VocabularyTerm
+     * @param termDescendants the descendants of each VocabularyTerm
      * @return a map from each term to the information content of that term
      */
-    private Map<OntologyTerm, Double> findTermICs(Map<OntologyTerm, Double> termFreq,
-        Map<OntologyTerm, Collection<OntologyTerm>> termDescendants)
+    private Map<VocabularyTerm, Double> findTermICs(Map<VocabularyTerm, Double> termFreq,
+        Map<VocabularyTerm, Collection<VocabularyTerm>> termDescendants)
     {
-        Map<OntologyTerm, Double> returnTermICs = new HashMap<OntologyTerm, Double>();
+        Map<VocabularyTerm, Double> returnTermICs = new HashMap<VocabularyTerm, Double>();
 
-        for (OntologyTerm term : termFreq.keySet()) {
-            Collection<OntologyTerm> descendants = termDescendants.get(term);
+        for (VocabularyTerm term : termFreq.keySet()) {
+            Collection<VocabularyTerm> descendants = termDescendants.get(term);
             if (descendants == null) {
                 this.logger.warn("Found no descendants of term: " + term.getId());
             }
             // Sum up frequencies of all descendants
             double probMass = 0.0;
-            for (OntologyTerm descendant : descendants) {
+            for (VocabularyTerm descendant : descendants) {
                 Double freq = termFreq.get(descendant);
                 if (freq != null) {
                     probMass += freq;

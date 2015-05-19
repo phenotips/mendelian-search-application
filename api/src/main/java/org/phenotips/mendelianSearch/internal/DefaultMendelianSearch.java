@@ -24,8 +24,8 @@ import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.PatientViewFactory;
 import org.phenotips.mendelianSearch.phenotype.PatientPhenotypeScorer;
 import org.phenotips.variantStoreIntegration.VariantStoreService;
-import org.phenotips.vocabulary.OntologyManager;
-import org.phenotips.vocabulary.OntologyTerm;
+import org.phenotips.vocabulary.VocabularyManager;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import org.xwiki.component.annotation.Component;
 
@@ -56,7 +56,7 @@ public class DefaultMendelianSearch implements MendelianSearch
     private PatientPhenotypeScorer patientPhenotypeScorer;
 
     @Inject
-    private OntologyManager om;
+    private VocabularyManager om;
 
     @Inject
     private PatientRepository pr;
@@ -144,8 +144,8 @@ public class DefaultMendelianSearch implements MendelianSearch
         @SuppressWarnings("unchecked")
         List<String> hpoIds = (List<String>) request.get("phenotype");
 
-        // Convert the request list of HPO ids into OntologyTerms
-        List<OntologyTerm> phenotype = new ArrayList<OntologyTerm>();
+        // Convert the request list of HPO ids into VocabularyTerms
+        List<VocabularyTerm> phenotype = new ArrayList<>();
         for (String termId : hpoIds) {
             phenotype.add(this.om.resolveTerm(termId));
         }

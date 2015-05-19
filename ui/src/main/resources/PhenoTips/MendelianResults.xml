@@ -29,8 +29,8 @@
   <parent>data.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
-  <date>1429157040000</date>
-  <contentUpdateDate>1429135996000</contentUpdateDate>
+  <date>1431010374000</date>
+  <contentUpdateDate>1430941799000</contentUpdateDate>
   <version>1.1</version>
   <title>Gene Genie</title>
   <comment/>
@@ -73,7 +73,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       &lt;table class = 'grid-visualization'&gt;
         &lt;tr&gt;
           &lt;!-- Blank cells for alignment --&gt;
-          &lt;td class='blank-cell' colspan='2' rowspan='2'&gt;&lt;/td&gt; 
+          &lt;td class='blank-cell' colspan='2' rowspan='2'&gt;&lt;/td&gt;
           &lt;td colspan='2'&gt;Matching Gene&lt;/td&gt;
         &lt;/tr&gt;
         &lt;tr&gt;
@@ -1285,7 +1285,7 @@ $xwiki.ssx.use('data.MendelianResults')##
         var phenotypeMatchElement = Element.select(category, 'input[name="matchPhenotype"]')[0];
         var matchPhenotype = (phenotypeMatchElement) ? phenotypeMatchElement.getAttribute('value') : 1;
         var matchGene = Element.select(category, 'input[name="matchGene"]')[0].getAttribute('value') || 1;
-        
+
         if(isNaN(matchPhenotype) || isNaN(matchGene)){
           return;
         }
