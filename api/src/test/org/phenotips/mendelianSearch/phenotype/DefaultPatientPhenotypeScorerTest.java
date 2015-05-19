@@ -19,9 +19,9 @@ package org.phenotips.mendelianSearch.phenotype;
 
 import org.phenotips.data.Feature;
 import org.phenotips.data.Patient;
-import org.phenotips.mendelianSearch.mocks.MockOntologyTerm;
-import org.phenotips.ontology.OntologyManager;
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.mendelianSearch.mocks.MockVocabularyTerm;
+import org.phenotips.vocabulary.VocabularyManager;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import org.xwiki.cache.CacheException;
 import org.xwiki.component.manager.ComponentLookupException;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 public class DefaultPatientPhenotypeScorerTest
 {
 
-    private static Map<String, OntologyTerm> testOntologyTerms;
+    private static Map<String, VocabularyTerm> testVocabularyTerms;
 
     /**
      * The component under test.
@@ -63,14 +63,14 @@ public class DefaultPatientPhenotypeScorerTest
     public final MockitoComponentMockingRule<DefaultPatientPhenotypeScorer> mocker =
         new MockitoComponentMockingRule<DefaultPatientPhenotypeScorer>(DefaultPatientPhenotypeScorer.class);
 
-    //Reference to the OntologyManager used by the component.
-    private OntologyManager ontologyManager;
+    //Reference to the VocabularyManager used by the component.
+    private VocabularyManager vocabularyManager;
 
     //Reference to the PhenotypeScorer used by the component.
     private PhenotypeScorer scorer;
 
     /**
-     * Before each test, mock the scorer and ontology manager methods.
+     * Before each test, mock the scorer and vocabulary manager methods.
      * @throws ComponentLookupException If the test component cannot be found
      */
     @SuppressWarnings("unchecked")
@@ -78,13 +78,13 @@ public class DefaultPatientPhenotypeScorerTest
     public void setup() throws ComponentLookupException
     {
         MockitoAnnotations.initMocks(this);
-        this.ontologyManager = this.mocker.getInstance(OntologyManager.class);
+        this.vocabularyManager = this.mocker.getInstance(VocabularyManager.class);
         this.scorer = this.mocker.getInstance(PhenotypeScorer.class);
 
         when(this.scorer.getScore(Matchers.anyList(), Matchers.anyList())).thenReturn(Math.random());
 
-        for (String term : DefaultPatientPhenotypeScorerTest.testOntologyTerms.keySet()) {
-            when(this.ontologyManager.resolveTerm(term)).thenReturn(testOntologyTerms.get(term));
+        for (String term : DefaultPatientPhenotypeScorerTest.testVocabularyTerms.keySet()) {
+            when(this.vocabularyManager.resolveTerm(term)).thenReturn(testVocabularyTerms.get(term));
         }
 
     }
@@ -107,9 +107,9 @@ public class DefaultPatientPhenotypeScorerTest
             Feature mockFeature3 = mock(Feature.class);
             when(mockFeature3.isPresent()).thenReturn(true);
 
-            // Returns a random term from the testOntologyTerm keySet
+            // Returns a random term from the testVocabularyTerm keySet
             when(mockFeature.getId()).thenReturn(
-                (String) testOntologyTerms.keySet().toArray()[(int) (Math.random() * testOntologyTerms.size() - 1)]);
+                (String) testVocabularyTerms.keySet().toArray()[(int) (Math.random() * testVocabularyTerms.size() - 1)]);
             when(mockFeature3.getId()).thenReturn(null);
 
             Set<Feature> mockPatientFeatures = new HashSet<Feature>();
@@ -121,94 +121,94 @@ public class DefaultPatientPhenotypeScorerTest
 
             patientList.add(mockPatient);
         }
-        List<OntologyTerm> phenotype = new ArrayList<OntologyTerm>();
-        phenotype.add(testOntologyTerms.get("HP:0001367"));
-        phenotype.add(testOntologyTerms.get("HP:0001382"));
-        phenotype.add(testOntologyTerms.get("HP:0011729"));
+        List<VocabularyTerm> phenotype = new ArrayList<>();
+        phenotype.add(testVocabularyTerms.get("HP:0001367"));
+        phenotype.add(testVocabularyTerms.get("HP:0001382"));
+        phenotype.add(testVocabularyTerms.get("HP:0011729"));
 
         Map<Patient, Double> result = this.mocker.getComponentUnderTest().getScores(phenotype, patientList);
         assertEquals(numPatients, result.size());
     }
 
     /**
-     * Sets up a mocked HPO ontology for use in tests
+     * Sets up a mocked HPO vocabulary for use in tests
      */
     @BeforeClass
     public static void setupOntology() throws ComponentLookupException, CacheException
     {
 
-        Set<OntologyTerm> ancestors = new HashSet<OntologyTerm>();
-        testOntologyTerms = new HashMap<String, OntologyTerm>();
+        Set<VocabularyTerm> ancestors = new HashSet<VocabularyTerm>();
+        testVocabularyTerms = new HashMap<String, VocabularyTerm>();
 
-        OntologyTerm all = new MockOntologyTerm("HP:0000001", Collections.<OntologyTerm>emptySet(),
-            Collections.<OntologyTerm>emptySet());
+        VocabularyTerm all = new MockVocabularyTerm("HP:0000001", Collections.<VocabularyTerm>emptySet(),
+            Collections.<VocabularyTerm>emptySet());
         ancestors.add(all);
-        testOntologyTerms.put("HP:0000001", all);
-        OntologyTerm phenotypes =
-            new MockOntologyTerm("HP:0000118", Collections.singleton(all), new HashSet<OntologyTerm>(ancestors));
+        testVocabularyTerms.put("HP:0000001", all);
+        VocabularyTerm phenotypes =
+            new MockVocabularyTerm("HP:0000118", Collections.singleton(all), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(phenotypes);
-        testOntologyTerms.put("HP:0000118", phenotypes);
-        OntologyTerm abnormalNS =
-            new MockOntologyTerm("HP:0000707", Collections.singleton(phenotypes), new HashSet<OntologyTerm>(ancestors));
+        testVocabularyTerms.put("HP:0000118", phenotypes);
+        VocabularyTerm abnormalNS =
+            new MockVocabularyTerm("HP:0000707", Collections.singleton(phenotypes), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalNS);
-        testOntologyTerms.put("HP:0000707", abnormalNS);
+        testVocabularyTerms.put("HP:0000707", abnormalNS);
 
-        OntologyTerm abnormalCNS =
-            new MockOntologyTerm("HP:0002011", Collections.singleton(abnormalNS), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm abnormalCNS =
+            new MockVocabularyTerm("HP:0002011", Collections.singleton(abnormalNS), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalCNS);
-        testOntologyTerms.put("HP:0002011", abnormalCNS);
+        testVocabularyTerms.put("HP:0002011", abnormalCNS);
 
-        OntologyTerm abnormalHMF =
-            new MockOntologyTerm("HP:0011446", Collections.singleton(abnormalCNS), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm abnormalHMF =
+            new MockVocabularyTerm("HP:0011446", Collections.singleton(abnormalCNS), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalHMF);
-        testOntologyTerms.put("HP:0011446", abnormalHMF);
+        testVocabularyTerms.put("HP:0011446", abnormalHMF);
 
-        OntologyTerm cognImp =
-            new MockOntologyTerm("HP:0100543", Collections.singleton(abnormalHMF), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm cognImp =
+            new MockVocabularyTerm("HP:0100543", Collections.singleton(abnormalHMF), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(cognImp);
-        testOntologyTerms.put("HP:0100543", cognImp);
+        testVocabularyTerms.put("HP:0100543", cognImp);
 
-        OntologyTerm intDis =
-            new MockOntologyTerm("HP:0001249", Collections.singleton(cognImp), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm intDis =
+            new MockVocabularyTerm("HP:0001249", Collections.singleton(cognImp), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(intDis);
-        testOntologyTerms.put("HP:0001249", intDis);
+        testVocabularyTerms.put("HP:0001249", intDis);
 
-        OntologyTerm mildIntDis =
-            new MockOntologyTerm("HP:0001256", Collections.singleton(intDis), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm mildIntDis =
+            new MockVocabularyTerm("HP:0001256", Collections.singleton(intDis), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(mildIntDis);
-        testOntologyTerms.put("HP:0001256", mildIntDis);
+        testVocabularyTerms.put("HP:0001256", mildIntDis);
 
         ancestors.clear();
         ancestors.add(all);
         ancestors.add(phenotypes);
-        OntologyTerm abnormalSkelS =
-            new MockOntologyTerm("HP:0000924", Collections.singleton(phenotypes), new HashSet<OntologyTerm>(ancestors));
+        VocabularyTerm abnormalSkelS =
+            new MockVocabularyTerm("HP:0000924", Collections.singleton(phenotypes), new HashSet<VocabularyTerm>(ancestors));
         ancestors.add(abnormalSkelS);
-        testOntologyTerms.put("HP:0000924", abnormalSkelS);
+        testVocabularyTerms.put("HP:0000924", abnormalSkelS);
 
-        OntologyTerm abnormalSkelM =
-            new MockOntologyTerm("HP:0011842", Collections.singleton(abnormalSkelS), new HashSet<OntologyTerm>(
+        VocabularyTerm abnormalSkelM =
+            new MockVocabularyTerm("HP:0011842", Collections.singleton(abnormalSkelS), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(abnormalSkelM);
-        testOntologyTerms.put("HP:0011842", abnormalSkelM);
+        testVocabularyTerms.put("HP:0011842", abnormalSkelM);
 
-        OntologyTerm abnormalJointMorph =
-            new MockOntologyTerm("HP:0001367", Collections.singleton(abnormalSkelM), new HashSet<OntologyTerm>(
+        VocabularyTerm abnormalJointMorph =
+            new MockVocabularyTerm("HP:0001367", Collections.singleton(abnormalSkelM), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(abnormalJointMorph);
-        testOntologyTerms.put("HP:0001367", abnormalJointMorph);
+        testVocabularyTerms.put("HP:0001367", abnormalJointMorph);
 
-        OntologyTerm abnormalJointMob =
-            new MockOntologyTerm("HP:0011729", Collections.singleton(abnormalJointMorph), new HashSet<OntologyTerm>(
+        VocabularyTerm abnormalJointMob =
+            new MockVocabularyTerm("HP:0011729", Collections.singleton(abnormalJointMorph), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(abnormalJointMob);
-        testOntologyTerms.put("HP:0011729", abnormalJointMob);
+        testVocabularyTerms.put("HP:0011729", abnormalJointMob);
 
-        OntologyTerm jointHyperm =
-            new MockOntologyTerm("HP:0001382", Collections.singleton(abnormalJointMob), new HashSet<OntologyTerm>(
+        VocabularyTerm jointHyperm =
+            new MockVocabularyTerm("HP:0001382", Collections.singleton(abnormalJointMob), new HashSet<VocabularyTerm>(
                 ancestors));
         ancestors.add(jointHyperm);
-        testOntologyTerms.put("HP:0001382", jointHyperm);
+        testVocabularyTerms.put("HP:0001382", jointHyperm);
 
     }
 }

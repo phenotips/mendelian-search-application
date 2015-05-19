@@ -19,9 +19,9 @@ package org.phenotips.mendelianSearch.phenotype;
 
 import org.phenotips.mendelianSearch.mocks.MockHPO;
 import org.phenotips.mendelianSearch.mocks.MockMIM;
-import org.phenotips.ontology.OntologyManager;
-import org.phenotips.ontology.OntologyService;
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.vocabulary.Vocabulary;
+import org.phenotips.vocabulary.VocabularyManager;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.test.mockito.MockitoComponentMockingRule;
@@ -50,13 +50,13 @@ public class DefaultPhenotypeScorerTest
     public final MockitoComponentMockingRule<DefaultPhenotypeScorer> mocker =
         new MockitoComponentMockingRule<DefaultPhenotypeScorer>(DefaultPhenotypeScorer.class);
 
-    private OntologyService mim;
+    private Vocabulary mim;
 
-    private OntologyService hpo;
+    private Vocabulary hpo;
 
-    private OntologyManager ontologyManager;
+    private VocabularyManager vocabularyManager;
 
-    private static Map<String, OntologyTerm> h = new HashMap<String, OntologyTerm>();
+    private static Map<String, VocabularyTerm> h = new HashMap<String, VocabularyTerm>();
 
     private static final double EPS = 1e-9;
 
@@ -68,21 +68,21 @@ public class DefaultPhenotypeScorerTest
         this.hpo = new MockHPO();
 
         MockitoAnnotations.initMocks(this);
-        this.ontologyManager = this.mocker.getInstance(OntologyManager.class);
+        this.vocabularyManager = this.mocker.getInstance(VocabularyManager.class);
 
         for (String id : this.hpo.getAliases()) {
-            Mockito.doReturn(this.hpo.getTerm(id)).when(this.ontologyManager).resolveTerm(id);
+            Mockito.doReturn(this.hpo.getTerm(id)).when(this.vocabularyManager).resolveTerm(id);
         }
 
-        Mockito.doReturn(this.mim).when(this.ontologyManager).getOntology("MIM");
-        Mockito.doReturn(this.hpo).when(this.ontologyManager).getOntology("HPO");
+        Mockito.doReturn(this.mim).when(this.vocabularyManager).getVocabulary("MIM");
+        Mockito.doReturn(this.hpo).when(this.vocabularyManager).getVocabulary("HPO");
 
     }
 
     @Test
     public void testIdenticalPhenotypes() throws ComponentLookupException
     {
-        List<OntologyTerm> phenotype = new ArrayList<OntologyTerm>();
+        List<VocabularyTerm> phenotype = new ArrayList<>();
         phenotype.add(this.hpo.getTerm("HP:0100543"));
         phenotype.add(this.hpo.getTerm("HP:0011842"));
         phenotype.add(this.hpo.getTerm("HP:0001382"));
@@ -95,8 +95,8 @@ public class DefaultPhenotypeScorerTest
     @Test
     public void testEmptyPhenotypes() throws ComponentLookupException
     {
-        List<OntologyTerm> p1 = new ArrayList<OntologyTerm>();
-        List<OntologyTerm> p2 = new ArrayList<OntologyTerm>();
+        List<VocabularyTerm> p1 = new ArrayList<>();
+        List<VocabularyTerm> p2 = new ArrayList<>();
         p1.add(this.hpo.getTerm("HP:0100543"));
         p1.add(this.hpo.getTerm("HP:0011842"));
         p1.add(this.hpo.getTerm("HP:0001382"));
@@ -116,10 +116,10 @@ public class DefaultPhenotypeScorerTest
     }
 
     @Test
-    public void testNullOntologyTerms() throws ComponentLookupException
+    public void testNullVocabularyTerms() throws ComponentLookupException
     {
-        List<OntologyTerm> p1 = new ArrayList<OntologyTerm>();
-        List<OntologyTerm> p2 = new ArrayList<OntologyTerm>();
+        List<VocabularyTerm> p1 = new ArrayList<>();
+        List<VocabularyTerm> p2 = new ArrayList<>();
         p1.add(null);
         p2.add(this.hpo.getTerm("HP:0100543"));
 

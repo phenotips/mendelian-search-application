@@ -17,8 +17,8 @@
  */
 package org.phenotips.mendelianSearch.mocks;
 
-import org.phenotips.ontology.OntologyService;
-import org.phenotips.ontology.OntologyTerm;
+import org.phenotips.vocabulary.Vocabulary;
+import org.phenotips.vocabulary.VocabularyTerm;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,46 +27,46 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class MockMIM implements OntologyService
+public class MockMIM implements Vocabulary
 {
-    private Map<String, OntologyTerm> ontology;
+    private Map<String, VocabularyTerm> vocabulary;
 
     public MockMIM()
     {
-        this.ontology = new HashMap<String, OntologyTerm>();
+        this.vocabulary = new HashMap<String, VocabularyTerm>();
 
         ArrayList<String> symptoms = new ArrayList<String>();
         symptoms.add("HP:0011729");
         symptoms.add("HP:0001367");
-        OntologyTerm arthritis = new MockDisease("MIM:1", "arthritis", new ArrayList<String>(symptoms));
-        this.ontology.put("MIM:1", arthritis);
+        VocabularyTerm arthritis = new MockDisease("MIM:1", "arthritis", new ArrayList<String>(symptoms));
+        this.vocabulary.put("MIM:1", arthritis);
 
         symptoms.clear();
         symptoms.add("HP:0001382");
         symptoms.add("HP:0011729");
-        OntologyTerm tooFlexible = new MockDisease("MIM:2", "tooFlexible", new ArrayList<String>(symptoms));
-        this.ontology.put("MIM:2", tooFlexible);
+        VocabularyTerm tooFlexible = new MockDisease("MIM:2", "tooFlexible", new ArrayList<String>(symptoms));
+        this.vocabulary.put("MIM:2", tooFlexible);
 
         symptoms.clear();
         symptoms.add(null);
-        OntologyTerm normal = new MockDisease("MIM:3", "normal", new ArrayList<String>(symptoms));
-        this.ontology.put("MIM:3", normal);
+        VocabularyTerm normal = new MockDisease("MIM:3", "normal", new ArrayList<String>(symptoms));
+        this.vocabulary.put("MIM:3", normal);
 
         symptoms.clear();
-        OntologyTerm NullSymptoms = new MockDisease("MIM:4", "NullSymptoms", null);
-        this.ontology.put("MIM:4", NullSymptoms);
+        VocabularyTerm NullSymptoms = new MockDisease("MIM:4", "NullSymptoms", null);
+        this.vocabulary.put("MIM:4", NullSymptoms);
     }
 
     @Override
-    public OntologyTerm getTerm(String id)
+    public VocabularyTerm getTerm(String id)
     {
-        return this.ontology.get(id);
+        return this.vocabulary.get(id);
     }
 
     @Override
-    public Set<OntologyTerm> getTerms(Collection<String> ids)
+    public Set<VocabularyTerm> getTerms(Collection<String> ids)
     {
-        return new HashSet<OntologyTerm>(this.ontology.values());
+        return new HashSet<VocabularyTerm>(this.vocabulary.values());
     }
 
     /**
@@ -76,9 +76,9 @@ public class MockMIM implements OntologyService
      * @return
      */
     @Override
-    public Set<OntologyTerm> search(Map<String, ?> fieldValues)
+    public Set<VocabularyTerm> search(Map<String, ?> fieldValues)
     {
-        return new HashSet<OntologyTerm>(this.ontology.values());
+        return new HashSet<VocabularyTerm>(this.vocabulary.values());
     }
 
     /**
@@ -89,15 +89,15 @@ public class MockMIM implements OntologyService
      * @return
      */
     @Override
-    public Set<OntologyTerm> search(Map<String, ?> fieldValues, Map<String, String> queryOptions)
+    public Set<VocabularyTerm> search(Map<String, ?> fieldValues, Map<String, String> queryOptions)
     {
-        return new HashSet<OntologyTerm>(this.ontology.values());
+        return new HashSet<VocabularyTerm>(this.vocabulary.values());
     }
 
     @Override
     public long count(Map<String, ?> fieldValues)
     {
-        return this.ontology.size();
+        return this.vocabulary.size();
     }
 
     @Override
@@ -107,7 +107,7 @@ public class MockMIM implements OntologyService
     }
 
     @Override
-    public long getDistance(OntologyTerm fromTerm, OntologyTerm toTerm)
+    public long getDistance(VocabularyTerm fromTerm, VocabularyTerm toTerm)
     {
         return 0;
     }
@@ -115,17 +115,17 @@ public class MockMIM implements OntologyService
     @Override
     public Set<String> getAliases()
     {
-        return this.ontology.keySet();
+        return this.vocabulary.keySet();
     }
 
     @Override
     public long size()
     {
-        return this.ontology.size();
+        return this.vocabulary.size();
     }
 
     @Override
-    public int reindex(String ontologyUrl)
+    public int reindex(String vocabularyUrl)
     {
         return 0;
     }
@@ -143,7 +143,7 @@ public class MockMIM implements OntologyService
     }
 
     @Override
-    public Set<OntologyTerm> termSuggest(String query, Integer rows, String sort, String customFq)
+    public Set<VocabularyTerm> termSuggest(String query, Integer rows, String sort, String customFq)
     {
         return null;
     }
