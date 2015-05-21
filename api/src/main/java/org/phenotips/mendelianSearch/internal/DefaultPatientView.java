@@ -19,12 +19,14 @@ package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.data.Disorder;
 import org.phenotips.mendelianSearch.PatientView;
+import org.phenotips.variantstore.shared.GACallInfoFields;
 import org.phenotips.variantstore.shared.GAVariantInfoFields;
+import org.phenotips.variantstore.shared.VariantUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+import org.ga4gh.GACall;
 import org.ga4gh.GAVariant;
 
 import net.sf.json.JSONArray;
@@ -122,26 +124,33 @@ public class DefaultPatientView implements PatientView
         }
         v.put("alternateBases", alternateValue);
 
-        Map<String, List<String>> rawVInfo = rawV.getInfo();
+
+        GACall call = rawV.getCalls().get(0);
         JSONObject info = new JSONObject();
-        List<String> exomiserVariantScore = rawVInfo.get(GAVariantInfoFields.EXOMISER_VARIANT_SCORE);
-        if (exomiserVariantScore != null) {
-            info.put("EXOMISER_VARIANT_SCORE", Double.parseDouble(exomiserVariantScore.get(0)));
+
+        String infoField = VariantUtils.getInfo(call, GACallInfoFields.EXOMISER_VARIANT_SCORE);
+        if (infoField != null) {
+            info.put("EXOMISER_VARIANT_SCORE", Double.parseDouble(infoField));
         }
 
-        List<String> exomiserGeneScore = rawVInfo.get(GAVariantInfoFields.EXOMISER_GENE_VARIANT_SCORE);
-        if (exomiserGeneScore != null) {
-            info.put("EXOMISER_GENE_VARIANT_SCORE", Double.parseDouble(exomiserGeneScore.get(0)));
+        infoField = VariantUtils.getInfo(call, GACallInfoFields.EXOMISER_GENE_VARIANT_SCORE);
+        if (infoField != null) {
+            info.put("EXOMISER_GENE_VARIANT_SCORE", Double.parseDouble(infoField));
         }
 
-        List<String> geneEffect = rawVInfo.get(GAVariantInfoFields.GENE_EFFECT);
-        if (geneEffect != null && !geneEffect.isEmpty()) {
-            info.put("GENE_EFFECT", geneEffect.get(0));
+        infoField = VariantUtils.getInfo(rawV, GAVariantInfoFields.GENE_EFFECT);
+        if (infoField != null) {
+            info.put("GENE_EFFECT", infoField);
         }
 
-        List<String> geneSymbol = rawVInfo.get(GAVariantInfoFields.GENE);
-        if (geneSymbol != null && !geneSymbol.isEmpty()) {
-            info.put("GENE", geneSymbol.get(0));
+        infoField = VariantUtils.getInfo(rawV, GAVariantInfoFields.GENE);
+        if (infoField != null) {
+            info.put("GENE", infoField);
+        }
+
+        infoField = VariantUtils.getInfo(rawV, GAVariantInfoFields.EXAC_AF);
+        if (infoField != null) {
+            info.put(GAVariantInfoFields.EXAC_AF, infoField);
         }
         v.element("info", info);
         return v;

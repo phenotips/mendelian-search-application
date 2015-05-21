@@ -66,7 +66,8 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
                 || (this.pm.getPatientAccess(patient).getVisibility().compareTo(new HiddenVisibility()) <= 0)) {
                 continue;
             }
-            patientScores.put(patient, this.scorer.getScore(phenotype, this.getPresentPatientTerms(patient)));
+            patientScores.put(patient,
+                this.scorer.getScoreAgainstReference(phenotype, this.getPresentPatientTerms(patient)));
         }
         return patientScores;
     }

@@ -42,7 +42,7 @@
 $xwiki.jsx.use('data.MendelianResults')##
 $xwiki.jsx.use('PhenoTips.d3', {"minify" : false})##
 $xwiki.ssx.use('data.MendelianResults')##
-#if($request &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
+#if($!{request} != '' &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
   #set ($overview = $services.MendelianSearch.getOverview($request))
   #set ($displayResults = true)
 #else
@@ -361,25 +361,28 @@ $xwiki.ssx.use('data.MendelianResults')##
           method: "POST",
           onCreate: function() {
             _this.tableControls.update('');
-            _this.resultsTable.update('&lt;p class="loading"&gt;Searching...&lt;/p&gt;');
+            _this.resultsTable.update('&lt;p class="message loading"&gt;Searching...&lt;/p&gt;');
           },
           onSuccess: function(response) {
-            _this.preProcessData(response.responseJSON);
-            _this.generateTable();
-            _this.initializeControls();
+            _this.processData(response.responseJSON);
           },
           onComplete: function() {
             _this.addEventListeners();
-            _this.container.removeClassName('loading');
             _this.activeSearch = false;
           }
         });
     },
 
     //Applies any transformations to the raw response before storing it in this._data returns a variable called displayedData
-    preProcessData: function(data) {
+    processData: function(data) {
       this._data = data.results.patients;
       this.numberOfResults = data.results.meta.numberOfResults;
+      if (this._data.length == 0){
+        this.resultsTable.update('&lt;p class="message"&gt;' + this.strings['message.noResults'] + '&lt;/p&gt;')
+        return;
+      }
+      this.generateTable();
+      this.initializeControls();
     },
 
     generateTable: function() {
@@ -467,6 +470,7 @@ $xwiki.ssx.use('data.MendelianResults')##
 
     insertHeaderSortIcon :function(header) {
       if (header.tableSortKey == this.sortKey){
+        header.addClassName('sorted');
         if (this.sortAsc) {
           header.insert(" &lt;span class ='fa fa-caret-up'&gt;&lt;/span&gt;");
         } else {
@@ -554,7 +558,12 @@ $xwiki.ssx.use('data.MendelianResults')##
 
     displayResultPhenotypeScore: function(data) {
       var cell = new Element('td');
-      cell.insert(new Element('p').update(Math.round(data.phenotypeScore * 100) / 100));
+      var score = Math.round(data.phenotypeScore * 100) / 100;
+      if(PhenoTips.widgets.SegmentedBar) {
+        cell.insert(new PhenoTips.widgets.SegmentedBar(score).generateSegmentedBar());
+      } else {
+        cell.insert(new Element('p').update(score));
+      }
       return cell;
     },
 
@@ -601,6 +610,11 @@ $xwiki.ssx.use('data.MendelianResults')##
         phenotypeList.insert(new Element('li').update(e));
       });
       return phenotypeList;
+    },
+
+    displayVariantTable: function (variants, container) {
+      var variantColumns =["GENE", "EXOMISER_GENE_VARIANT_SCORE", "B_UCSC_POSITION_LINK","chr", "pos", "ref", "alt", "GENE_EFFECT", "EXAC_AF"];
+      new PhenoTips.widgets.VariantDisplayTable(variants, variantColumns, container);
     },
 
     displayDiagnosisBox: function(cell) {
@@ -677,8 +691,7 @@ $xwiki.ssx.use('data.MendelianResults')##
       if (container.select('.variant-display-table')[0]) {
         container.select('.variant-display-table')[0].remove();
       }
-      var variantColumns =["GENE", "EXOMISER_GENE_VARIANT_SCORE", "B_UCSC_POSITION_LINK","chr", "pos", "ref", "alt", "EXOMISER_VARIANT_SCORE", "GENE_EFFECT"];
-      new PhenoTips.widgets.VariantDisplayTable(row.patientVariants, variantColumns, container);
+      this.displayVariantTable(row.patientVariants, container);
     },
 
     addDiagnosisToggleListeners: function() {
@@ -776,7 +789,8 @@ $xwiki.ssx.use('data.MendelianResults')##
       "candidateGene.title": "The queried gene was listed as a candidate gene for this patient.",
       "solvedGene.title": "The queried gene was listed as the solved gene for this patient",
       "rejectedGene.title": "The queried gene was listed as a rejected gene for this patient.",
-      "omim.link.title": "Read about this disorder on OMIM"
+      "omim.link.title" : "Read about this disorder on OMIM",
+      'message.noResults': "No results were found"
 
     },
 
@@ -938,186 +952,209 @@ $xwiki.ssx.use('data.MendelianResults')##
          return "translate(" + x(Object.keys(data)[i]) + ", 0)";
       });
 
-  //Data points
-  category.selectAll('circle')
-    .data(function(d){return data[d];})
-    .enter()
-    .append('circle')
-      .attr('class', 'data-point')
-      .attr('cx', function(){ return nrmRandom(x.rangeBand(), 0.2);})
-      .attr('cy', function(d , i){return y(d);})
-      .attr('r','1.5px');
-
-  //Median lines
-  category.append('line')
-    .attr('class', function(d){
-      if (data[d].length&lt;5) {
-        return "hidden";
-      } else {
-        return "box-plot";
-      }
-    })
-    .attr('x1',(x.rangeBand()-boxWidth)/2)
-    .attr('x2', (x.rangeBand()+boxWidth)/2)
-    .attr('y1', function(d){return y(getMedian(data[d]));})
-    .attr('y2', function(d){return y(getMedian(data[d]));});
-
-  //Boxes
-  category.append('rect')
-    .attr('class', 'box-plot')
-    .attr('x', (x.rangeBand()-boxWidth)/2)
-    .attr('y', function (d) {return y(getUpperQuartile(data[d]));})
-    .attr('width', function(d){
-      return data[d].length&lt;5 ? 0 : boxWidth;
-    })
-    .attr('height', function(d) {
-    return data[d].length&lt; 5 ? 0:y(getLowerQuartile(data[d]))-y(getUpperQuartile(data[d]));
+  category.each(function (d, i){
+    if (data[d].length&gt;0){
+      decorateCategory(this, d, i);
+    }
+    addHoverBoxes(this, d, i);
   });
 
-  //Min Lines
-  category.append('line')
-    .attr('class',function(d){
-      if(data[d].length&lt;5){
-        return "hidden";
-      }else{
-        return 'box-plot';
-      }
-    })
-    .attr('x1',(x.rangeBand()-boxWidth)/2)
-    .attr('x2', (x.rangeBand()+boxWidth)/2)
-    .attr('y1', function(d){ return y(d3.min(data[d]));})
-    .attr('y2', function(d){ return y(d3.min(data[d]));});
+  function findMaxYDomain(data){
+    var allValues = d3.values(data).reduce(function(a,b){
+      return a.concat(b);
+    });
+    return (d3.max(allValues) + 0.1) / 1.1;
+  }
 
-  //Max Lines
-  category.append('line')
-    .attr('class', function(d){
-      if(data[d].length&lt;5){
-        return "hidden";
-      }else{
-        return 'box-plot';
-      }
-    })
-    .attr('x1',(x.rangeBand()-boxWidth)/2)
-    .attr('x2', (x.rangeBand()+boxWidth)/2)
-    .attr('y1', function(d){ return y(d3.max(data[d]));})
-    .attr('y2', function(d){ return y(d3.max(data[d]));});
+  function decorateCategory(c, datum, i) {
+    category = d3.select(c);
+    
+    //Data points
+    category.selectAll('circle')
+      .data(function(d){return data[d];})
+      .enter()
+      .append('circle')
+        .attr('class', 'data-point')
+        .attr('cx', function(){ return nrmRandom(x.rangeBand(), 0.2);})
+        .attr('cy', function(d , i){return y(d);})
+        .attr('r','1.5px');
 
-  //Min whiskers
-  category.append('line')
-    .attr('class', 'whisker box-plot')
-    .attr('x1', x.rangeBand()/2)
-    .attr('x2', x.rangeBand()/2)
-    .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(d3.max(data[d]));})
-    .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(getUpperQuartile(data[d]));});
+    //Median lines
+    category.append('line')
+      .attr('class', function(d){
+        if (data[d].length&lt;5) {
+          return "hidden";
+        } else {
+          return "box-plot";
+        }
+      })
+      .attr('x1',(x.rangeBand()-boxWidth)/2)
+      .attr('x2', (x.rangeBand()+boxWidth)/2)
+      .attr('y1', function(d){return y(getMedian(data[d]));})
+      .attr('y2', function(d){return y(getMedian(data[d]));});
 
-  //Max whiskers
-  category.append('line')
-    .attr('class', 'whisker box-plot')
-    .attr('x1', x.rangeBand()/2)
-    .attr('x2', x.rangeBand()/2)
-    .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(getLowerQuartile(data[d]));})
-    .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(d3.min(data[d]));});
-
-  //labels
-  var labelX = (x.rangeBand()+boxWidth)/2 + 4;
-  var offsetY = 4;
-
-  // Max labels
-  category.append('text')
-    .attr('class', 'box-label')
-    .attr('dx', labelX)
-    .attr('dy', function(d){ return y(d3.max(data[d]))+ offsetY;})
-    .text(function(d){ return roundDecimals(d3.max(data[d]), 2);})
-    .style("text-anchor", "start");
-  // UpperQ labels
-  category.append('text')
-    .attr('class', 'box-label')
-    .attr('dx', labelX)
-    .attr('dy', function(d){ return y(getUpperQuartile(data[d])) + offsetY;})
-    .text(function(d){ return roundDecimals(getUpperQuartile(data[d]), 2);})
-    .style("text-anchor", "start");
-  // Median labels
-  category.append('text')
-    .attr('class', 'box-label')
-    .attr('dx', labelX)
-    .attr('dy', function(d){ return y(getMedian(data[d])) + offsetY;})
-    .text(function(d){ return roundDecimals(getMedian(data[d]), 2);})
-    .style("text-anchor", "start");
-  //LowerQ labels
-  category.append('text')
-    .attr('class', 'box-label')
-    .attr('dx', labelX)
-    .attr('dy', function(d){ return y(getLowerQuartile(data[d])) + offsetY;})
-    .text(function(d){ return roundDecimals(getLowerQuartile(data[d]), 2);})
-    .style("text-anchor", "start");
-  //Min labels
-  category.append('text')
-    .attr('class', 'box-label')
-    .attr('dx', labelX)
-    .attr('dy', function(d){ return y(d3.min(data[d])) + offsetY;})
-    .text(function(d){ return roundDecimals(d3.min(data[d]), 2);})
-    .style("text-anchor", "start");
-
-  //Info labels
-  var infoLabel = category.append('g')
-    .attr('transform', function(d){
-      var yCoord = y(getUpperQuartile(data[d]));
-      var maxYCoord = y.range()[0] * 4/5;
-      var yPos = (yCoord &gt;  maxYCoord) ? maxYCoord : yCoord;
-      return 'translate(0,'+ yPos +')';
+    //Boxes
+    category.append('rect')
+      .attr('class', 'box-plot')
+      .attr('x', (x.rangeBand()-boxWidth)/2)
+      .attr('y', function (d) {return y(getUpperQuartile(data[d]));})
+      .attr('width', function(d){
+        return data[d].length&lt;5 ? 0 : boxWidth;
+      })
+      .attr('height', function(d) {
+      return data[d].length&lt; 5 ? 0:y(getLowerQuartile(data[d]))-y(getUpperQuartile(data[d]));
     });
 
-  infoLabel.append('rect')
-    .attr('class', 'info-label')
-    .attr('height', '3em')
-    .attr('width', x.rangeBand()/2.5);
+    //Min Lines
+    category.append('line')
+      .attr('class',function(d){
+        if(data[d].length&lt;5){
+          return "hidden";
+        }else{
+          return 'box-plot';
+        }
+      })
+      .attr('x1',(x.rangeBand()-boxWidth)/2)
+      .attr('x2', (x.rangeBand()+boxWidth)/2)
+      .attr('y1', function(d){ return y(d3.min(data[d]));})
+      .attr('y2', function(d){ return y(d3.min(data[d]));});
 
-  infoLabel.append('text')
-    .text(function(d) {return 'n: ' + data[d].length;})
-    .attr('class', 'info-label')
-    .attr('dx', '.5em')
-    .attr('dy', '1.25em')
-    .style("text-anchor", "start");
-  infoLabel.append('text')
-    .text(function(d) {
-      var mean = roundDecimals(d3.mean(data[d]), 2);
-      return 'Mean: ' + mean ;
-    })
-    .attr('class', 'info-label')
-    .attr('dx', '.5em')
-    .attr('dy', '2.25em')
-    .style("text-anchor", "start");
+    //Max Lines
+    category.append('line')
+      .attr('class', function(d){
+        if(data[d].length&lt;5){
+          return "hidden";
+        }else{
+          return 'box-plot';
+        }
+      })
+      .attr('x1',(x.rangeBand()-boxWidth)/2)
+      .attr('x2', (x.rangeBand()+boxWidth)/2)
+      .attr('y1', function(d){ return y(d3.max(data[d]));})
+      .attr('y2', function(d){ return y(d3.max(data[d]));});
+
+    //Min whiskers
+    category.append('line')
+      .attr('class', 'whisker box-plot')
+      .attr('x1', x.rangeBand()/2)
+      .attr('x2', x.rangeBand()/2)
+      .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(d3.max(data[d]));})
+      .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(getUpperQuartile(data[d]));});
+
+    //Max whiskers
+    category.append('line')
+      .attr('class', 'whisker box-plot')
+      .attr('x1', x.rangeBand()/2)
+      .attr('x2', x.rangeBand()/2)
+      .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(getLowerQuartile(data[d]));})
+      .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(d3.min(data[d]));});
+
+    //labels
+    var labelX = (x.rangeBand()+boxWidth)/2 + 4;
+    var offsetY = 4;
+
+    // Max labels
+    category.append('text')
+      .attr('class', 'box-label')
+      .attr('dx', labelX)
+      .attr('dy', function(d){ return y(d3.max(data[d]))+ offsetY;})
+      .text(function(d){ return roundDecimals(d3.max(data[d]), 2);})
+      .style("text-anchor", "start");
+    // UpperQ labels
+    category.append('text')
+      .attr('class', 'box-label')
+      .attr('dx', labelX)
+      .attr('dy', function(d){ return y(getUpperQuartile(data[d])) + offsetY;})
+      .text(function(d){ return roundDecimals(getUpperQuartile(data[d]), 2);})
+      .style("text-anchor", "start");
+    // Median labels
+    category.append('text')
+      .attr('class', 'box-label')
+      .attr('dx', labelX)
+      .attr('dy', function(d){ return y(getMedian(data[d])) + offsetY;})
+      .text(function(d){ return roundDecimals(getMedian(data[d]), 2);})
+      .style("text-anchor", "start");
+    //LowerQ labels
+    category.append('text')
+      .attr('class', 'box-label')
+      .attr('dx', labelX)
+      .attr('dy', function(d){ return y(getLowerQuartile(data[d])) + offsetY;})
+      .text(function(d){ return roundDecimals(getLowerQuartile(data[d]), 2);})
+      .style("text-anchor", "start");
+    //Min labels
+    category.append('text')
+      .attr('class', 'box-label')
+      .attr('dx', labelX)
+      .attr('dy', function(d){ return y(d3.min(data[d])) + offsetY;})
+      .text(function(d){ return roundDecimals(d3.min(data[d]), 2);})
+      .style("text-anchor", "start");
+
+    //Info labels
+    var infoLabel = category.append('g')
+      .attr('transform', function(d){
+        var yCoord = y(getUpperQuartile(data[d]));
+        var maxYCoord = y.range()[0] * 4/5;
+        var yPos = (yCoord &gt;  maxYCoord) ? maxYCoord : yCoord;
+        return 'translate(0,'+ yPos +')';
+      });
+
+    infoLabel.append('rect')
+      .attr('class', 'info-label')
+      .attr('height', '3em')
+      .attr('width', x.rangeBand()/2.5);
+
+    infoLabel.append('text')
+      .text(function(d) {return 'n: ' + data[d].length;})
+      .attr('class', 'info-label')
+      .attr('dx', '.5em')
+      .attr('dy', '1.25em')
+      .style("text-anchor", "start");
+    infoLabel.append('text')
+      .text(function(d) {
+        var mean = roundDecimals(d3.mean(data[d]), 2);
+        return 'Mean: ' + mean ;
+      })
+      .attr('class', 'info-label')
+      .attr('dx', '.5em')
+      .attr('dy', '2.25em')
+      .style("text-anchor", "start");
 
 
-  //Axes
-  chart.append("g").attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
+    //Axes
+    chart.append("g").attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
 
-  chart.append("g").attr("class", "y axis")
-    .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("x", -(height-margin.top)/2)
-      .attr("dy", "-3.5em")
-      .style("text-anchor", "middle")
-      .text("Phenotypic Similarity Score");
+    chart.append("g").attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(height-margin.top)/2)
+        .attr("dy", "-3.5em")
+        .style("text-anchor", "middle")
+        .text("Phenotypic Similarity Score");
 
-  //Hover/Click Boxes
-  var clickArea = category.append('rect')
-    .attr('class', 'hover-box category-button')
-    .attr('width', x.rangeBand())
-    .attr('height', height);
 
-  var inputContainer = clickArea.append('foreignObject');
+  }
 
-  inputContainer.append('input')
+  function addHoverBoxes(c, d, i) {
+    var category = d3.select(c);
+    //Hover/Click Boxes
+    var clickArea = category.append('rect')
+      .attr('class', 'hover-box category-button')
+      .attr('width', x.rangeBand())
+      .attr('height', height);
+
+    var inputContainer = clickArea.append('foreignObject');
+
+    inputContainer.append('input')
       .attr('type','hidden')
       .attr('name', 'matchGene')
       .attr('value', function(d){
         return (d === 'withGene') ? 1 : 0;
       });
-   inputContainer.append('input')
+
+    inputContainer.append('input')
       .attr('type','hidden')
       .attr('name', 'title')
       .attr('class', function(d){
@@ -1126,9 +1163,10 @@ $xwiki.ssx.use('data.MendelianResults')##
       .attr('value', function(d, i) {
         return chartTitles[d];
       });
+  }
 
   function nrmRandom( mean, std) {
-      return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3 * mean *std + mean/2;
+    return ((Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) - 3) / 3 * mean *std + mean/2;
   }
 
   function getUpperQuartile (A){
@@ -1155,12 +1193,6 @@ $xwiki.ssx.use('data.MendelianResults')##
     if (!N) return 0;
     var modifier = Math.pow(10,D);
     return Math.round(N*modifier)/modifier;
-  }
-  function findMaxYDomain(data){
-    var allValues = d3.values(data).reduce(function(a,b){
-      return a.concat(b);
-    });
-    return (d3.max(allValues) + 0.1) / 1.1;
   }
 };</code>
     </property>
@@ -1489,7 +1521,7 @@ $xwiki.ssx.use('data.MendelianResults')##
           heading : _this.Strings["codingEffect.heading"]
         },
         "EXAC_AF" : {
-          display : _this.displayScoreBarCell.bind(_this, "EXAC_AF"),
+          display : _this.displayAF.bind(_this, "EXAC_AF"),
           heading : _this.Strings["exacAF.heading"]
         },
         "UCSC_POSITION_LINK" : {
@@ -1552,14 +1584,14 @@ $xwiki.ssx.use('data.MendelianResults')##
     //A cell to display plain text
     displayPlainTextCell : function (key, variant) {
       var cell = new Element('td');
-      var text = variant[key] || variant.info[key];
+      var text = this.Utils.deepFind(variant, key);
       cell.insert(text);
       return cell;
     },
 
     //A cell to display strings of bases. Will truncate the bases if length is greater than 9.
     displayBasesCell : function(key, variant) {
-      var fullBases = variant[key] || variant.info[key];
+      var fullBases = this.Utils.deepFind(variant, key);
       if (fullBases.length &gt; 9) {
         var shortBases = fullBases.subString(0,9) + "...";
       } else {
@@ -1575,7 +1607,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     //A cell to display scores using the segmented bar visualization. Scores should be between 0 and 1.
     displayScoreBarCell : function(key, variant) {
       var cell = new Element('td');
-      var score = variant[key] || variant.info[key];
+      var score = this.Utils.deepFind(variant, key);
       if (PhenoTips.widgets.SegmentedBar) {
         var barOptions = {
           segments : 5,
@@ -1622,6 +1654,23 @@ $xwiki.ssx.use('data.MendelianResults')##
       return cell;
     },
 
+    displayAF :function(key, variant) {
+      var af = this.Utils.deepFind(variant, key);
+      var cell = new Element('td');
+      if (af) {
+        cell.insert(af);
+      } else {
+        cell.insert(this.Strings['message.EmptyInFo']);
+      }
+      return cell;
+    },
+
+    Utils :{
+      deepFind : function (variant, key) {
+        return variant[key] || variant.info[key];
+      }
+    },
+
     Strings : {
       'chromosome.heading'  : "chromosome",
       'position.heading'    : "position",
@@ -1634,7 +1683,8 @@ $xwiki.ssx.use('data.MendelianResults')##
       'exacAF.heading'      : "allele frequency",
       'UCSC_POSITION_LINK.heading': "variant",
       "positionPhrase"      : "__CHROMOSOME__:__START__-__STOP__",
-      "UCSCLinkTitle": 'Visualize in the UCSC Genome Browser'
+      "UCSCLinkTitle"       : 'Visualize in the UCSC Genome Browser',
+      'message.EmptyInFo'   : "unavailable"
     }
 
     });
@@ -1758,7 +1808,7 @@ $xwiki.ssx.use('data.MendelianResults')##
 #hidden-query-form{
   display: none;
 }
-#mendelian-livetable-container .loading {
+#mendelian-livetable-container .message {
   display: block;
   text-align: center;
   height: 5em;
@@ -1782,6 +1832,10 @@ $xwiki.ssx.use('data.MendelianResults')##
 .mendelian-results-table tr th.sortable:hover {
   color: $theme.linkColor;
   cursor: pointer;
+}
+
+.mendelian-results-table tr th.sorted {
+  border-bottom-width: 3px;
 }
 
 .patient-row td {
