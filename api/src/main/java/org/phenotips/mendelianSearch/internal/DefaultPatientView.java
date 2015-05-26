@@ -19,14 +19,11 @@ package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.data.Disorder;
 import org.phenotips.mendelianSearch.PatientView;
-import org.phenotips.variantstore.shared.GACallInfoFields;
-import org.phenotips.variantstore.shared.GAVariantInfoFields;
-import org.phenotips.variantstore.shared.VariantUtils;
+import org.phenotips.variantStoreIntegration.internal.VariantJSONUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ga4gh.GACall;
 import org.ga4gh.GAVariant;
 
 import net.sf.json.JSONArray;
@@ -110,50 +107,7 @@ public class DefaultPatientView implements PatientView
 
     private JSONObject convertGAVariantToJSON(GAVariant rawV)
     {
-        JSONObject v = new JSONObject();
-        v.put("start", rawV.getStart());
-        v.put("referenceBases", rawV.getReferenceBases());
-        v.put("referenceName", rawV.getReferenceName());
-        // We are only showing the first possible alternates.
-        List<String> alternates = rawV.getAlternateBases();
-        String alternateValue;
-        if (alternates != null && !alternates.isEmpty()) {
-            alternateValue = alternates.get(0);
-        } else {
-            alternateValue = "";
-        }
-        v.put("alternateBases", alternateValue);
-
-
-        GACall call = rawV.getCalls().get(0);
-        JSONObject info = new JSONObject();
-
-        String infoField = VariantUtils.getInfo(call, GACallInfoFields.EXOMISER_VARIANT_SCORE);
-        if (infoField != null) {
-            info.put("EXOMISER_VARIANT_SCORE", Double.parseDouble(infoField));
-        }
-
-        infoField = VariantUtils.getInfo(call, GACallInfoFields.EXOMISER_GENE_VARIANT_SCORE);
-        if (infoField != null) {
-            info.put("EXOMISER_GENE_VARIANT_SCORE", Double.parseDouble(infoField));
-        }
-
-        infoField = VariantUtils.getInfo(rawV, GAVariantInfoFields.GENE_EFFECT);
-        if (infoField != null) {
-            info.put("GENE_EFFECT", infoField);
-        }
-
-        infoField = VariantUtils.getInfo(rawV, GAVariantInfoFields.GENE);
-        if (infoField != null) {
-            info.put("GENE", infoField);
-        }
-
-        infoField = VariantUtils.getInfo(rawV, GAVariantInfoFields.EXAC_AF);
-        if (infoField != null) {
-            info.put(GAVariantInfoFields.EXAC_AF, infoField);
-        }
-        v.element("info", info);
-        return v;
+        return VariantJSONUtils.convertGAVariantToJSON(rawV);
     }
 
     @Override

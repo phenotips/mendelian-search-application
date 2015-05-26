@@ -42,7 +42,7 @@ public interface PatientViewFactory
      * @param request The request that provides context to the patient view.
      * @return The patient view
      */
-    PatientView createPatientView(String id, List<GAVariant> variants, double score, MendelianSearchRequest request);
+    PatientView createPatientView(String id, List<GAVariant> variants, Double score, MendelianSearchRequest request);
 
     /**
      * Create multiple patient views. Note that the ids specified in the params must be consistent.

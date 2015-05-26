@@ -73,7 +73,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
     private Provider<XWikiContext> xcontext;
 
     @Override
-    public PatientView createPatientView(String id, List<GAVariant> variants, double phenotypeScore,
+    public PatientView createPatientView(String id, List<GAVariant> variants, Double phenotypeScore,
         MendelianSearchRequest request)
     {
         PatientView view;
@@ -81,7 +81,7 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         if (patient == null) {
             patient = this.pr.getPatientByExternalId(id);
         }
-        if (patient == null) {
+        if ((patient == null) || (variants == null) || (phenotypeScore == null)) {
             return null;
         }
         boolean hasAccess = this.hasPatientAccess(patient);
@@ -103,8 +103,11 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         }
         for (String id : ids) {
             List<GAVariant> variants = variantMap.get(id);
-            double phenotypeScore = scores.containsKey(id) ? scores.get(id) : -1;
-            result.add(this.createPatientView(id, variants, phenotypeScore, request));
+            Double phenotypeScore = scores.get(id);
+            PatientView view = this.createPatientView(id, variants, phenotypeScore, request);
+            if (view != null) {
+                result.add(view);
+            }
         }
         return result;
     }
