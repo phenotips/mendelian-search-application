@@ -74,9 +74,10 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
         request.set(this.phenotypeKey, Arrays.asList(rawRequest.getParameterValues(this.phenotypeKey)));
         request.set(this.variantEffectsKey, Arrays.asList(rawRequest.getParameterValues("variant-effect")));
 
-        Map<String, String> alleleFrequencies = new HashMap<String, String>();
-        alleleFrequencies.put("PhenomeCentral", rawRequest.getParameter("allele-freq-pc"));
-        alleleFrequencies.put("EXAC", rawRequest.getParameter("allele-freq-exac"));
+        Map<String, Double> alleleFrequencies = new HashMap<String, Double>();
+        alleleFrequencies.put("PhenomeCentral",
+            Double.parseDouble((String) rawRequest.getParameter("allele-freq-pc")) / 100);
+        alleleFrequencies.put("EXAC", Double.parseDouble((String) rawRequest.getParameter("allele-freq-exac")) / 100);
 
         request.set(this.alleleFrequenciesKey, alleleFrequencies);
         request.set(this.phenotypeMatchingKey, rawRequest.getParameter("phenotype-matching"));
