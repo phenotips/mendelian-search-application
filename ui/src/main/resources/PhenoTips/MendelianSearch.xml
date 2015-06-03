@@ -203,145 +203,157 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
     </property>
     <property>
       <code>var PhenoTips = (function (PhenoTips) {
-	var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
-	widgets.MendelianSearchFormBehaviour = Class.create({
-		initialize : function(){
-			this.searchForm = $$('form.mendelian-search-form')[0];
-			//Add click listener to toggle advanced options
-			this.advancedOptionsButton = $('mendelian-advanced-options-button');
-			(this.advancedOptionsButton &amp;&amp; this.advancedOptionsButton.observe('click', this.toggleAdvancedOptions));
+  var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
+  widgets.MendelianSearchFormBehaviour = Class.create({
+    initialize : function(){
+      this.searchForm = $$('form.mendelian-search-form')[0];
+      //Add click listener to toggle advanced options
+      this.advancedOptionsButton = $('mendelian-advanced-options-button');
+      (this.advancedOptionsButton &amp;&amp; this.advancedOptionsButton.observe('click', this.toggleAdvancedOptions));
+
+      this.submitButton = this.searchForm.select("input[type='submit'")[0];
+      (this.submitButton &amp;&amp; this.submitButton.observe('click', this.onClickSubmit.bindAsEventListener(this)));
 
 
-			//Add term suggest for gene name input
-			this.geneSuggest(this.searchForm);
+      //Add term suggest for gene name input
+      this.geneSuggest(this.searchForm);
 
-			//Enable term suggest and multi suggest for HPO
-			this.HPOSuggest(this.searchForm);
-			//Enable delete tool for symptoms from previous search
-			this.enableSymptomDelete();
+      //Enable term suggest and multi suggest for HPO
+      this.HPOSuggest(this.searchForm);
+      //Enable delete tool for symptoms from previous search
+      this.enableSymptomDelete();
+    },
 
-		},
+    geneSuggest : function(form) {
+        form.select('input.suggest-genes').each(function(item) {
+            if (!item.hasClassName('initialized')) {
+                var geneServiceURL = new XWiki.Document('GeneNameService', 'PhenoTips').getURL("get", "outputSyntax=plain")
+                //console.log("GeneService URL: " + geneServiceURL);
+                item._suggest = new PhenoTips.widgets.Suggest(item, {
+                    script: geneServiceURL + "&amp;json=true&amp;",
+                    varname: "q",
+                    noresults: "No matching terms",
+                    resultsParameter : "docs",
+                    json: true,
+                    resultId : "symbol",
+                    resultValue : "symbol",
+                    resultInfo : {},
+                    enableHierarchy: false,
+                    tooltip : 'gene-info',
+                    fadeOnClear : false,
+                    timeout : 30000,
+                    parentContainer : $('body')
+                });
+                if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
+                    item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
+                        'showKey' : false,
+                        'showTooltip' : false,
+                        'showDeleteTool' : true,
+                        'enableSort' : false,
+                        'showClearTool' : true,
+                        'inputType': 'hidden',
+                        'listInsertionElt' : 'input',
+                        'listInsertionPosition' : 'after',
+                        'acceptFreeText' : true
+                    });
+                }
+                item.addClassName('initialized');
+                document.observe('ms:suggest:containerCreated', function(event) {
+                    if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
+                        item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
+                    }
+                });
+            }
+        });
+    },
+      // HPO terms
+      HPOSuggest : function (form) {
+        form.select('input.suggest-hpo').each(function(item) {
+            if (!item.hasClassName('initialized')) {
+                var solrServiceURL = new XWiki.Document('SolrService', 'PhenoTips').getURL("get", "outputSyntax=plain")
+                //console.log("HPO\SOLR URL: " + solrServiceURL);
+                item._suggest = new PhenoTips.widgets.Suggest(item, {
+                    script: solrServiceURL + "rows=100&amp;",
+                    varname: "q",
+                    noresults: "No matching terms",
+                    json: true,
+                    resultsParameter : "rows",
+                    resultId : "id",
+                    resultValue : "name",
+                    resultAltName: "synonym",
+                    resultCategory : "term_category",
+                    resultInfo : {},
+                    enableHierarchy: false,
+                    resultParent : "is_a",
+                    tooltip: 'phenotype-info',
+                    fadeOnClear : false,
+                    timeout : 30000,
+                    parentContainer : $('body')
+                });
+                if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
+                    item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
+                        'showKey' : false,
+                        'showTooltip' : false,
+                        'showDeleteTool' : true,
+                        'enableSort' : false,
+                        'showClearTool' : false,
+                        'inputType': 'hidden',
+                        'listInsertionElt' : $$('.mendelian-search-symptoms')[0] || 'input',
+                        'listInsertionPosition' : 'bottom',
+                        'acceptFreeText' : false
+                    });
+                }
+                item.addClassName('initialized');
+                document.observe('ms:suggest:containerCreated', function(event) {
+                    if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
+                        item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
+                    }
+                });
+            }
+        });
+    },
+    //Enables deleting symptoms specified in previous search
+    enableSymptomDelete : function() {
+      var deleteTools = $$('.accepted-suggestions &gt; li &gt; .delete-tool');
+      deleteTools.each(function(e){
+        e.observe('click', function(){
+          this.up('li').remove();
+        });
+      });
+    },
 
-		geneSuggest : function(form) {
-		    form.select('input.suggest-genes').each(function(item) {
-		        if (!item.hasClassName('initialized')) {
-		            var geneServiceURL = new XWiki.Document('GeneNameService', 'PhenoTips').getURL("get", "outputSyntax=plain")
-		            //console.log("GeneService URL: " + geneServiceURL);
-		            item._suggest = new PhenoTips.widgets.Suggest(item, {
-		                script: geneServiceURL + "&amp;json=true&amp;",
-		                varname: "q",
-		                noresults: "No matching terms",
-		                resultsParameter : "docs",
-		                json: true,
-		                resultId : "symbol",
-		                resultValue : "symbol",
-		                resultInfo : {},
-		                enableHierarchy: false,
-		                tooltip : 'gene-info',
-		                fadeOnClear : false,
-		                timeout : 30000,
-		                parentContainer : $('body')
-		            });
-		            if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
-		                item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
-		                    'showKey' : false,
-		                    'showTooltip' : false,
-		                    'showDeleteTool' : true,
-		                    'enableSort' : false,
-		                    'showClearTool' : true,
-		                    'inputType': 'hidden',
-		                    'listInsertionElt' : 'input',
-		                    'listInsertionPosition' : 'after',
-		                    'acceptFreeText' : true
-		                });
-		            }
-		            item.addClassName('initialized');
-		            document.observe('ms:suggest:containerCreated', function(event) {
-		                if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
-		                    item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
-		                }
-		            });
-		        }
-		    });
-		},
-	    // HPO terms
-	    HPOSuggest : function (form) {
-		    form.select('input.suggest-hpo').each(function(item) {
-		        if (!item.hasClassName('initialized')) {
-		            var solrServiceURL = new XWiki.Document('SolrService', 'PhenoTips').getURL("get", "outputSyntax=plain")
-		            //console.log("HPO\SOLR URL: " + solrServiceURL);
-		            item._suggest = new PhenoTips.widgets.Suggest(item, {
-		                script: solrServiceURL + "rows=100&amp;",
-		                varname: "q",
-		                noresults: "No matching terms",
-		                json: true,
-		                resultsParameter : "rows",
-		                resultId : "id",
-		                resultValue : "name",
-		                resultAltName: "synonym",
-		                resultCategory : "term_category",
-		                resultInfo : {},
-		                enableHierarchy: false,
-		                resultParent : "is_a",
-		                tooltip: 'phenotype-info',
-		                fadeOnClear : false,
-		                timeout : 30000,
-		                parentContainer : $('body')
-		            });
-		            if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
-		                item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
-		                    'showKey' : false,
-		                    'showTooltip' : false,
-		                    'showDeleteTool' : true,
-		                    'enableSort' : false,
-		                    'showClearTool' : false,
-		                    'inputType': 'hidden',
-		                    'listInsertionElt' : $$('.mendelian-search-symptoms')[0] || 'input',
-		                    'listInsertionPosition' : 'bottom',
-		                    'acceptFreeText' : false
-		                });
-		            }
-		            item.addClassName('initialized');
-		            document.observe('ms:suggest:containerCreated', function(event) {
-		                if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
-		                    item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
-		                }
-		            });
-		        }
-		    });
-		},
-		enableSymptomDelete : function(){
-			var deleteTools = $$('.accepted-suggestions &gt; li &gt; .delete-tool');
-			deleteTools.each(function(e){
-				e.observe('click', function(){
-					this.up('li').remove();
-				});
-			});
-		},
+    toggleAdvancedOptions: function(event) {
+      event.stop();
+      this.advancedOptionsBox = this.advancedOptionsBox || $$("div.mendelian-search-advanced");
+      this.advancedOptionsBox.each(function(e){
+        if (e &amp;&amp; e.hasClassName("collapsed")){
+            e.removeClassName("collapsed");
+            this.update('Hide options');
+          } else if (e) {
+            e.addClassName("collapsed");
+            this.update('Advanced options');
+          }
+        }.bind(this));
+    },
 
-		toggleAdvancedOptions: function(event){
-			event.stop();
-			this.advancedOptionsBox = this.advancedOptionsBox || $$("div.mendelian-search-advanced");
-			this.advancedOptionsBox.each(function(e){
-				if (e &amp;&amp; e.hasClassName("collapsed")){
-			  		e.removeClassName("collapsed");
-			  		this.update('Hide options');
-			  	} else if (e) {
-			  		e.addClassName("collapsed");
-			  		this.update('Advanced options');
-			  	}
-		  	}.bind(this));
-		}
-	});
+    onClickSubmit : function(event) {
+      if (!this.searchForm.hasClassName('loading')) {
+        this.searchForm.childElements().each(function (c) {
+          c.addClassName('hidden');
+        });
+        this.searchForm.addClassName('loading');
+      }
+    }
+  });
 
-	var init = function (){
-		new PhenoTips.widgets.MendelianSearchFormBehaviour();
-	};
+  var init = function (){
+    new PhenoTips.widgets.MendelianSearchFormBehaviour();
+  };
 
-	(XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianSearchFormBehaviour()) || document.observe("xwiki:dom:loaded", init);
-	
-	// End PhenoTips augmentation.
-	return PhenoTips;
+  (XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianSearchFormBehaviour()) || document.observe("xwiki:dom:loaded", init);
+  
+  // End PhenoTips augmentation.
+  return PhenoTips;
 }(PhenoTips || {}));</code>
     </property>
     <property>
@@ -440,11 +452,14 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
   box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
   overflow-y: hidden;
 }
+.mendelian-search-form.loading{
+  height: 3em;
+}
 .mendelian-search-form &gt; .form-section{
-    display: inline-block;
-    padding: 1% 0.5%;
-    vertical-align: top;
-    width: 32%;
+  display: inline-block;
+  padding: 1% 0.5%;
+  vertical-align: top;
+  width: 32%;
 }
 .mendelian-search-info{
   display: none;
@@ -471,12 +486,12 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 }
 .mendelian-search-advanced{
   display: block;
-  max-height:300px;
-  overflow:hidden;
+  max-height: 25em;
+  overflow: hidden;
   transition: max-height .5s linear;
 }
 .mendelian-search-advanced.collapsed {
-  max-height: 0px;
+  max-height: 0em;
 }
 .mendelian-search-advanced .advanced-option-heading {
   color: $theme.titleColor;
