@@ -59,9 +59,6 @@ public class DefaultMendelianSearch implements MendelianSearch
     private VocabularyManager om;
 
     @Inject
-    private PatientRepository pr;
-
-    @Inject
     private PatientViewFactory pvf;
 
     @Override
@@ -69,8 +66,6 @@ public class DefaultMendelianSearch implements MendelianSearch
     {
         Set<String> allIds = this.findValidIds();
         Map<String, List<GAVariant>> matchingGenotype = this.findIdsMatchingGenotype(request, allIds);
-        this.convertExternalKeys(matchingGenotype);
-        this.convertExeternalIDSetToInternal(allIds);
 
         Set<String> matchingPhenotype = this.findIdsMatchingPhenotype(request, allIds);
 
@@ -99,9 +94,6 @@ public class DefaultMendelianSearch implements MendelianSearch
         Set<String> allIds = this.findValidIds();
         Map<String, List<GAVariant>> matchingGenotype = this.findIdsMatchingGenotype(request, allIds);
 
-        this.convertExternalKeys(matchingGenotype);
-        this.convertExeternalIDSetToInternal(allIds);
-
         Set<String> matchingIds = matchingGenotype.keySet();
         allIds.removeAll(matchingIds);
         Set<String> nonMatchingIds = allIds;
@@ -114,29 +106,6 @@ public class DefaultMendelianSearch implements MendelianSearch
         result.put("withoutGene", nonMatchingScores.values());
 
         return result;
-    }
-
-    private void convertExeternalIDSetToInternal(Set<String> ids)
-    {
-        Set<String> externalIds = new HashSet<String>(ids);
-        for (String external : externalIds) {
-            String internal = this.getPatientInternalFromExternal(external);
-            ids.remove(external);
-            ids.add(internal);
-        }
-
-    }
-
-    private void convertExternalKeys(Map<String, List<GAVariant>> matchingGenotype)
-    {
-
-        Set<String> keySet = new HashSet<String>(matchingGenotype.keySet());
-        for (String external : keySet) {
-            String newKey = this.getPatientInternalFromExternal(external);
-            List<GAVariant> newValue = matchingGenotype.get(external);
-            matchingGenotype.remove(external);
-            matchingGenotype.put(newKey, newValue);
-        }
     }
 
     private Map<String, Double> scorePatientPhenotypes(MendelianSearchRequest request, Set<String> ids)
@@ -201,15 +170,6 @@ public class DefaultMendelianSearch implements MendelianSearch
     private Set<String> findValidIds()
     {
         return new HashSet<String>(this.variantStore.getIndividuals());
-    }
-
-    private String getPatientInternalFromExternal(String external)
-    {
-        Patient patient = this.pr.getPatientByExternalId(external);
-        if (patient == null) {
-            return null;
-        }
-        return this.pr.getPatientByExternalId(external).getId();
     }
 
 }
