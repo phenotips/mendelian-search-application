@@ -17,8 +17,6 @@
  */
 package org.phenotips.mendelianSearch.internal;
 
-import org.phenotips.data.Patient;
-import org.phenotips.data.PatientRepository;
 import org.phenotips.mendelianSearch.MendelianSearch;
 import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.PatientViewFactory;
