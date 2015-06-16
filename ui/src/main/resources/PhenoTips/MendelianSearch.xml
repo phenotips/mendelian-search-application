@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses/
+-->
+
+<xwikidoc version="1.1">
+  <web>PhenoTips</web>
+  <name>MendelianSearch</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <creationDate>1424379562000</creationDate>
+  <parent>PhenoTips.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <date>1428436178000</date>
+  <contentUpdateDate>1428435733000</contentUpdateDate>
+  <version>1.1</version>
+  <title>MendelianSearch</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>false</hidden>
+  <content>{{velocity wiki='true'}}
+$xwiki.ssx.use('PhenoTips.MendelianSearch')##
+$xwiki.jsx.use('PhenoTips.MendelianSearch')##
+$xwiki.ssx.use('PhenoTips.Widgets')##
+$xwiki.jsx.use('PhenoTips.Widgets')##
+$xwiki.jsx.use('PhenoTips.TouchscreenEvents')##
+$xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
+#set ($alleleFreqPrecision = 4)##
+{{html}}
+&lt;div class='box infomessage mendelian-search-info'&gt;The Gene Genie is a tool used to search for associations between genes and phenotypes. Simply enter a gene symbol and a phenotype and the Gene Genie will search for and score patients based on how well they fit into your hypothesis.&lt;/div&gt;
+&lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('data.MendelianResults')" method='post'&gt;
+  &lt;div class="form-section gene-section"&gt;
+    &lt;p class='search-heading'&gt;Enter the gene you are investigating:&lt;/p&gt;
+    &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder='Enter a gene name' value="$!{escapetool.xml($request.gene)}"/&gt;
+    &lt;div class='mendelian-search-advanced collapsed'&gt;
+        &lt;p class='advanced-option-heading'&gt;Please select the mutation types you want to be included in your search:&lt;/p&gt;
+        #set($variantEffects = $services.MendelianSearch.getVariantEffects())
+        #if("$!{request.variant-effect}" != '')
+          #set($previousEffects = [])
+          #foreach($previousEffect in $request.getParameterValues('variant-effect'))
+            #set($discard = $previousEffects.add($previousEffect))
+          #end
+        #end
+        #set($uncheckedEffect = ["UTR3", "UTR5", "SYNONYMOUS", "INTRONIC", "ncRNA_INTRONIC", "UPSTREAM",
+            "DOWNSTREAM", "INTERGENIC"])
+        #if("$!{variantEffects}" != '')
+          &lt;ul class='variant-effects'&gt;
+            #foreach($effect in $variantEffects)
+              #set($checked = '')
+              #if("$!{previousEffects}" != '' &amp;&amp; $previousEffects.contains($effect))
+                #set($checked="checked='checked")
+              #elseif("$!{previousEffects}" == '' &amp;&amp; $uncheckedEffect.contains($effect) == false)
+                #set($checked="checked='checked")
+              #end
+              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value="$effect" $checked/&gt;$effect&lt;/label&gt;&lt;/li&gt;
+            #end
+          &lt;/ul&gt;
+        #else
+          &lt;div class='warningmessage box'&gt;There was an error retrieving possible variant effects. Your search will consider all effects.&lt;/div&gt;
+        #end
+        &lt;p class='advanced-option-heading'&gt;Adjust allele frequency cut-offs:&lt;/p&gt;
+        &lt;ul&gt;
+          #if("$!{request.allele-freq-exac}"=='')
+            #set($frequency = 1)
+          #else
+            #set($frequency = $escapetool.xml($request.allele-freq-exac))
+          #end
+          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-exac' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in EXAC&lt;/label&gt;&lt;/li&gt;
+          #if("$!{request.allele-freq-pc}"=='')
+            #set($frequency = 10)
+          #else
+            #set($frequency = $escapetool.xml($request.allele-freq-pc))
+          #end
+          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-pc' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in PhenomeCentral&lt;/label&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="form-section phenotype-section"&gt;
+    &lt;p class='search-heading'&gt;Enter the symptoms you want to filter by:&lt;/p&gt;
+    &lt;div class="phenotype-container"&gt;
+      &lt;input type="text" name='phenotype' class="suggest multi suggest-hpo" placeholder='Search for symptoms'  value=""/&gt;
+      &lt;div class="mendelian-search-symptoms"&gt;
+        &lt;ul class="accepted-suggestions"&gt;
+          #foreach($symptom in $request.getParameterValues('phenotype'))
+          &lt;li&gt;
+            &lt;label class="accepted-suggestion" for="phenotype_$symptom"&gt;&lt;input type="hidden" name="phenotype" id="phenotype_$symptom" value="$symptom" &gt;&lt;span class="value"&gt;$!{services.vocabularies.resolveTerm($symptom).getName()}&lt;/span&gt;&lt;/label&gt;
+            &lt;span class="delete-tool" title="Delete this term"&gt;✖&lt;/span&gt;
+          &lt;/li&gt;
+          #end
+        &lt;/ul&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class='mendelian-search-advanced collapsed'&gt;
+    &lt;input type='hidden' name='phenotype-matching' value='fuzzy' checked='checked'/&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class='form-section button-section'&gt;
+    &lt;input type='hidden' name='matchGene' value='1'/&gt;
+    &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
+    &lt;span class="buttonwrapper"&gt;&lt;a class="button" id="mendelian-advanced-options-button" href='#'&gt;Advanced options&lt;/a&gt;&lt;/span&gt;
+    &lt;span class="buttonwrapper"&gt;&lt;input class='button' type='submit' value="Search"/&gt;&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/form&gt;
+{{/html}}
+{{/velocity}}</content>
+  <object>
+    <name>PhenoTips.MendelianSearch</name>
+    <number>1</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>ef892156-ae1f-4de3-83aa-7b7f1f9dae01</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>default</cache>
+    </property>
+    <property>
+      <code>var PhenoTips = (function (PhenoTips) {
+  var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
+  widgets.MendelianSearchFormBehaviour = Class.create({
+    initialize : function(){
+      this.searchForm = $$('form.mendelian-search-form')[0];
+      //Add click listener to toggle advanced options
+      this.advancedOptionsButton = $('mendelian-advanced-options-button');
+      (this.advancedOptionsButton &amp;&amp; this.advancedOptionsButton.observe('click', this.toggleAdvancedOptions));
+
+      this.submitButton = this.searchForm.select("input[type='submit'")[0];
+      (this.submitButton &amp;&amp; this.submitButton.observe('click', this.onClickSubmit.bindAsEventListener(this)));
+
+
+      //Add term suggest for gene name input
+      this.geneSuggest(this.searchForm);
+
+      //Enable term suggest and multi suggest for HPO
+      this.HPOSuggest(this.searchForm);
+      //Enable delete tool for symptoms from previous search
+      this.enableSymptomDelete();
+    },
+
+    geneSuggest : function(form) {
+        form.select('input.suggest-genes').each(function(item) {
+            if (!item.hasClassName('initialized')) {
+                var geneServiceURL = new XWiki.Document('GeneNameService', 'PhenoTips').getURL("get", "outputSyntax=plain")
+                //console.log("GeneService URL: " + geneServiceURL);
+                item._suggest = new PhenoTips.widgets.Suggest(item, {
+                    script: geneServiceURL + "&amp;json=true&amp;",
+                    varname: "q",
+                    noresults: "No matching terms",
+                    resultsParameter : "docs",
+                    json: true,
+                    resultId : "symbol",
+                    resultValue : "symbol",
+                    resultInfo : {},
+                    enableHierarchy: false,
+                    tooltip : 'gene-info',
+                    fadeOnClear : false,
+                    timeout : 30000,
+                    parentContainer : $('body')
+                });
+                if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
+                    item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
+                        'showKey' : false,
+                        'showTooltip' : false,
+                        'showDeleteTool' : true,
+                        'enableSort' : false,
+                        'showClearTool' : true,
+                        'inputType': 'hidden',
+                        'listInsertionElt' : 'input',
+                        'listInsertionPosition' : 'after',
+                        'acceptFreeText' : true
+                    });
+                }
+                item.addClassName('initialized');
+                document.observe('ms:suggest:containerCreated', function(event) {
+                    if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
+                        item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
+                    }
+                });
+            }
+        });
+    },
+      // HPO terms
+      HPOSuggest : function (form) {
+        form.select('input.suggest-hpo').each(function(item) {
+            if (!item.hasClassName('initialized')) {
+                var solrServiceURL = new XWiki.Document('SolrService', 'PhenoTips').getURL("get", "outputSyntax=plain")
+                //console.log("HPO\SOLR URL: " + solrServiceURL);
+                item._suggest = new PhenoTips.widgets.Suggest(item, {
+                    script: solrServiceURL + "rows=100&amp;",
+                    varname: "q",
+                    noresults: "No matching terms",
+                    json: true,
+                    resultsParameter : "rows",
+                    resultId : "id",
+                    resultValue : "name",
+                    resultAltName: "synonym",
+                    resultCategory : "term_category",
+                    resultInfo : {},
+                    enableHierarchy: false,
+                    resultParent : "is_a",
+                    tooltip: 'phenotype-info',
+                    fadeOnClear : false,
+                    timeout : 30000,
+                    parentContainer : $('body')
+                });
+                if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
+                    item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
+                        'showKey' : false,
+                        'showTooltip' : false,
+                        'showDeleteTool' : true,
+                        'enableSort' : false,
+                        'showClearTool' : false,
+                        'inputType': 'hidden',
+                        'listInsertionElt' : $$('.mendelian-search-symptoms')[0] || 'input',
+                        'listInsertionPosition' : 'bottom',
+                        'acceptFreeText' : false
+                    });
+                }
+                item.addClassName('initialized');
+                document.observe('ms:suggest:containerCreated', function(event) {
+                    if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
+                        item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
+                    }
+                });
+            }
+        });
+    },
+    //Enables deleting symptoms specified in previous search
+    enableSymptomDelete : function() {
+      var deleteTools = $$('.accepted-suggestions &gt; li &gt; .delete-tool');
+      deleteTools.each(function(e){
+        e.observe('click', function(){
+          this.up('li').remove();
+        });
+      });
+    },
+
+    toggleAdvancedOptions: function(event) {
+      event.stop();
+      this.advancedOptionsBox = this.advancedOptionsBox || $$("div.mendelian-search-advanced");
+      this.advancedOptionsBox.each(function(e){
+        if (e &amp;&amp; e.hasClassName("collapsed")){
+            e.removeClassName("collapsed");
+            this.update('Hide options');
+          } else if (e) {
+            e.addClassName("collapsed");
+            this.update('Advanced options');
+          }
+        }.bind(this));
+    },
+
+    onClickSubmit : function(event) {
+      if (!this.searchForm.hasClassName('loading')) {
+        this.searchForm.childElements().each(function (c) {
+          c.addClassName('hidden');
+        });
+        this.searchForm.addClassName('loading');
+      }
+    }
+  });
+
+  var init = function (){
+    new PhenoTips.widgets.MendelianSearchFormBehaviour();
+  };
+
+  (XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianSearchFormBehaviour()) || document.observe("xwiki:dom:loaded", init);
+  
+  // End PhenoTips augmentation.
+  return PhenoTips;
+}(PhenoTips || {}));</code>
+    </property>
+    <property>
+      <name>Form Behaviour</name>
+    </property>
+    <property>
+      <parse>1</parse>
+    </property>
+    <property>
+      <use>onDemand</use>
+    </property>
+  </object>
+  <object>
+    <name>PhenoTips.MendelianSearch</name>
+    <number>0</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>475670c5-8c34-4c94-a5db-a5fb9d06e49b</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>default</cache>
+    </property>
+    <property>
+      <code>#template('colorThemeInit.vm')
+
+.mendelian-search-form{
+  box-shadow: 0 0 7px rgba(0, 0, 0, 0.1) inset;
+  overflow-y: hidden;
+}
+.mendelian-search-form.loading{
+  height: 3em;
+}
+.mendelian-search-form &gt; .form-section{
+  display: inline-block;
+  padding: 1% 0.5%;
+  vertical-align: top;
+  width: 32%;
+}
+.mendelian-search-info{
+  display: none;
+}
+.gadget .mendelian-search-info {
+  display: block;
+}
+.gadget .mendelian-search-form &gt; .form-section{
+  width: 99%;
+}
+.mendelian-search-form  .form-section.button-section{
+  text-align: center;
+}
+.mendelian-search-form .form-section.button-section &gt; *{
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.mendelian-search-form .form-section .search-heading{
+  color: $theme.titleColor;
+  margin: 0;
+}
+.mendelian-search-form input[type="text"].percentage-input {
+  width: 4em;
+}
+.mendelian-search-advanced{
+  display: block;
+  max-height: 25em;
+  overflow: hidden;
+  transition: max-height .5s linear;
+}
+.mendelian-search-advanced.collapsed {
+  max-height: 0em;
+}
+.mendelian-search-advanced .advanced-option-heading {
+  color: $theme.titleColor;
+  margin-bottom: 0;
+}
+.mendelian-search-advanced &gt; ul {
+  list-style-type: none;
+  margin: .2em .2em;
+}
+div.mendelian-search-symptoms {
+  width: 99%;
+}
+.mendelian-search-symptoms &gt; .accepted-suggestions{
+ margin: 0 !important;
+}
+.phenotype-container  .accepted-suggestions li {
+  background-color: #FFF;
+  border-top: 1px solid #EEE;
+  padding-left: .5em;
+}
+.variant-effects {
+  background-color: #FFF;
+  border:  1px solid #DDD;
+  height: 8em;
+  margin-left: 0;
+  overflow-y: scroll;
+}
+
+.variant-effects li {
+  border-bottom: 1px dotted #DDD;
+  font-size: 12px;
+  padding: 5px;
+}</code>
+    </property>
+    <property>
+      <name>MendelianSearch</name>
+    </property>
+    <property>
+      <parse>1</parse>
+    </property>
+    <property>
+      <use>currentPage</use>
+    </property>
+  </object>
+</xwikidoc>
