@@ -67,58 +67,8 @@ $xwiki.ssx.use('data.MendelianResults')##
 &lt;div id="mendelian-results"&gt;
   &lt;div id="mendellian-overview-container"&gt;
   &lt;h4 class='graph-heading'&gt;Overview&lt;/h4&gt;
-  #if($overview.size() == 0 )
-    &lt;div class='grid-view'&gt;
-      &lt;table class = 'grid-visualization'&gt;
-        &lt;tr&gt;
-          &lt;!-- Blank cells for alignment --&gt;
-          &lt;td class='blank-cell' colspan='2' rowspan='2'&gt;&lt;/td&gt;
-          &lt;td colspan='2'&gt;Matching Gene&lt;/td&gt;
-        &lt;/tr&gt;
-        &lt;tr&gt;
-          &lt;td class='yn-cell'&gt;Yes&lt;/td&gt;
-          &lt;td class='yn-cell'&gt;No&lt;/td&gt;
-        &lt;/tr&gt;
-        &lt;tr&gt;
-          &lt;td class='vertical-text' rowspan='2'&gt;&lt;div&gt;Matching Phenotype&lt;/div&gt;&lt;/td&gt;
-          &lt;td class='yn-cell'&gt;Yes
-
-          &lt;/td&gt;
-          &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$overview.getInt('withBoth')&lt;/span&gt;&lt;br/&gt;Patients
-            &lt;input type='hidden' name='title' value='Displaying Patients With Matching Phenotypes And Variants'/&gt;
-            &lt;input type='hidden' name='matchGene' value='1'/&gt;
-            &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
-          &lt;/td&gt;
-          &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$overview.getInt('withPhenotype')&lt;/span&gt;&lt;br/&gt;Patients
-            &lt;input type='hidden' name='title' value='Displaying Patients With Matching Phenotypes And Non-matching Variants'/&gt;
-            &lt;input type='hidden' name='matchGene' value='0'/&gt;
-            &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
-          &lt;/td&gt;
-        &lt;/tr&gt;
-        &lt;tr&gt;
-          &lt;td class='yn-cell'&gt;No
-          &lt;/td&gt;
-          &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$overview.getInt('withGene')&lt;/span&gt;&lt;br/&gt;Patients
-            &lt;input type='hidden' name='title' value='Displaying Patients With Matching Variants And Non-matching Phenotype'/&gt;
-            &lt;input type='hidden' name='matchGene' value='1'/&gt;
-            &lt;input type='hidden' name='matchPhenotype' value='0'/&gt;
-          &lt;/td&gt;
-          &lt;td class='results-cell category-button'&gt;
-            &lt;span class='patient-number'&gt;$overview.getInt('withNeither')&lt;/span&gt;&lt;br/&gt;Patients
-            &lt;input type='hidden' name='title' value='Displaying Patients That Did Not Match Either The Symptoms or The Variants'/&gt;
-            &lt;input type='hidden' name='matchGene' value='0'/&gt;
-            &lt;input type='hidden' name='matchPhenotype' value='0'/&gt;
-          &lt;/td&gt;
-        &lt;/tr&gt;
-      &lt;/table&gt;
-    &lt;/div&gt;
-  #else
-    &lt;input type="hidden" value=$overview id="box-plot-values" /&gt;
-    &lt;svg id='chart'&gt;&lt;/svg&gt;
-  #end
+  &lt;input type="hidden" value=$overview id="box-plot-values" /&gt;
+  &lt;svg id='chart'&gt;&lt;/svg&gt;
   &lt;/div&gt;
   &lt;div id="mendelian-livetable-container"&gt;&lt;/div&gt;
  &lt;/div&gt;
