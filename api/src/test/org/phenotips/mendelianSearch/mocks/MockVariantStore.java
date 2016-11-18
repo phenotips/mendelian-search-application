@@ -31,8 +31,8 @@ import java.util.concurrent.Future;
 
 import org.ga4gh.GAVariant;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * A dummy implementation of the variant store's query methods. Stores patients with ids P0000001 through P0000005.

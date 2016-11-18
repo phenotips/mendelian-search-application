@@ -28,7 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import net.sf.json.JSONObject;
+import org.json.JSONObject;
 
 import static org.mockito.Mockito.mock;
 

@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import net.sf.json.JSON;
+import org.json.JSON;
 
 public class MockDisease implements VocabularyTerm
 {
