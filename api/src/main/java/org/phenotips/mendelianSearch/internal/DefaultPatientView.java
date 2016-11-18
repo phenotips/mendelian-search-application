@@ -26,8 +26,8 @@ import java.util.List;
 
 import org.ga4gh.GAVariant;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Default patient view for storing response information.
@@ -72,21 +72,21 @@ public class DefaultPatientView implements PatientView
     {
         JSONObject result = new JSONObject();
 
-        result.element("patientId", this.patientID);
-        result.element("patientURL", this.patientURL);
-        result.element("owner", this.owner);
-        result.element("phenotypeScore", this.phenotypeScore);
-        result.element("geneStatus", this.geneStatus);
-        result.element("diagnosis", this.disordersToJSON(this.diagnosis));
+        result.put("patientId", this.patientID);
+        result.put("patientURL", this.patientURL);
+        result.put("owner", this.owner);
+        result.put("phenotypeScore", this.phenotypeScore);
+        result.put("geneStatus", this.geneStatus);
+        result.put("diagnosis", this.disordersToJSON(this.diagnosis));
 
         JSONArray variantJSONs = new JSONArray();
         if (!this.variants.isEmpty()) {
             for (GAVariant v : this.variants) {
-                variantJSONs.add(this.convertGAVariantToJSON(v));
+                variantJSONs.put(this.convertGAVariantToJSON(v));
             }
         }
-        result.element("variants", variantJSONs);
-        result.element("phenotype", this.phenotype);
+        result.put("variants", variantJSONs);
+        result.put("phenotype", this.phenotype);
         return result;
     }
 
@@ -98,8 +98,8 @@ public class DefaultPatientView implements PatientView
         }
         for (Disorder disorder : diagnosis) {
             JSONObject disorderJSON = new JSONObject();
-            disorderJSON.element("id", disorder.getId());
-            disorderJSON.element("name", disorder.getName());
+            disorderJSON.put("id", disorder.getId());
+            disorderJSON.put("name", disorder.getName());
             result.add(disorderJSON);
         }
         return result;

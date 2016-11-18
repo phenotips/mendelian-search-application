@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import net.sf.json.JSONObject;
+import org.json.JSONObject;
 
 /**
  * Static utility class for handling patient views.

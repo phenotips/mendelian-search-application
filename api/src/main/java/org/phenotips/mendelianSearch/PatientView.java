@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.ga4gh.GAVariant;
 
-import net.sf.json.JSONObject;
+import org.json.JSONObject;
 
 /**
  * A container to be used to store patient information for the mendelian search application.

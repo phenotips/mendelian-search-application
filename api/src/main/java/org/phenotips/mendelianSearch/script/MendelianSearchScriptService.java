@@ -35,9 +35,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.xpn.xwiki.web.XWikiRequest;
+import org.json.JSONObject;
 
-import net.sf.json.JSONObject;
+import com.xpn.xwiki.web.XWikiRequest;
 
 /**
  * API that provides methods for using the mendelian search application.
@@ -74,7 +74,7 @@ public class MendelianSearchScriptService implements ScriptService
 
         List<PatientView> views = this.ms.search(request);
         List<JSONObject> patientJSONs = this.convertViewsToArrayOfJSON(views);
-        metaData.element("numberOfResults", patientJSONs.size());
+        metaData.put("numberOfResults", patientJSONs.size());
 
         //Sort data
         String sortString = "sort";
@@ -90,8 +90,8 @@ public class MendelianSearchScriptService implements ScriptService
         int resultsPerPage = (request.get(resultsPerPageString) != null) ? (int) request.get(resultsPerPageString) : 20;
         patientJSONs = PatientViewUtils.paginatePatientViewJSON(patientJSONs, page, resultsPerPage);
 
-        response.element("meta", metaData);
-        response.element("patients", patientJSONs);
+        response.put("meta", metaData);
+        response.put("patients", patientJSONs);
         return response;
     }
 
@@ -111,7 +111,7 @@ public class MendelianSearchScriptService implements ScriptService
 
         Map<String, Object> overview = this.ms.getOverview(request);
 
-        JSONObject result = JSONObject.fromObject(overview);
+        JSONObject result = new JSONObject(overview);
 
         return result;
     }
