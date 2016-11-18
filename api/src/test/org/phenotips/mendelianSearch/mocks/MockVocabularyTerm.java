@@ -25,8 +25,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+import org.json.JSON;
+import org.json.JSONObject;
 
 /**
  * Simple mock for an vocabulary term, responding with pre-specified values.
