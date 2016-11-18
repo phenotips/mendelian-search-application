@@ -36,7 +36,7 @@
     <repository>
       <id>phenotips-releases</id>
       <name>PhenoTips Releases repository</name>
-      <url>https://nexus.phenotips.org/nexus/content/repositories/releases/</url>
+      <url>https://nexus.phenotips.org/nexus/content/repositories/public/</url>
       <releases>
         <enabled>true</enabled>
         <checksumPolicy>fail</checksumPolicy>
