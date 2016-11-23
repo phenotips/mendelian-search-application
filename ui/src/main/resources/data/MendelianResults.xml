@@ -65,7 +65,7 @@ $xwiki.ssx.use('data.MendelianResults')##
   &lt;/div&gt;
 &lt;/form&gt;
 &lt;div id="mendelian-results"&gt;
-  &lt;div id="mendellian-overview-container"&gt;
+  &lt;div id="mendelian-overview-container"&gt;
   &lt;h4 class='graph-heading'&gt;Overview&lt;/h4&gt;
   &lt;input type="hidden" value=$overview id="box-plot-values" /&gt;
   &lt;svg id='chart'&gt;&lt;/svg&gt;
@@ -1755,7 +1755,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     <property>
       <code>#template('colorThemeInit.vm')
 
-#mendellian-overview-container{
+#mendelian-overview-container{
   float: left;
   width: 400px;
 }
