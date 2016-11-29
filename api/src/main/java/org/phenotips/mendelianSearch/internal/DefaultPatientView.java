@@ -18,14 +18,13 @@
 package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.data.Disorder;
+import org.phenotips.data.similarity.internal.VariantStoreVariant;
 import org.phenotips.mendelianSearch.PatientView;
-import org.phenotips.variantStoreIntegration.internal.VariantJSONUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.ga4gh.GAVariant;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -107,7 +106,7 @@ public class DefaultPatientView implements PatientView
 
     private JSONObject convertGAVariantToJSON(GAVariant rawV)
     {
-        return VariantJSONUtils.convertGAVariantToJSON(rawV);
+        return (new VariantStoreVariant(rawV)).toJSON();
     }
 
     @Override
