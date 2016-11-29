@@ -143,7 +143,7 @@ public class DefaultMendelianSearch implements MendelianSearch
     private Map<String, List<GAVariant>> findIdsMatchingGenotype(MendelianSearchRequest request, Set<String> ids)
     {
         Map<String, List<GAVariant>> matchingVariants;
-        String variantSearchKey = "variantSearch";
+
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
         matchingVariants = this.variantStore.getIndividualsWithGene(
             (String) request.get("geneSymbol"),

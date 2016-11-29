@@ -51,9 +51,9 @@ public interface PatientView
      *          "variants"  : [
      *              {
      *                  "geneSymbol : <String geneSymbol>,
-     *                  "position"  : <Long position>,
-     *                  "ref"       : <String reference bases>,
-     *                  "alt"       : <String alternate bases or "-">,
+     *                  "start"  : <Long position>,
+     *                  "referenceBases"       : <String reference bases>,
+     *                  "alternateBases"       : <String alternate bases or "-">,
      *                  "score"     : <Double exomiser score>,
      *                  "effect"    : <String predicted gene effect>
      *              },
