@@ -564,7 +564,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     },
 
     displayVariantTable: function (variants, container) {
-      var variantColumns = ["geneSymbol", "geneScore", "B_UCSC_POSITION_LINK", "referenceBases", "alternateBases", "effect", "zygosity"];
+      var variantColumns = ["geneSymbol", "geneScore", "B_UCSC_POSITION_LINK", "referenceBases", "alternateBases", "effect", "zygosity", "exacAF"];
       new PhenoTips.widgets.VariantDisplayTable(variants, variantColumns, container);
     },
 
