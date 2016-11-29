@@ -52,6 +52,13 @@
       <artifactId>d3js</artifactId>
       <version>3.5.5</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>variant-store-integration-ui</artifactId>
+      <version>${variantStore.version}</version>
+      <type>xar</type>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>

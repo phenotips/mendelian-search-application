@@ -39,8 +39,10 @@
   <hidden>false</hidden>
   <content>{{include reference='PhenoTips.MendelianSearch' /}}
 {{velocity}}
-$xwiki.jsx.use('data.MendelianResults')##
+$xwiki.jsx.use('data.MendelianResults', {'minify' : false})##
 $xwiki.ssx.use('data.MendelianResults')##
+$xwiki.jsx.use('PhenoTips.VariantTableWidget', {'minify' : false})##
+$xwiki.ssx.use('PhenoTips.VariantTableWidget')##
 #if($!{request} != '' &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
   #set ($overview = $services.MendelianSearch.getOverview($request))
   #set ($displayResults = true)
@@ -562,7 +564,7 @@ $xwiki.ssx.use('data.MendelianResults')##
     },
 
     displayVariantTable: function (variants, container) {
-      var variantColumns =["GENE", "EXOMISER_GENE_VARIANT_SCORE", "B_UCSC_POSITION_LINK","chr", "pos", "ref", "alt", "GENE_EFFECT", "EXAC_AF"];
+      var variantColumns = ["geneSymbol", "geneScore", "B_UCSC_POSITION_LINK", "referenceBases", "alternateBases", "effect", "zygosity"];
       new PhenoTips.widgets.VariantDisplayTable(variants, variantColumns, container);
     },
 
@@ -1307,358 +1309,6 @@ $xwiki.ssx.use('data.MendelianResults')##
   </object>
   <object>
     <name>data.MendelianResults</name>
-    <number>3</number>
-    <className>XWiki.JavaScriptExtension</className>
-    <guid>119deb72-e08d-47fa-926a-053aa83a7de9</guid>
-    <class>
-      <name>XWiki.JavaScriptExtension</name>
-      <customClass/>
-      <customMapping/>
-      <defaultViewSheet/>
-      <defaultEditSheet/>
-      <defaultWeb/>
-      <nameField/>
-      <validationScript/>
-      <cache>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>select</displayType>
-        <multiSelect>0</multiSelect>
-        <name>cache</name>
-        <number>5</number>
-        <prettyName>Caching policy</prettyName>
-        <relationalStorage>0</relationalStorage>
-        <separator> </separator>
-        <separators>|, </separators>
-        <size>1</size>
-        <unmodifiable>0</unmodifiable>
-        <values>long|short|default|forbid</values>
-        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
-      </cache>
-      <code>
-        <disabled>0</disabled>
-        <name>code</name>
-        <number>2</number>
-        <prettyName>Code</prettyName>
-        <rows>20</rows>
-        <size>50</size>
-        <unmodifiable>0</unmodifiable>
-        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
-      </code>
-      <name>
-        <disabled>0</disabled>
-        <name>name</name>
-        <number>1</number>
-        <prettyName>Name</prettyName>
-        <size>30</size>
-        <unmodifiable>0</unmodifiable>
-        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
-      </name>
-      <parse>
-        <disabled>0</disabled>
-        <displayFormType>select</displayFormType>
-        <displayType>yesno</displayType>
-        <name>parse</name>
-        <number>4</number>
-        <prettyName>Parse content</prettyName>
-        <unmodifiable>0</unmodifiable>
-        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
-      </parse>
-      <use>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>select</displayType>
-        <multiSelect>0</multiSelect>
-        <name>use</name>
-        <number>3</number>
-        <prettyName>Use this extension</prettyName>
-        <relationalStorage>0</relationalStorage>
-        <separator> </separator>
-        <separators>|, </separators>
-        <size>1</size>
-        <unmodifiable>0</unmodifiable>
-        <values>currentPage|onDemand|always</values>
-        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
-      </use>
-    </class>
-    <property>
-      <cache>default</cache>
-    </property>
-    <property>
-      <code>var PhenoTips = (function (PhenoTips) {
-  var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
-  widgets.VariantDisplayTable = Class.create({
-    RESULTS_TABLE_MARKER : "variant-display-table",
-
-    /* A javascript table to display variant information. Columns can be specified in a list using the columns argument. Column titles are specified at the end of the document.
-
-    @param columns Specify which columns to display in the table. The columns will be displayed in the order they are listed. The currently supported columns are:
-      [
-      "UCSC_POSITION_LINK", ##Link is displayed as chr?:????-?????
-      "B_UCSC_POSITION_LINK", ##Same as previous but displayed as a PhenoTips secondary action button
-      "chr",
-      "pos",
-      "ref",
-      "alt",
-      "EXOMISER_VARIANT_SCORE",
-      "GENE",
-      "EXOMISER_GENE_VARIANT_SCORE",
-      "GENE_EFFECT",
-      "EXAC_AF"
-      ]
-
-    @param variants Variants must be passed as a list of JSONs in the following format based on http://ga4gh.org/#/schemas.
-                    Not every field must be present but failing to include one may cause certain columns to fail.
-      {
-        referenceName : chromosome (chr1-22, X, Y),
-        start : The start position at which this variant occurs (0-based),
-        end : The end position (exclusive),
-        referenceBases : The reference bases for this variant,
-        alternateBases : The bases that appear instead of the reference bases,
-        info : {
-          EXOMISER_VARIANT_SCORE : The exomiser score for the variant,
-          GENE : The name of the gene to which this variant belongs,
-          EXOMISER_GENE_VARIANT_SCORE : The exomiser harmfulness of the gene,
-          GENE_EFFECT : The effect of this mutation (ie MISSENSE, STOPGAIN etc.),
-          EXAC_AF : The exac allele frequency of this variant
-        }
-      }
-
-    @param container the HTML element you would like the table to be contained within. div is recommended.
-
-    */
-
-    initialize    : function(variants, columns, container) {
-      if (!variants || !container || !columns || columns.length &lt; 1) {return;}
-      var _this = this;
-      this.container = container;
-      this.table = new Element('table', {'class' : _this.RESULTS_TABLE_MARKER});
-      this.container.insert(this.table);
-      this.columns = this.getColumns(columns);
-      this.data = variants;
-      this.generateTable();
-    },
-
-    getColumns : function(columns){
-      var _this = this;
-      var activeColumns = {};
-      var columnTemplates = {
-        "chr" : {
-          display : _this.displayPlainTextCell.bind(_this, "referenceName"),
-          heading : _this.Strings["chromosome.heading"]
-        },
-        "pos"      : {
-          display : _this.displayPlainTextCell.bind(_this, "start"),
-          heading : _this.Strings["position.heading"]
-        },
-        "ref": {
-          display : _this.displayBasesCell.bind(_this, "referenceBases"),
-          heading : _this.Strings["reference.heading"]
-        },
-        "alt" : {
-          display : _this.displayBasesCell.bind(_this, "alternateBases"),
-          heading : _this.Strings["alternate.heading"]
-        },
-        "EXOMISER_VARIANT_SCORE" : {
-          display : _this.displayScoreBarCell.bind(_this, "EXOMISER_VARIANT_SCORE"),
-          heading : _this.Strings["variantScore.heading"]
-        },
-        "GENE" : {
-          display : _this.displayPlainTextCell.bind(_this, "GENE"),
-          heading : _this.Strings["gene.heading"]
-        },
-        "EXOMISER_GENE_VARIANT_SCORE" : {
-          display : _this.displayScoreBarCell.bind(_this, "EXOMISER_GENE_VARIANT_SCORE"),
-          heading : _this.Strings["geneScore.heading"]
-        },
-        "GENE_EFFECT" : {
-          display : _this.displayPlainTextCell.bind(_this, "GENE_EFFECT"),
-          heading : _this.Strings["codingEffect.heading"]
-        },
-        "EXAC_AF" : {
-          display : _this.displayAF.bind(_this, "EXAC_AF"),
-          heading : _this.Strings["exacAF.heading"]
-        },
-        "UCSC_POSITION_LINK" : {
-          display : _this.displayUCSCPositionCell.bind(_this),
-          heading : _this.Strings["UCSC_POSITION_LINK.heading"]
-        },
-        "B_UCSC_POSITION_LINK" : {
-          display: _this.displayButtonUCSCPositionCell.bind(_this),
-          heading : _this.Strings["UCSC_POSITION_LINK.heading"]
-        }
-      };
-
-      columns.each(function(column){
-        if (!columnTemplates[column]) {
-          console.log("Error: " + column + " is not a supported column for the variant display table");
-        } else {
-        activeColumns[column] = columnTemplates[column];
-        }
-      });
-      return activeColumns;
-    },
-
-    generateTable : function() {
-      this.displayTableHeader(this.columns, this.table);
-      this.displayTableRows();
-
-    },
-    getEmptyTableRow  : function(table) {
-      var row = new Element('tr');
-      table.insert(row);
-      return row;
-    },
-    displayTableHeader : function() {
-      var row = this.getEmptyTableRow(this.table);
-      for (var c in this.columns) {
-        if (!this.columns.hasOwnProperty(c)) {
-          continue;
-        }
-        var heading = this.columns[c].heading;
-        row.insert(new Element("th", {"class" : "variant-display-heading"}).update(heading).addClassName(c));
-      }
-    },
-    displayTableRows : function() {
-      var _this= this;
-      _this.data.each(function (r) {
-        _this.displayTableRow(r, _this.columns, _this.table);
-      });
-    },
-
-    displayTableRow : function(r, columns, table) {
-      var row = this.getEmptyTableRow(table);
-      for (var c in columns) {
-        row.insert(columns[c].display(r));
-      }
-      return row;
-    },
-
-    /* Table cell templates */
-
-    //A cell to display plain text
-    displayPlainTextCell : function (key, variant) {
-      var cell = new Element('td');
-      var text = this.Utils.deepFind(variant, key);
-      cell.insert(text);
-      return cell;
-    },
-
-    //A cell to display strings of bases. Will truncate the bases if length is greater than 9.
-    displayBasesCell : function(key, variant) {
-      var fullBases = this.Utils.deepFind(variant, key);
-      if (fullBases.length &gt; 9) {
-        var shortBases = fullBases.subString(0,9) + "...";
-      } else {
-        var shortBases = fullBases;
-      }
-      var cell = new Element('td', {
-        'title' : fullBases
-      });
-      cell.update(shortBases);
-      return cell;
-    },
-
-    //A cell to display scores using the segmented bar visualization. Scores should be between 0 and 1.
-    displayScoreBarCell : function(key, variant) {
-      var cell = new Element('td');
-      var score = this.Utils.deepFind(variant, key);
-      if (PhenoTips.widgets.SegmentedBar) {
-        var barOptions = {
-          segments : 5,
-          segmentHeight : '5px',
-          segmentWidth : '5px',
-          displayPercentValueFlag : true
-        };
-        cell.insert(new PhenoTips.widgets.SegmentedBar(score, barOptions).generateSegmentedBar());
-      } else {
-        cell.update(score);
-      }
-      return cell;
-    },
-
-    //A cell to display variant information and provide a link to the UCSC genome browser
-    displayUCSCPositionCell : function(variant){
-      var cell = new Element('td');
-      if (variant.referenceName &amp;&amp; variant.start &amp;&amp; variant.referenceBases) {
-        var _this = this;
-        var start = variant.start;
-        var end = variant.end || variant.start + variant.referenceBases.length;
-        var positionText = this.Strings["positionPhrase"].replace("__CHROMOSOME__", variant.referenceName.toUpperCase()).replace("__START__", start).replace("__STOP__", + end);
-        var positionURLFragment = variant.referenceName.toUpperCase() + ": " + start + "-" + end;
-        var assembly = variant.assembly || "hg19";
-        var position = new Element('a', {
-          'href': 'http://genome.ucsc.edu/cgi-bin/hgTracks?db=' + assembly + '&amp;position=' + encodeURIComponent(positionURLFragment),
-          'class': 'variant-position',
-          'target': '__blank',
-          'title': _this.Strings["UCSCLinkTitle"]
-        }).update(positionText);
-        cell.insert(position);
-      } else {
-        console.log('Error: Could not find variant information for:' + variant);
-      }
-      return cell;
-    },
-
-    //Displays the same information as displayUCSCPositionCell() but link is displayed as a secondary action button.
-    displayButtonUCSCPositionCell : function(variant) {
-      var cell = this.displayUCSCPositionCell(variant);
-      var linkElement = cell.select('a.variant-position')[0];
-      linkElement.addClassName('button secondary');
-      linkElement.wrap(new Element('span', {'class' : 'buttonwrapper'}));
-      return cell;
-    },
-
-    displayAF :function(key, variant) {
-      var af = this.Utils.deepFind(variant, key);
-      var cell = new Element('td');
-      if (af) {
-        cell.insert(af);
-      } else {
-        cell.insert(this.Strings['message.EmptyInFo']);
-      }
-      return cell;
-    },
-
-    Utils :{
-      deepFind : function (variant, key) {
-        return variant[key] || variant.info[key];
-      }
-    },
-
-    Strings : {
-      'chromosome.heading'  : "chromosome",
-      'position.heading'    : "position",
-      'reference.heading'   : "ref",
-      'alternate.heading'   : "alt",
-      'variantScore.heading': "variant score",
-      'gene.heading'        : "gene symbol",
-      'geneScore.heading'   : "gene score",
-      'codingEffect.heading': "gene effect",
-      'exacAF.heading'      : "allele frequency",
-      'UCSC_POSITION_LINK.heading': "variant",
-      "positionPhrase"      : "__CHROMOSOME__:__START__-__STOP__",
-      "UCSCLinkTitle"       : 'Visualize in the UCSC Genome Browser',
-      'message.EmptyInFo'   : "unavailable"
-    }
-
-    });
-    // End PhenoTips augmentation.
-    return PhenoTips;
-}(PhenoTips || {}));</code>
-    </property>
-    <property>
-      <name>VariantDisplayTable</name>
-    </property>
-    <property>
-      <parse/>
-    </property>
-    <property>
-      <use>onDemand</use>
-    </property>
-  </object>
-  <object>
-    <name>data.MendelianResults</name>
     <number>0</number>
     <className>XWiki.StyleSheetExtension</className>
     <guid>2b621d55-392e-42c5-89c5-b5b408e4ba39</guid>
@@ -2076,13 +1726,11 @@ Diagnosis Box Styles
 .axis text{
   font: 10px sans-serif;
 }
-
 #chart .axis path, .axis line{
   fill:none;
   stroke:#000;
   shape-rendering: crispEdges;
 }
-
 #chart .box-plot{
   fill: #FFF;
   fill-opacity: 0;
@@ -2092,34 +1740,29 @@ Diagnosis Box Styles
 #chart line.box-plot.whisker {
   stroke-dasharray: 5,5;
 }
-  #chart g.category:hover .box-plot{
-    stroke: #9F000F;
-  }
-
+#chart g.category:hover .box-plot{
+  stroke: #9F000F;
+}
 #chart circle.data-point{
   fill: steelblue;
   opacity: 0.7;
 }
-
 #chart rect.hover-box{
   opacity:0;
   transition: all .2s linear;
 }
- #chart g.category:hover rect.hover-box{
-   box-shadow: 0 0 3px black;
-   cursor: pointer;
- }
-
+#chart g.category:hover rect.hover-box{
+  box-shadow: 0 0 3px black;
+  cursor: pointer;
+}
 #chart text.box-label {
   font: 10px sans-serif;
   opacity: 0;
   transition: opacity .2s linear;
 }
-  #chart g.category:hover text.box-label {
-    opacity: 1;
-  }
-
-
+#chart g.category:hover text.box-label {
+  opacity: 1;
+}
 #chart *.info-label{
   opacity: 0;
   transition: opacity .2s linear;
@@ -2142,127 +1785,6 @@ Diagnosis Box Styles
     </property>
     <property>
       <use>onDemand</use>
-    </property>
-  </object>
-  <object>
-    <name>data.MendelianResults</name>
-    <number>3</number>
-    <className>XWiki.StyleSheetExtension</className>
-    <guid>0d5a02c4-1b2b-400e-b705-add0c89b746f</guid>
-    <class>
-      <name>XWiki.StyleSheetExtension</name>
-      <customClass/>
-      <customMapping/>
-      <defaultViewSheet/>
-      <defaultEditSheet/>
-      <defaultWeb/>
-      <nameField/>
-      <validationScript/>
-      <cache>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>select</displayType>
-        <multiSelect>0</multiSelect>
-        <name>cache</name>
-        <number>5</number>
-        <prettyName>Caching policy</prettyName>
-        <relationalStorage>0</relationalStorage>
-        <separator> </separator>
-        <separators>|, </separators>
-        <size>1</size>
-        <unmodifiable>0</unmodifiable>
-        <values>long|short|default|forbid</values>
-        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
-      </cache>
-      <code>
-        <disabled>0</disabled>
-        <name>code</name>
-        <number>2</number>
-        <prettyName>Code</prettyName>
-        <rows>20</rows>
-        <size>50</size>
-        <unmodifiable>0</unmodifiable>
-        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
-      </code>
-      <contentType>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>select</displayType>
-        <multiSelect>0</multiSelect>
-        <name>contentType</name>
-        <number>6</number>
-        <prettyName>Content Type</prettyName>
-        <relationalStorage>0</relationalStorage>
-        <separator> </separator>
-        <separators>|, </separators>
-        <size>1</size>
-        <unmodifiable>0</unmodifiable>
-        <values>CSS|LESS</values>
-        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
-      </contentType>
-      <name>
-        <disabled>0</disabled>
-        <name>name</name>
-        <number>1</number>
-        <prettyName>Name</prettyName>
-        <size>30</size>
-        <unmodifiable>0</unmodifiable>
-        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
-      </name>
-      <parse>
-        <disabled>0</disabled>
-        <displayFormType>select</displayFormType>
-        <displayType>yesno</displayType>
-        <name>parse</name>
-        <number>4</number>
-        <prettyName>Parse content</prettyName>
-        <unmodifiable>0</unmodifiable>
-        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
-      </parse>
-      <use>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>select</displayType>
-        <multiSelect>0</multiSelect>
-        <name>use</name>
-        <number>3</number>
-        <prettyName>Use this extension</prettyName>
-        <relationalStorage>0</relationalStorage>
-        <separator> </separator>
-        <separators>|, </separators>
-        <size>1</size>
-        <unmodifiable>0</unmodifiable>
-        <values>currentPage|onDemand|always</values>
-        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
-      </use>
-    </class>
-    <property>
-      <cache>long</cache>
-    </property>
-    <property>
-      <code>table.variant-display-table {
-  width: 100%;
-}
-table.variant-display-table td {
-  border-left: none;
-  border-right: none;
-  padding: .4em .5em;
-}
-.variant-position.button{
-  width: 100%;
-}</code>
-    </property>
-    <property>
-      <contentType>CSS</contentType>
-    </property>
-    <property>
-      <name>VariantDisplayTableStyles</name>
-    </property>
-    <property>
-      <parse/>
-    </property>
-    <property>
-      <use>currentPage</use>
     </property>
   </object>
 </xwikidoc>
