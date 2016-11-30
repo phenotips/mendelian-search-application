@@ -18,8 +18,8 @@
 package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.data.Disorder;
-import org.phenotips.data.similarity.internal.VariantStoreVariant;
 import org.phenotips.mendelianSearch.PatientView;
+import org.phenotips.variantStoreIntegration.VariantStoreVariant;
 
 import java.util.ArrayList;
 import java.util.List;
