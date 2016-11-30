@@ -39,7 +39,7 @@
   <hidden>false</hidden>
   <content>{{velocity wiki='true'}}
 $xwiki.ssx.use('PhenoTips.MendelianSearch')##
-$xwiki.jsx.use('PhenoTips.MendelianSearch')##
+$xwiki.jsx.use('PhenoTips.MendelianSearch', {'minify' : false})##
 $xwiki.ssx.use('PhenoTips.Widgets')##
 $xwiki.jsx.use('PhenoTips.Widgets')##
 $xwiki.jsx.use('PhenoTips.TouchscreenEvents')##
@@ -266,8 +266,8 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
             }
         });
     },
-      // HPO terms
-      HPOSuggest : function (form) {
+    // HPO terms
+    HPOSuggest : function (form) {
         form.select('input.suggest-hpo').each(function(item) {
             if (!item.hasClassName('initialized')) {
                 var solrServiceURL = new XWiki.Document('SolrService', 'PhenoTips').getURL("get", "outputSyntax=plain")
