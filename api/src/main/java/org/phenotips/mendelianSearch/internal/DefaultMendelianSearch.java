@@ -162,12 +162,10 @@ public class DefaultMendelianSearch implements MendelianSearch
         return nonMatchingVariants;
     }
 
-    /**
-     * @return a list of all valid patient ids to use in the search
-     */
-    private Set<String> findValidIds()
+    @Override
+    public Set<String> findValidIds()
     {
-        return new HashSet<String>(this.variantStore.getIndividuals());
+        return new HashSet<String>(this.variantStore.getAllIndividuals());
     }
 
 }

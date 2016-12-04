@@ -67,7 +67,12 @@ public class DefaultPatientView implements PatientView
     }
 
     @Override
-    public JSONObject toJSON()
+    public JSONObject toJSON() {
+        return toJSON(null);
+    }
+
+    @Override
+    public JSONObject toJSON(Integer individualIDs)
     {
         JSONObject result = new JSONObject();
 
@@ -81,7 +86,7 @@ public class DefaultPatientView implements PatientView
         JSONArray variantJSONs = new JSONArray();
         if (!this.variants.isEmpty()) {
             for (GAVariant v : this.variants) {
-                variantJSONs.put(this.convertGAVariantToJSON(v));
+                variantJSONs.put(this.convertGAVariantToJSON(v, individualIDs));
             }
         }
         result.put("variants", variantJSONs);
@@ -104,9 +109,9 @@ public class DefaultPatientView implements PatientView
         return result;
     }
 
-    private JSONObject convertGAVariantToJSON(GAVariant rawV)
+    private JSONObject convertGAVariantToJSON(GAVariant rawV, Integer individualIDs)
     {
-        return (new VariantStoreVariant(rawV)).toJSON();
+        return (new VariantStoreVariant(rawV, individualIDs)).toJSON();
     }
 
     @Override

@@ -23,6 +23,7 @@ import org.xwiki.component.annotation.Role;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The main controller for the Mendelian Search Application (aka Gene Genie).
@@ -53,4 +54,8 @@ public interface MendelianSearch
      */
     Map<String, Object> getOverview(MendelianSearchRequest request);
 
+    /**
+     * @return a list of all valid patient ids to use in the search
+     */
+    Set<String> findValidIds();
 }
