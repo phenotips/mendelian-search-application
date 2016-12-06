@@ -32,9 +32,9 @@
   <name>PhenoTips - Mendelian Search Application - Java APIs for implementing mendelian searches</name>
   <dependencies>
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>patient-data-api</artifactId>
-      <version>${phenotips.version}</version>
+      <groupId>org.phenotips</groupId>
+      <artifactId>variant-store</artifactId>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -42,12 +42,18 @@
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>patient-access-rules-api</artifactId>
+      <version>${phenotips.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>patient-access-rules-api</artifactId>
+      <artifactId>patient-data-api</artifactId>
+      <version>${phenotips.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>vocabularies-api</artifactId>
       <version>${phenotips.version}</version>
     </dependency>
     <dependency>
@@ -71,22 +77,16 @@
       <version>${xwiki.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>vocabularies-api</artifactId>
-      <version>${phenotips.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.phenotips</groupId>
-      <artifactId>variant-store</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
