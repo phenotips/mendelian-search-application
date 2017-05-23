@@ -880,17 +880,15 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
       var boxWidth = 20;
 
       var maxY = findMaxYDomain(data);
-      var y =d3.scale.linear().range([height,0]).domain([0,maxY]).nice();
-      var x = d3.scale.ordinal().rangeRoundBands([0,width], 0.1).domain(['withGene', 'withoutGene']);
+      var y = d3.scaleLinear().range([height,0]).domain([0,maxY]).nice();
+      var x = d3.scaleBand().range([0,width], 0.1).domain(['withGene', 'withoutGene']);
 
-      var xAxis = d3.svg.axis()
-        .scale(x)
-        .orient("bottom")
+      var xAxis = d3.axisBottom(x)
         .tickFormat(function(d, i){
           return xAxisLabels[i];
         });
 
-      var yAxis = d3.svg.axis().scale(y).orient('left');
+      var yAxis = d3.axisLeft(y);
 
       var chart = d3.select('#chart')
         .attr('width', width+margin.right+ margin.left)
@@ -929,7 +927,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
           .enter()
           .append('circle')
             .attr('class', 'data-point')
-            .attr('cx', function(){ return nrmRandom(x.rangeBand(), 0.2);})
+            .attr('cx', function(){ return nrmRandom(x.bandwidth(), 0.2);})
             .attr('cy', function(d , i){return y(d);})
             .attr('r','1.5px');
 
@@ -942,15 +940,15 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
               return "box-plot";
             }
           })
-          .attr('x1',(x.rangeBand()-boxWidth)/2)
-          .attr('x2', (x.rangeBand()+boxWidth)/2)
+          .attr('x1',(x.bandwidth()-boxWidth)/2)
+          .attr('x2', (x.bandwidth()+boxWidth)/2)
           .attr('y1', function(d){return y(getMedian(data[d]));})
           .attr('y2', function(d){return y(getMedian(data[d]));});
 
         //Boxes
         category.append('rect')
           .attr('class', 'box-plot')
-          .attr('x', (x.rangeBand()-boxWidth)/2)
+          .attr('x', (x.bandwidth()-boxWidth)/2)
           .attr('y', function (d) {return y(getUpperQuartile(data[d]));})
           .attr('width', function(d){
             return data[d].length&lt;5 ? 0 : boxWidth;
@@ -968,8 +966,8 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
               return 'box-plot';
             }
           })
-          .attr('x1',(x.rangeBand()-boxWidth)/2)
-          .attr('x2', (x.rangeBand()+boxWidth)/2)
+          .attr('x1',(x.bandwidth()-boxWidth)/2)
+          .attr('x2', (x.bandwidth()+boxWidth)/2)
           .attr('y1', function(d){ return y(d3.min(data[d]));})
           .attr('y2', function(d){ return y(d3.min(data[d]));});
 
@@ -982,29 +980,29 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
               return 'box-plot';
             }
           })
-          .attr('x1',(x.rangeBand()-boxWidth)/2)
-          .attr('x2', (x.rangeBand()+boxWidth)/2)
+          .attr('x1',(x.bandwidth()-boxWidth)/2)
+          .attr('x2', (x.bandwidth()+boxWidth)/2)
           .attr('y1', function(d){ return y(d3.max(data[d]));})
           .attr('y2', function(d){ return y(d3.max(data[d]));});
 
         //Min whiskers
         category.append('line')
           .attr('class', 'whisker box-plot')
-          .attr('x1', x.rangeBand()/2)
-          .attr('x2', x.rangeBand()/2)
+          .attr('x1', x.bandwidth()/2)
+          .attr('x2', x.bandwidth()/2)
           .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(d3.max(data[d]));})
           .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(getUpperQuartile(data[d]));});
 
         //Max whiskers
         category.append('line')
           .attr('class', 'whisker box-plot')
-          .attr('x1', x.rangeBand()/2)
-          .attr('x2', x.rangeBand()/2)
+          .attr('x1', x.bandwidth()/2)
+          .attr('x2', x.bandwidth()/2)
           .attr('y1', function(d){ return data[d].length&lt;5 ? 0 : y(getLowerQuartile(data[d]));})
           .attr('y2', function(d){ return data[d].length&lt;5 ? 0 : y(d3.min(data[d]));});
 
         //labels
-        var labelX = (x.rangeBand()+boxWidth)/2 + 4;
+        var labelX = (x.bandwidth()+boxWidth)/2 + 4;
         var offsetY = 4;
 
         // Max labels
@@ -1055,7 +1053,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
         infoLabel.append('rect')
           .attr('class', 'info-label')
           .attr('height', '3em')
-          .attr('width', x.rangeBand()/2.5);
+          .attr('width', x.bandwidth()/2.5);
 
         infoLabel.append('text')
           .text(function(d) {return 'n: ' + data[d].length;})
@@ -1096,7 +1094,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
         //Hover/Click Boxes
         var clickArea = category.append('rect')
           .attr('class', 'hover-box category-button')
-          .attr('width', x.rangeBand())
+          .attr('width', x.bandwidth())
           .attr('height', height);
 
         var inputContainer = clickArea.append('foreignObject');
