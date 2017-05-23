@@ -328,10 +328,10 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
       this.advancedOptionsBox.each(function(e){
         if (e &amp;&amp; e.hasClassName("collapsed")){
             e.removeClassName("collapsed");
-            this.update('Hide options');
+            this.update('Hide advanced options');
           } else if (e) {
             e.addClassName("collapsed");
-            this.update('Advanced options');
+            this.update('Show advanced options');
           }
         }.bind(this));
     },

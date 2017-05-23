@@ -109,10 +109,7 @@
     </class>
     <property>
       <content>
-        <!--
-        Plug in the existing Mendelian Search UI from MendelianSearch.xml
-        -->
-        {{include reference='PhenoTips.MendelianSearch' /}}
+{{include reference='PhenoTips.MendelianSearch' /}}
       </content>
     </property>
     <property>
