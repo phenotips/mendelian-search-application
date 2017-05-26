@@ -863,7 +863,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
       <cache>default</cache>
     </property>
     <property>
-      <code>define("BoxPlotGenerator", ["$services.webjars.url('d3js', 'd3.min.js')"], function() {
+      <code>define("BoxPlotGenerator", ["$services.webjars.url('d3js', 'd3.min.js')"], function(d3) {
   PhenoTips = (function(PhenoTips) {
     var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
     widgets.boxPlotGenerator = function () {
