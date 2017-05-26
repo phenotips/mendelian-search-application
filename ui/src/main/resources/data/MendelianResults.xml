@@ -32,7 +32,7 @@
   <date>1433527237000</date>
   <contentUpdateDate>1433514867000</contentUpdateDate>
   <version>1.1</version>
-  <title>Gene Genie</title>
+  <title>$services.localization.render('phenotips.mendelianSearch.results.title')</title>
   <comment/>
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
@@ -51,7 +51,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
 #end
 #if (!${displayResults})
   {{html clean=false}}
-  &lt;div class="infomessage box"&gt;Select your search terms above&lt;/div&gt;
+  &lt;div class="infomessage box"&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.results.selectSearchTerms'))&lt;/div&gt;
   {{/html}}
 #else
   {{html clean = false}}
@@ -197,7 +197,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
       var fromResult = this.resultsPerPage * (this.page - 1) + 1;
       var toResult = Math.min(this.resultsPerPage * this.page, this.numberOfResults);
 
-      this.resultsSummary = new Element('p').update("Displaying results " + fromResult + ' - ' + toResult + " of " + this.numberOfResults);
+      this.resultsSummary = new Element('p').update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.displayedOnPage.total'))".replace("__firstResult__", fromResult).replace("__lastResult__", toResult).replace("__totalNumberOfResults__", this.numberOfResults));
 
       var resultsPerPagePicker = this.generateResultsPerPagePicker();
       var pageSelector = this.generatePageSelector();
@@ -292,7 +292,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     },
 
     updateResultsSummary : function(){
-      this.resultsSummary.update("Displaying results " + (this.getFirstResultIndex()) + '-' + (this.resultsPerPage * this.page));
+      this.resultsSummary.update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.displayedOnPage'))".replace("__firstResult__", this.getFirstResultIndex()).replace("__lastResult__", this.resultsPerPage * this.page));
     },
 
     launchSearch: function() {
@@ -312,7 +312,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
           method: "POST",
           onCreate: function() {
             _this.tableControls.update('');
-            _this.resultsTable.update('&lt;p class="message loading"&gt;Searching...&lt;/p&gt;');
+            _this.resultsTable.update('&lt;p class="message loading"&gt;$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.searching'))&lt;/p&gt;');
           },
           onSuccess: function(response) {
             _this.processData(response.responseJSON);
@@ -718,30 +718,30 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     },
 
     strings: {
-      "patientId.heading": "ID",
-      "owner.heading": "Owner",
-      "phenotypeScore.heading": "Phenotype Score",
-      "numberOfVariants.heading": "Variants observed",
-      "more.heading": "More info",
-      "noPhenotypeOrVariants.text": "Nothing to display",
-      "showMore.button": "More...",
-      "patientSymptom.heading": "Symptoms observed in this patient",
-      'patientVariantsHeading': "Variants found in this patient",
-      'variant.position.heading': "Position",
-      'variant.change.heading': "Change",
-      'variant.effect.heading': "Effect",
-      'variant.score.heading': "Score",
-      'geneSymbol': "Gene symbol",
-      'score.label': "Exomiser score",
-      "positionPhrase": "__CHROMOSOME__:__START__-__STOP__",
-      "variantPositionLinkTitle": 'Visualize in the UCSC Genome Browser',
-      'variantSearchButton': "Redo search with this variant",
-      'control.resultsPerPage.label': 'Results per page: ',
-      "candidateGene.title": "The queried gene was listed as a candidate gene for this patient.",
-      "solvedGene.title": "The queried gene was listed as the solved gene for this patient",
-      "rejectedGene.title": "The queried gene was listed as a rejected gene for this patient.",
-      "omim.link.title" : "Read about this disorder on OMIM",
-      'message.noResults': "No results were found"
+      "patientId.heading": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.patientID'))",
+      "owner.heading": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.owner'))",
+      "phenotypeScore.heading": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.phenotypeScore'))",
+      "numberOfVariants.heading": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.numberOfVariants'))",
+      "more.heading": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.more'))",
+      "noPhenotypeOrVariants.text": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.text.noPhenotypeOrVariants'))",
+      "showMore.button": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.button.showMore'))",
+      "patientSymptom.heading": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.patientSymptom'))",
+      'patientVariantsHeading': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.patientVariants'))",
+      'variant.position.heading': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.variantPosition'))",
+      'variant.change.heading': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.variantChange'))",
+      'variant.effect.heading': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.variantEffect'))",
+      'variant.score.heading': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.heading.variantScore'))",
+      'geneSymbol': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.geneSymbol'))",
+      'score.label': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.label.score'))",
+      "positionPhrase": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.positionPhrase'))",
+      "variantPositionLinkTitle": '$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.title.variantPositionLink'))',
+      'variantSearchButton': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.button.variantSearch'))",
+      'control.resultsPerPage.label': '$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.label.controlResultsPerPage'))',
+      "candidateGene.title": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.title.candidateGene'))",
+      "solvedGene.title": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.title.solvedGene'))",
+      "rejectedGene.title": "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.title.rejectedGene'))",
+      "omim.link.title" : "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.title.OMIMLink'))",
+      'message.noResults': "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.message.noResults'))"
 
     },
 
@@ -863,15 +863,15 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
       <cache>default</cache>
     </property>
     <property>
-      <code>define("BoxPlotGenerator", ["$services.webjars.url('d3js', 'd3.min.js')"], function() {
+      <code>define("BoxPlotGenerator", ["$services.webjars.url('d3js', 'd3.min.js')"], function(d3) {
   PhenoTips = (function(PhenoTips) {
     var widgets = PhenoTips.widgets = PhenoTips.widgets || {};
     widgets.boxPlotGenerator = function () {
       var data = JSON.parse($('box-plot-values').value);
-      xAxisLabels = ["With Variants", "Without Variants"];
+      xAxisLabels = ["$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.boxPlot.xAxis.withVariants'))", "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.boxPlot.xAxis.withoutVariants'))"];
       var chartTitles = {
-        "withGene"    : "Displaying Patients With Matching Variants",
-        "withoutGene" : "Displaying Patients With Non-matching Variants"
+        "withGene"    : "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.boxPlot.title.matching'))",
+        "withoutGene" : "$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.boxPlot.title.nonMatching'))"
       };
       var margin = {top: 20, right: 0, bottom:30, left:50};
       var height = 400-margin.top - margin.bottom;

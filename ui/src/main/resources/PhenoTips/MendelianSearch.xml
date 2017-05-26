@@ -46,13 +46,13 @@ $xwiki.jsx.use('PhenoTips.TouchscreenEvents')##
 $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
 #set ($alleleFreqPrecision = 4)##
 {{html}}
-&lt;div class='box infomessage mendelian-search-info'&gt;The Gene Genie is a tool used to search for associations between genes and phenotypes. Simply enter a gene symbol and a phenotype and the Gene Genie will search for and score patients based on how well they fit into your hypothesis.&lt;/div&gt;
+&lt;div class='box infomessage mendelian-search-info'&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.gadgetDescription'))&lt;/div&gt;
 &lt;form class="xform mendelian-search-form box" action="$xwiki.getURL('data.MendelianResults')" method='post'&gt;
   &lt;div class="form-section gene-section"&gt;
-    &lt;p class='search-heading'&gt;Enter the gene you are investigating:&lt;/p&gt;
-    &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder='Enter a gene name' value="$!{escapetool.xml($request.gene)}"/&gt;
+    &lt;p class='search-heading'&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.gene'))&lt;/p&gt;
+    &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder="$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.gene.placeholder'))" value="$!{escapetool.xml($request.gene)}"/&gt;
     &lt;div class='mendelian-search-advanced collapsed'&gt;
-        &lt;p class='advanced-option-heading'&gt;Please select the mutation types you want to be included in your search:&lt;/p&gt;
+        &lt;p class='advanced-option-heading'&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.mutation'))&lt;/p&gt;
         #set($variantEffects = $services.MendelianSearch.getVariantEffects())
         #if("$!{request.variant-effect}" != '')
           #set($previousEffects = [])
@@ -75,35 +75,35 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
             #end
           &lt;/ul&gt;
         #else
-          &lt;div class='warningmessage box'&gt;There was an error retrieving possible variant effects. Your search will consider all effects.&lt;/div&gt;
+          &lt;div class='warningmessage box'&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.mutation.retrievalError'))&lt;/div&gt;
         #end
-        &lt;p class='advanced-option-heading'&gt;Adjust allele frequency cut-offs:&lt;/p&gt;
+        &lt;p class='advanced-option-heading'&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.alleleFrequency'))&lt;/p&gt;
         &lt;ul&gt;
           #if("$!{request.allele-freq-exac}"=='')
             #set($frequency = 1)
           #else
             #set($frequency = $escapetool.xml($request.allele-freq-exac))
           #end
-          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-exac' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in EXAC&lt;/label&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-exac' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % $escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.alleleFrequency.percentInEXAC'))&lt;/label&gt;&lt;/li&gt;
           #if("$!{request.allele-freq-pc}"=='')
             #set($frequency = 10)
           #else
             #set($frequency = $escapetool.xml($request.allele-freq-pc))
           #end
-          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-pc' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % in PhenomeCentral&lt;/label&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;label class='filter-option'&gt;≤ &lt;input name='allele-freq-pc' class='percentage-input' type='text' maxlength="$alleleFreqPrecision" value="$frequency"/&gt; % $escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.alleleFrequency.percentInPhenomeCentral'))&lt;/label&gt;&lt;/li&gt;
         &lt;/ul&gt;
     &lt;/div&gt;
   &lt;/div&gt;
   &lt;div class="form-section phenotype-section"&gt;
-    &lt;p class='search-heading'&gt;Enter the symptoms you want to filter by:&lt;/p&gt;
+    &lt;p class='search-heading'&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.phenotype'))&lt;/p&gt;
     &lt;div class="phenotype-container"&gt;
-      &lt;input type="text" name='phenotype' class="suggest multi suggest-hpo" placeholder='Search for symptoms'  value=""/&gt;
+      &lt;input type="text" name='phenotype' class="suggest multi suggest-hpo" placeholder="$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.phenotype.placeholder'))"  value=""/&gt;
       &lt;div class="mendelian-search-symptoms"&gt;
         &lt;ul class="accepted-suggestions"&gt;
           #foreach($symptom in $request.getParameterValues('phenotype'))
           &lt;li&gt;
             &lt;label class="accepted-suggestion" for="phenotype_$symptom"&gt;&lt;input type="hidden" name="phenotype" id="phenotype_$symptom" value="$symptom" &gt;&lt;span class="value"&gt;$!{services.vocabularies.resolveTerm($symptom).getName()}&lt;/span&gt;&lt;/label&gt;
-            &lt;span class="delete-tool" title="Delete this term"&gt;✖&lt;/span&gt;
+            &lt;span class="delete-tool" title="$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.phenotype.delete'))"&gt;✖&lt;/span&gt;
           &lt;/li&gt;
           #end
         &lt;/ul&gt;
@@ -117,7 +117,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
     &lt;input type='hidden' name='matchGene' value='1'/&gt;
     &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
     &lt;span class="buttonwrapper"&gt;&lt;a class="button" id="mendelian-advanced-options-button" href='#'&gt;Advanced options&lt;/a&gt;&lt;/span&gt;
-    &lt;span class="buttonwrapper"&gt;&lt;input class='button' type='submit' value="Search"/&gt;&lt;/span&gt;
+    &lt;span class="buttonwrapper"&gt;&lt;input class='button' type='submit' value="$!{escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.searchButton'))}" /&gt;&lt;/span&gt;
   &lt;/div&gt;
 &lt;/form&gt;
 {{/html}}
@@ -214,104 +214,67 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
       this.submitButton = this.searchForm.select("input[type='submit'")[0];
       (this.submitButton &amp;&amp; this.submitButton.observe('click', this.onClickSubmit.bindAsEventListener(this)));
 
+      var suggestOptions = {
+        'genes' : {
+          script: XWiki.contextPath + "/rest/vocabularies/hgnc/suggest?",
+          noresults: "$escapetool.javascript($services.localization.render('phenotips.UIXField.genes.noMatches'))",
+          resultsParameter : "vocabularyTerms",
+          resultValue : "symbol",
+          resultInfo : {},
+          json: true,
+          tooltip : 'gene-info'
+        },
+        'hpo' : {
+          script: XWiki.contextPath + "/rest/vocabularies/hpo/suggest?",
+          noresults: "$escapetool.javascript($services.localization.render('phenotips.DBWebHomeSheet.noResults'))",
+          json: true,
+          resultsParameter : "vocabularyTerms",
+          resultValue : "name",
+          resultAltName: "synonym",
+          resultCategory : "term_category",
+          resultInfo : {},
+          enableHierarchy: false,
+          resultParent : "is_a",
+          tooltip: 'phenotype-info'
+        }
+      };
 
-      //Add term suggest for gene name input
-      this.geneSuggest(this.searchForm);
+      var suggetTypes = Object.keys(suggestOptions);
 
-      //Enable term suggest and multi suggest for HPO
-      this.HPOSuggest(this.searchForm);
+      // -----------------------------------------------------------------
+      // Create and attach the suggests and suggest pickers
+      // -----------------------------------------------------------------
+      for (var i = 0; i &lt; suggetTypes.length; i++) {
+        var options = suggestOptions[suggetTypes[i]];
+        this.searchForm.select('input.suggest-' + suggetTypes[i]).each(function(item) {
+          if (!item.hasClassName('initialized')) {
+            // Create the Suggest
+            item._suggest = new PhenoTips.widgets.Suggest(item, options);
+            if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
+              item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
+                  'showKey' : false,
+                  'enableSort' : false,
+                  'showClearTool' : false,
+                  'listInsertionElt' : (item.hasClassName('suggest-hpo')) ? $$('.mendelian-search-symptoms')[0] || 'input' : 'input',
+                  'listInsertionPosition' : 'bottom'
+              });
+            }
+
+            item.addClassName('initialized');
+
+            document.observe('ms:suggest:containerCreated', function(event) {
+                if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
+                  item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
+                }
+            });
+          }
+        });
+      }
+
       //Enable delete tool for symptoms from previous search
       this.enableSymptomDelete();
     },
 
-    geneSuggest : function(form) {
-        form.select('input.suggest-genes').each(function(item) {
-            if (!item.hasClassName('initialized')) {
-                var geneServiceURL = new XWiki.Document('GeneNameService', 'PhenoTips').getURL("get", "outputSyntax=plain")
-                //console.log("GeneService URL: " + geneServiceURL);
-                item._suggest = new PhenoTips.widgets.Suggest(item, {
-                    script: geneServiceURL + "&amp;json=true&amp;",
-                    varname: "q",
-                    noresults: "No matching terms",
-                    resultsParameter : "docs",
-                    json: true,
-                    resultId : "symbol",
-                    resultValue : "symbol",
-                    resultInfo : {},
-                    enableHierarchy: false,
-                    tooltip : 'gene-info',
-                    fadeOnClear : false,
-                    timeout : 30000,
-                    parentContainer : $('body')
-                });
-                if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
-                    item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
-                        'showKey' : false,
-                        'showTooltip' : false,
-                        'showDeleteTool' : true,
-                        'enableSort' : false,
-                        'showClearTool' : true,
-                        'inputType': 'hidden',
-                        'listInsertionElt' : 'input',
-                        'listInsertionPosition' : 'after',
-                        'acceptFreeText' : true
-                    });
-                }
-                item.addClassName('initialized');
-                document.observe('ms:suggest:containerCreated', function(event) {
-                    if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
-                        item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
-                    }
-                });
-            }
-        });
-    },
-    // HPO terms
-    HPOSuggest : function (form) {
-        form.select('input.suggest-hpo').each(function(item) {
-            if (!item.hasClassName('initialized')) {
-                var solrServiceURL = new XWiki.Document('SolrService', 'PhenoTips').getURL("get", "outputSyntax=plain")
-                //console.log("HPO\SOLR URL: " + solrServiceURL);
-                item._suggest = new PhenoTips.widgets.Suggest(item, {
-                    script: solrServiceURL + "rows=100&amp;",
-                    varname: "q",
-                    noresults: "No matching terms",
-                    json: true,
-                    resultsParameter : "rows",
-                    resultId : "id",
-                    resultValue : "name",
-                    resultAltName: "synonym",
-                    resultCategory : "term_category",
-                    resultInfo : {},
-                    enableHierarchy: false,
-                    resultParent : "is_a",
-                    tooltip: 'phenotype-info',
-                    fadeOnClear : false,
-                    timeout : 30000,
-                    parentContainer : $('body')
-                });
-                if (item.hasClassName('multi') &amp;&amp; typeof(PhenoTips.widgets.SuggestPicker) != "undefined") {
-                    item._suggestPicker = new PhenoTips.widgets.SuggestPicker(item, item._suggest, {
-                        'showKey' : false,
-                        'showTooltip' : false,
-                        'showDeleteTool' : true,
-                        'enableSort' : false,
-                        'showClearTool' : false,
-                        'inputType': 'hidden',
-                        'listInsertionElt' : $$('.mendelian-search-symptoms')[0] || 'input',
-                        'listInsertionPosition' : 'bottom',
-                        'acceptFreeText' : false
-                    });
-                }
-                item.addClassName('initialized');
-                document.observe('ms:suggest:containerCreated', function(event) {
-                    if (event.memo &amp;&amp; event.memo.suggest === item._suggest) {
-                        item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'})
-                    }
-                });
-            }
-        });
-    },
     //Enables deleting symptoms specified in previous search
     enableSymptomDelete : function() {
       var deleteTools = $$('.accepted-suggestions &gt; li &gt; .delete-tool');
@@ -328,10 +291,10 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
       this.advancedOptionsBox.each(function(e){
         if (e &amp;&amp; e.hasClassName("collapsed")){
             e.removeClassName("collapsed");
-            this.update('Hide advanced options');
+            this.update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.searchBy.showOptions'))");
           } else if (e) {
             e.addClassName("collapsed");
-            this.update('Show advanced options');
+            this.update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.searchBy.hideOptions'))");
           }
         }.bind(this));
     },
