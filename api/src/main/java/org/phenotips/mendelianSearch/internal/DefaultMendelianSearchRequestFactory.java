@@ -39,8 +39,6 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
 {
 
     // The search keys
-    private String requestId = "id";
-
     private String geneKey = "geneSymbol";
 
     private String phenotypeKey = "phenotype";

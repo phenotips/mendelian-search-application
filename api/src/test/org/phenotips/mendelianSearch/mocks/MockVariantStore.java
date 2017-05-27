@@ -18,7 +18,6 @@
 package org.phenotips.mendelianSearch.mocks;
 
 import org.phenotips.variantStoreIntegration.VariantStoreService;
-import org.phenotips.variantstore.shared.VariantStoreException;
 
 import org.xwiki.component.phase.InitializationException;
 
@@ -114,7 +113,7 @@ public class MockVariantStore implements VariantStoreService
     }
 
     @Override
-    public List<String> getIndividuals()
+    public List<String> getAllIndividuals()
     {
         List<String> ids = new ArrayList<String>();
         for (int i = 1; i < 10; i++) {
@@ -131,14 +130,14 @@ public class MockVariantStore implements VariantStoreService
     }
 
     @Override
-    public Future addIndividual(String id, boolean isPublic, Path file) throws VariantStoreException
+    public Future addIndividual(String id, boolean isPublic, Path file) throws Exception
     {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Future removeIndividual(String id) throws VariantStoreException
+    public Future removeIndividual(String id) throws Exception
     {
         // TODO Auto-generated method stub
         return null;

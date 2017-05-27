@@ -19,13 +19,12 @@ package org.phenotips.mendelianSearch.internal;
 
 import org.phenotips.data.Disorder;
 import org.phenotips.mendelianSearch.PatientView;
-import org.phenotips.variantStoreIntegration.internal.VariantJSONUtils;
+import org.phenotips.variantStoreIntegration.VariantStoreVariant;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.ga4gh.GAVariant;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -68,7 +67,12 @@ public class DefaultPatientView implements PatientView
     }
 
     @Override
-    public JSONObject toJSON()
+    public JSONObject toJSON() {
+        return toJSON(null);
+    }
+
+    @Override
+    public JSONObject toJSON(Integer individualIDs)
     {
         JSONObject result = new JSONObject();
 
@@ -82,7 +86,7 @@ public class DefaultPatientView implements PatientView
         JSONArray variantJSONs = new JSONArray();
         if (!this.variants.isEmpty()) {
             for (GAVariant v : this.variants) {
-                variantJSONs.put(this.convertGAVariantToJSON(v));
+                variantJSONs.put(this.convertGAVariantToJSON(v, individualIDs));
             }
         }
         result.put("variants", variantJSONs);
@@ -105,9 +109,9 @@ public class DefaultPatientView implements PatientView
         return result;
     }
 
-    private JSONObject convertGAVariantToJSON(GAVariant rawV)
+    private JSONObject convertGAVariantToJSON(GAVariant rawV, Integer individualIDs)
     {
-        return VariantJSONUtils.convertGAVariantToJSON(rawV);
+        return (new VariantStoreVariant(rawV, individualIDs)).toJSON();
     }
 
     @Override

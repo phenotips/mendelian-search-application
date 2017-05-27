@@ -39,7 +39,7 @@ public interface PatientView
     String getType();
 
     /**
-     * Summarize patient information in a JSON object
+     * Summarize patient information in a JSON object.
      *
      * <pre>
      *
@@ -51,9 +51,9 @@ public interface PatientView
      *          "variants"  : [
      *              {
      *                  "geneSymbol : <String geneSymbol>,
-     *                  "position"  : <Long position>,
-     *                  "ref"       : <String reference bases>,
-     *                  "alt"       : <String alternate bases or "-">,
+     *                  "start"  : <Long position>,
+     *                  "referenceBases"       : <String reference bases>,
+     *                  "alternateBases"       : <String alternate bases or "-">,
      *                  "score"     : <Double exomiser score>,
      *                  "effect"    : <String predicted gene effect>
      *              },
@@ -66,6 +66,14 @@ public interface PatientView
      * @return a JSON object in the following format:
      */
     JSONObject toJSON();
+
+    /**
+     * Summarize patient information in a JSON object.
+     * @param individualIDs a list of all valid patient ids to use in the search
+     *
+     * @return variant JSON object
+     */
+    JSONObject toJSON(Integer individualIDs);
 
     /**
      * Set the patient view type.
@@ -120,5 +128,4 @@ public interface PatientView
      * @param diagnosis A list of disorders to add to the patient view.
      */
     void setDiagnosis(List<Disorder> diagnosis);
-
 }

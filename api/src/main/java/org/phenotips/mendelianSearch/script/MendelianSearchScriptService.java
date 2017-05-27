@@ -134,9 +134,10 @@ public class MendelianSearchScriptService implements ScriptService
     private List<JSONObject> convertViewsToArrayOfJSON(List<PatientView> views)
     {
         List<JSONObject> result = new ArrayList<JSONObject>();
+        Integer ids = this.ms.findValidIds().size();
         for (PatientView view : views) {
             if ("open".equals(view.getType())) {
-                result.add(view.toJSON());
+                result.add(view.toJSON(ids));
             }
         }
         return result;

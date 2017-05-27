@@ -32,14 +32,19 @@
   <name>PhenoTips - Mendelian Search Application - Java APIs for implementing mendelian searches</name>
   <dependencies>
     <dependency>
-      <groupId>org.phenotips</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>variant-store</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${variantStore.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>variant-store-integration-api</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${variantStore.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>patient-similarity-data-impl</artifactId>
+      <version>${patientNetwork.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>

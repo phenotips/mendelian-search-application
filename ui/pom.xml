@@ -31,7 +31,7 @@
     <!-- Don't run CLIRR here since there's no Java code. -->
     <xwiki.clirr.skip>true</xwiki.clirr.skip>
     <!-- Name to display by the Extension Manager -->
-    <xwiki.extension.name>Gene Genie - Mendelian Search Application</xwiki.extension.name>
+    <xwiki.extension.name>Mendelian Search Application</xwiki.extension.name>
   </properties>
 
   <dependencies>
@@ -50,7 +50,14 @@
     <dependency>
       <groupId>org.webjars</groupId>
       <artifactId>d3js</artifactId>
-      <version>3.5.5</version>
+      <version>4.2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>variant-store-integration-ui</artifactId>
+      <version>${variantStore.version}</version>
+      <type>xar</type>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
