@@ -77,9 +77,9 @@ public class DefaultPatientViewFactory implements PatientViewFactory
         MendelianSearchRequest request)
     {
         PatientView view;
-        Patient patient = this.pr.getPatientById(id);
+        Patient patient = this.pr.get(id);
         if (patient == null) {
-            patient = this.pr.getPatientByExternalId(id);
+            patient = this.pr.getByName(id);
         }
         if ((patient == null) || (variants == null) || (phenotypeScore == null)) {
             return null;
