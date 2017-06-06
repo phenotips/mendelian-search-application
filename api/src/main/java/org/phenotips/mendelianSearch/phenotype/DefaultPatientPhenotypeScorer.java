@@ -77,7 +77,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     {
         Set<Patient> patients = new HashSet<Patient>();
         for (String id : ids) {
-            Patient patient = this.pr.getPatientById(id);
+            Patient patient = this.pr.get(id);
             patients.add(patient);
         }
         Map<Patient, Double> patientMap = this.getScores(phenotype, patients);
