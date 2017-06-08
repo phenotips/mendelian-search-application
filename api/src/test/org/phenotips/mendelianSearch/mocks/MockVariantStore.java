@@ -58,7 +58,7 @@ public class MockVariantStore implements VariantStoreService
         String alt = "-";
         String position = "45215587452158";
         Double score = Math.random();
-        String effect = "MISSENSE";
+        String effect = "missense_variant";
 
         for (int i = 1; i < 10; i++) {
             String id = MockVariantStore.PATIENT_PREFIX + i;

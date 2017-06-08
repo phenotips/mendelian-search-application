@@ -60,8 +60,8 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
             #set($discard = $previousEffects.add($previousEffect))
           #end
         #end
-        #set($uncheckedEffect = ["UTR3", "UTR5", "SYNONYMOUS", "INTRONIC", "ncRNA_INTRONIC", "UPSTREAM",
-            "DOWNSTREAM", "INTERGENIC"])
+        #set($uncheckedEffect = ["3_prime_utr_truncation", "5_prime_utr_truncation", "synonymous_variant", "non_coding_transcript_variant",
+            "upstream_gene_variant", "downstream_gene_variant", "intergenic_variant"])
         #if("$!{variantEffects}" != '')
           &lt;ul class='variant-effects'&gt;
             #foreach($effect in $variantEffects)
