@@ -244,7 +244,7 @@ $xwiki.ssx.use('PhenoTips.MendelianSearchFromPatientSheet')
 		#foreach($id in $phenotype)
 		  &lt;input type="hidden" name="phenotype" value="$id"/&gt;
 		#end
-		&lt;input type='submit' class='button' value="$!{escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.gene'))}"/&gt;
+		&lt;input type='submit' class='button' value="$!{escapetool.xml($services.localization.render('phenotips.mendelianSearch.patientSheet.usePhenotype'))}"/&gt;
 	&lt;/div&gt;
 &lt;/form&gt;
 #end
