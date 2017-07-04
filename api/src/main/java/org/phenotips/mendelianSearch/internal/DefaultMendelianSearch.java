@@ -128,11 +128,10 @@ public class DefaultMendelianSearch implements MendelianSearch
      *
      * @param request Phenotype filter parameters should be present in the request
      * @param ids The set of all valid Ids which may be returned.
-     * @return
+     * @return Right now only the matching type 'fuzzy' so just return the ids
      */
     private Set<String> findIdsMatchingPhenotype(MendelianSearchRequest request, Set<String> ids)
     {
-        //Right now only the matching type 'fuzzy' so just return the ids.
         return ids;
     }
 
@@ -179,7 +178,8 @@ public class DefaultMendelianSearch implements MendelianSearch
     }
 
     @Override
-    public Map<String, MendelianVariantCategory> getVariantCategories() {
+    public Map<String, MendelianVariantCategory> getVariantCategories()
+    {
         if (this.variantCategories == null) {
             this.variantCategories = new LinkedHashMap<String, MendelianVariantCategory>();
 

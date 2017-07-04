@@ -93,17 +93,20 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     }
 
     @Override
-    public double getScore(List<VocabularyTerm> p1, List<VocabularyTerm> p2) {
+    public double getScore(List<VocabularyTerm> p1, List<VocabularyTerm> p2)
+    {
         return this.getScore(p1, p2, true);
     }
 
     @Override
-    public double getScoreAgainstReference(List<VocabularyTerm> query, List<VocabularyTerm> reference) {
+    public double getScoreAgainstReference(List<VocabularyTerm> query, List<VocabularyTerm> reference)
+    {
         return this.getScore(query, reference, false);
     }
 
     @Override
-    public List<Map<String, Object>> getDetailedMatches(List<VocabularyTerm> q, List<VocabularyTerm> m) {
+    public List<Map<String, Object>> getDetailedMatches(List<VocabularyTerm> q, List<VocabularyTerm> m)
+    {
         List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
         double maxIC;
 
@@ -117,7 +120,7 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
             maxIC = 0;
             VocabularyTerm bestMatch = null;
             VocabularyTerm lcs = null;
-            for (VocabularyTerm tPrime :  m) {
+            for (VocabularyTerm tPrime : m) {
                 VocabularyTerm tempLcs = this.findBestCommonAncestor(t, tPrime);
                 if (tempLcs != null && this.termICs.get(tempLcs) > maxIC) {
                     lcs = tempLcs;
@@ -209,7 +212,7 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
         double maxTermIC = 0;
         VocabularyTerm bestCommonAncestor = null;
         for (VocabularyTerm ancestor : allAncestors) {
-            Double ic  = this.termICs.get(ancestor);
+            Double ic = this.termICs.get(ancestor);
             if (ic != null && ic > maxTermIC) {
                 maxTermIC = this.termICs.get(ancestor);
                 bestCommonAncestor = ancestor;
@@ -410,7 +413,7 @@ public class DefaultPhenotypeScorer implements PhenotypeScorer, Initializable
     /**
      * Bound probability to between (0, 1) exclusive.
      *
-     * @param prob
+     * @param prob probability to bound
      * @return probability bounded between (0, 1) exclusive
      */
     private static double limitProb(double prob)

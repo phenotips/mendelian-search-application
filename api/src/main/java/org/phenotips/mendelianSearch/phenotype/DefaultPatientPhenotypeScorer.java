@@ -92,7 +92,7 @@ public class DefaultPatientPhenotypeScorer implements PatientPhenotypeScorer
     /**
      * Return a (potentially empty) collection of terms present in the patient.
      *
-     * @param patient
+     * @param patient the patient
      * @return a collection of terms present in the patient
      */
     private List<VocabularyTerm> getPresentPatientTerms(Patient patient)

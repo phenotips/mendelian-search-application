@@ -48,11 +48,6 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>org.webjars</groupId>
-      <artifactId>d3js</artifactId>
-      <version>4.2.1</version>
-    </dependency>
-    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>variant-store-integration-ui</artifactId>
       <version>${variantStore.version}</version>

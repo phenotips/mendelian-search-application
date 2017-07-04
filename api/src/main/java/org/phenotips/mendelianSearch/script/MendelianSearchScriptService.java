@@ -123,7 +123,7 @@ public class MendelianSearchScriptService implements ScriptService
      */
     public Map<String, MendelianVariantCategory> getVariantCategories()
     {
-        return ms.getVariantCategories();
+        return this.ms.getVariantCategories();
     }
 
 
