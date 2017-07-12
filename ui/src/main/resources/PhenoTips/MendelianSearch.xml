@@ -291,10 +291,10 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
       this.advancedOptionsBox.each(function(e){
         if (e &amp;&amp; e.hasClassName("collapsed")){
             e.removeClassName("collapsed");
-            this.update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.searchBy.showOptions'))");
+            this.update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.searchBy.hideOptions'))");
           } else if (e) {
             e.addClassName("collapsed");
-            this.update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.searchBy.hideOptions'))");
+            this.update("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.searchBy.showOptions'))");
           }
         }.bind(this));
     },
