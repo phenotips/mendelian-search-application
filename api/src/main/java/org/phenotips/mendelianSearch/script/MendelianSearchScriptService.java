@@ -21,6 +21,7 @@ import org.phenotips.mendelianSearch.MendelianSearch;
 import org.phenotips.mendelianSearch.MendelianSearchRequestFactory;
 import org.phenotips.mendelianSearch.PatientView;
 import org.phenotips.mendelianSearch.internal.MendelianSearchRequest;
+import org.phenotips.mendelianSearch.internal.MendelianVariantCategory;
 import org.phenotips.mendelianSearch.internal.PatientViewUtils;
 
 import org.xwiki.component.annotation.Component;
@@ -56,7 +57,6 @@ public class MendelianSearchScriptService implements ScriptService
 
     @Inject
     private MendelianSearchRequestFactory requestFactory;
-
 
 
     /**
@@ -117,19 +117,13 @@ public class MendelianSearchScriptService implements ScriptService
     }
 
     /**
-     * @return A list of variant effects used by the variant store.
+     * Get a map of all searchable variant effects, grouped into broader variant categories.
+     *
+     * @return An ordered map of categories summarizing all of the variant effects used by the variant store.
      */
-    public String[] getVariantEffects()
+    public Map<String, MendelianVariantCategory> getVariantCategories()
     {
-        String[] effects =
-        { "missense_variant", "frameshift_truncation", "frameshift_elongation", "frameshift_variant",
-            "disruptive_inframe_deletion", "disruptive_inframe_insertion", "stop_gained", "stop_lost",
-            "start_lost", "exon_loss_variant", "splice_acceptor_variant", "splice_donor_variant",
-            "3_prime_utr_truncation", "5_prime_utr_truncation", "synonymous_variant",
-            "non_coding_transcript_variant", "upstream_gene_variant", "downstream_gene_variant",
-            "intergenic_variant" };
-        return effects;
-
+        return ms.getVariantCategories();
     }
 
 
