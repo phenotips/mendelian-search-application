@@ -76,7 +76,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
               #elseif("$!{previousCategories}" == '' &amp;&amp; $uncheckedCategory.contains($categoryName) == false)
                 #set($checked="checked='checked")
               #end
-              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-category' value="$categoryName" $checked/&gt;$categoryName&lt;/label&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-category' value="$escapetool.xml($services.localization.render("phenotips.mendelianSearch.searchBy.mutation.${categoryName}"))" $checked/&gt;$escapetool.xml($services.localization.render("phenotips.mendelianSearch.searchBy.mutation.${categoryName}"))&lt;/label&gt;&lt;/li&gt;
             #end
           &lt;/ul&gt;
         #else
