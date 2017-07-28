@@ -187,23 +187,36 @@ public class DefaultMendelianSearch implements MendelianSearch
 
             // TODO complete these arrays, esp the otherEffects array
             List<String> fsInDelEffects = Arrays.asList("frameshift_truncation",
-                "frameshift_elongation", "frameshift_variant");
-            List<String> nonfsInDelEffects = Arrays.asList("disruptive_inframe_deletion",
-                "disruptive_inframe_insertion");
-            List<String> splicingEffects = Arrays.asList("splice_acceptor_variant", "splice_donor_variant");
+                "frameshift_elongation", "frameshift_variant", "internal_feature_elongation",
+                "feature_truncation");
+            List<String> inframeInDelEffects = Arrays.asList("disruptive_inframe_deletion", "inframe_insertion",
+                "disruptive_inframe_insertion", "inframe_deletion");
+            List<String> splicingEffects = Arrays.asList("splice_acceptor_variant", "splice_donor_variant",
+                "splice_region_variant", "exon_loss_variant", "splicing_variant");
             List<String> nonsenseEffects = Arrays.asList("stop_gained");
-            List<String> missenseEffects = Arrays.asList("missense_variant");
-            List<String> otherEffects = Arrays.asList("stop_lost", "start_lost");
+            List<String> missenseEffects = Arrays.asList("missense_variant", "rare_amino_acid_variant");
+            List<String> otherEffects = Arrays.asList("stop_lost", "start_lost", "chromosome_number_variation",
+                "mnv", "complex_substitution", "transcript_ablation", "5_prime_utr_truncation",
+                "3_prime_utr_truncation", "stop_retained_variant", "initiator_codon_variant",
+                "synonymous_variant", "coding_transcript_intron_variant", "non_coding_transcript_exon_variant",
+                "non_coding_transcript_intron_variant", "5_prime_UTR_premature_start_codon_gain_variant",
+                "5_prime_utr_variant", "3_prime_utr_variant", "direct_tandem_duplication",
+                "upstream_gene_variant", "downstream_gene_variant", "intergenic_variant",
+                "tf_binding_site_variant", "regulatory_region_variant", "conserved_intron_variant",
+                "intragenic_variant", "conserved_intergenic_variant", "structural_variant",
+                "coding_sequence_variant", "intron_variant", "exon_variant", "miRNA", "gene_variant",
+                "coding_transcript_variant", "non_coding_transcript_variant", "  transcript_variant",
+                "intergenic_region", "chromosome", "sequence_variant");
 
             MendelianVariantCategory fsInDelCategory = new MendelianVariantCategory(fsInDelEffects, true);
-            MendelianVariantCategory nonfsInDelCategory = new MendelianVariantCategory(nonfsInDelEffects, true);
+            MendelianVariantCategory inframeInDelCategory = new MendelianVariantCategory(inframeInDelEffects, true);
             MendelianVariantCategory splicingCategory = new MendelianVariantCategory(splicingEffects, true);
             MendelianVariantCategory nonsenseCategory = new MendelianVariantCategory(nonsenseEffects, true);
             MendelianVariantCategory missenseCategory = new MendelianVariantCategory(missenseEffects, true);
             MendelianVariantCategory otherCategory = new MendelianVariantCategory(otherEffects, false);
 
             this.variantCategories.put("fsInDel", fsInDelCategory);
-            this.variantCategories.put("nonfsInDel", nonfsInDelCategory);
+            this.variantCategories.put("inframeInDel", inframeInDelCategory);
             this.variantCategories.put("splicing", splicingCategory);
             this.variantCategories.put("nonsense", nonsenseCategory);
             this.variantCategories.put("missense", missenseCategory);
