@@ -17,28 +17,24 @@
  */
 package org.phenotips.mendelianSearch.internal;
 
-import org.xwiki.component.annotation.Component;
-
 import java.util.List;
 
 /**
- * TODO improve this javadoc
- *
  * A MendelianVariantCategory object describes a single category of variants that
  * may be used to filter searches in the Mendelian Search Application.
  * A variant category contains multiple variant effects that are used to query the
- * variant store.
+ * variant store. It also contains information about whether or not the category
+ * is included in a default search.
  *
  * @version $Id$
  * @since 1.0
  */
-@Component
 public class MendelianVariantCategory
 {
     /** See {@link #getVariantEffects()}. */
     private List<String> variantEffects;
 
-    /** See {@link #getSelectedByDefault()}. */
+    /** See {@link #isSelectedByDefault()}. */
     private boolean selectedByDefault;
 
 
@@ -71,7 +67,7 @@ public class MendelianVariantCategory
      *
      * @return Returns true if the category is selected/included in the search by default
      */
-    public boolean getSelectedByDefault()
+    public boolean isSelectedByDefault()
     {
         return this.selectedByDefault;
     }

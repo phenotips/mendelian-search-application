@@ -45,7 +45,7 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
 
     private String phenotypeMatchingKey = "phenotypeMatching";
 
-    private String variantCategoriesKey = "variantCategories";
+    private String variantCategoriesKey = "variantCategoryNames";
 
     private String alleleFrequenciesKey = "alleleFrequencies";
 

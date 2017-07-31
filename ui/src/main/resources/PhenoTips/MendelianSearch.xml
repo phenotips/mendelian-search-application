@@ -63,7 +63,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
         #end
         #set($uncheckedCategory = [])
         #foreach($categoryName in $variantCategoryNames)
-          #if (!$variantCategories.get($categoryName).getSelectedByDefault())
+          #if (!$variantCategories.get($categoryName).isSelectedByDefault())
             #set($isUnchecked = $uncheckedCategory.add($categoryName))## Must use "set" b/c add() returns a boolean that would else be printed
           #end
         #end
@@ -76,7 +76,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
               #elseif("$!{previousCategories}" == '' &amp;&amp; $uncheckedCategory.contains($categoryName) == false)
                 #set($checked="checked='checked")
               #end
-              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-category' value="$escapetool.xml($services.localization.render("phenotips.mendelianSearch.searchBy.mutation.${categoryName}"))" $checked/&gt;$escapetool.xml($services.localization.render("phenotips.mendelianSearch.searchBy.mutation.${categoryName}"))&lt;/label&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-category' value='$categoryName' $checked/&gt;$escapetool.xml($services.localization.render("phenotips.mendelianSearch.searchBy.mutation.${categoryName}"))&lt;/label&gt;&lt;/li&gt;
             #end
           &lt;/ul&gt;
         #else

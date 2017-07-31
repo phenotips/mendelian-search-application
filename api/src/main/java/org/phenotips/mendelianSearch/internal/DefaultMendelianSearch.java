@@ -29,7 +29,6 @@ import org.xwiki.component.annotation.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -185,7 +184,6 @@ public class DefaultMendelianSearch implements MendelianSearch
         if (this.variantCategories == null) {
             this.variantCategories = new LinkedHashMap<String, MendelianVariantCategory>();
 
-            // TODO complete these arrays, esp the otherEffects array
             List<String> fsInDelEffects = Arrays.asList("frameshift_truncation",
                 "frameshift_elongation", "frameshift_variant", "internal_feature_elongation",
                 "feature_truncation");
@@ -222,6 +220,6 @@ public class DefaultMendelianSearch implements MendelianSearch
             this.variantCategories.put("missense", missenseCategory);
             this.variantCategories.put("other", otherCategory);
         }
-        return Collections.unmodifiableMap(this.variantCategories);
+        return this.variantCategories;
     }
 }
