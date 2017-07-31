@@ -108,9 +108,7 @@
       </scope>
     </class>
     <property>
-      <content>
-{{include reference='PhenoTips.MendelianSearch' /}}
-      </content>
+      <content>{{include reference='PhenoTips.MendelianSearch' /}}</content>
     </property>
     <property>
       <extensionPointId>org.phenotips.homepage.dashboard</extensionPointId>
