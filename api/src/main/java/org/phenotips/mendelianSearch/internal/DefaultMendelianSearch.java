@@ -185,7 +185,6 @@ public class DefaultMendelianSearch implements MendelianSearch
         if (this.variantCategories == null) {
             this.variantCategories = new LinkedHashMap<String, MendelianVariantCategory>();
 
-            // TODO complete these arrays, esp the otherEffects array
             List<String> fsInDelEffects = Arrays.asList("frameshift_truncation",
                 "frameshift_elongation", "frameshift_variant", "internal_feature_elongation",
                 "feature_truncation");
