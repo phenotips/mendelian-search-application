@@ -28,8 +28,11 @@ import org.phenotips.vocabulary.VocabularyTerm;
 import org.xwiki.component.annotation.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +61,8 @@ public class DefaultMendelianSearch implements MendelianSearch
 
     @Inject
     private PatientViewFactory pvf;
+
+    private Map<String, MendelianVariantCategory> variantCategories;
 
     @Override
     public List<PatientView> search(MendelianSearchRequest request)
@@ -144,10 +149,17 @@ public class DefaultMendelianSearch implements MendelianSearch
     {
         Map<String, List<GAVariant>> matchingVariants;
 
+        Map<String, MendelianVariantCategory> varCategories = getVariantCategories();
+        List<String> varCategoryNames = (List<String>) request.get("variantCategoryNames");
+        List<String> varEffects = new ArrayList<String>();
+        for (String category : varCategoryNames) {
+            varEffects.addAll(varCategories.get(category).getVariantEffects());
+        }
+
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
         matchingVariants = this.variantStore.getIndividualsWithGene(
             (String) request.get("geneSymbol"),
-            (List<String>) request.get("variantEffects"),
+            varEffects,
             (Map<String, Double>) request.get("alleleFrequencies"));
 
         if ((int) request.get("matchGene") == 1) {
@@ -168,4 +180,47 @@ public class DefaultMendelianSearch implements MendelianSearch
         return new HashSet<String>(this.variantStore.getAllIndividuals());
     }
 
+    @Override
+    public Map<String, MendelianVariantCategory> getVariantCategories() {
+        if (this.variantCategories == null) {
+            this.variantCategories = new LinkedHashMap<String, MendelianVariantCategory>();
+
+            List<String> fsInDelEffects = Arrays.asList("frameshift_truncation",
+                "frameshift_elongation", "frameshift_variant", "internal_feature_elongation",
+                "feature_truncation");
+            List<String> inframeInDelEffects = Arrays.asList("disruptive_inframe_deletion", "inframe_insertion",
+                "disruptive_inframe_insertion", "inframe_deletion");
+            List<String> splicingEffects = Arrays.asList("splice_acceptor_variant", "splice_donor_variant",
+                "splice_region_variant", "exon_loss_variant", "splicing_variant");
+            List<String> nonsenseEffects = Arrays.asList("stop_gained");
+            List<String> missenseEffects = Arrays.asList("missense_variant", "rare_amino_acid_variant");
+            List<String> otherEffects = Arrays.asList("stop_lost", "start_lost", "chromosome_number_variation",
+                "mnv", "complex_substitution", "transcript_ablation", "5_prime_utr_truncation",
+                "3_prime_utr_truncation", "stop_retained_variant", "initiator_codon_variant",
+                "synonymous_variant", "coding_transcript_intron_variant", "non_coding_transcript_exon_variant",
+                "non_coding_transcript_intron_variant", "5_prime_UTR_premature_start_codon_gain_variant",
+                "5_prime_utr_variant", "3_prime_utr_variant", "direct_tandem_duplication",
+                "upstream_gene_variant", "downstream_gene_variant", "intergenic_variant",
+                "tf_binding_site_variant", "regulatory_region_variant", "conserved_intron_variant",
+                "intragenic_variant", "conserved_intergenic_variant", "structural_variant",
+                "coding_sequence_variant", "intron_variant", "exon_variant", "miRNA", "gene_variant",
+                "coding_transcript_variant", "non_coding_transcript_variant", "  transcript_variant",
+                "intergenic_region", "chromosome", "sequence_variant");
+
+            MendelianVariantCategory fsInDelCategory = new MendelianVariantCategory(fsInDelEffects, true);
+            MendelianVariantCategory inframeInDelCategory = new MendelianVariantCategory(inframeInDelEffects, true);
+            MendelianVariantCategory splicingCategory = new MendelianVariantCategory(splicingEffects, true);
+            MendelianVariantCategory nonsenseCategory = new MendelianVariantCategory(nonsenseEffects, true);
+            MendelianVariantCategory missenseCategory = new MendelianVariantCategory(missenseEffects, true);
+            MendelianVariantCategory otherCategory = new MendelianVariantCategory(otherEffects, false);
+
+            this.variantCategories.put("fsInDel", fsInDelCategory);
+            this.variantCategories.put("inframeInDel", inframeInDelCategory);
+            this.variantCategories.put("splicing", splicingCategory);
+            this.variantCategories.put("nonsense", nonsenseCategory);
+            this.variantCategories.put("missense", missenseCategory);
+            this.variantCategories.put("other", otherCategory);
+        }
+        return Collections.unmodifiableMap(this.variantCategories);
+    }
 }

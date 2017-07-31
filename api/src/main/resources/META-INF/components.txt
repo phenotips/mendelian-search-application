@@ -4,3 +4,4 @@ org.phenotips.mendelianSearch.phenotype.DefaultPhenotypeScorer
 org.phenotips.mendelianSearch.phenotype.DefaultPatientPhenotypeScorer
 org.phenotips.mendelianSearch.internal.DefaultPatientViewFactory
 org.phenotips.mendelianSearch.internal.DefaultMendelianSearchRequestFactory
+org.phenotips.mendelianSearch.internal.MendelianVariantCategory

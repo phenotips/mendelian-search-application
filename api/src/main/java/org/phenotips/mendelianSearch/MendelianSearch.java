@@ -18,6 +18,7 @@
 package org.phenotips.mendelianSearch;
 
 import org.phenotips.mendelianSearch.internal.MendelianSearchRequest;
+import org.phenotips.mendelianSearch.internal.MendelianVariantCategory;
 
 import org.xwiki.component.annotation.Role;
 
@@ -58,4 +59,11 @@ public interface MendelianSearch
      * @return a list of all valid patient ids to use in the search
      */
     Set<String> findValidIds();
+
+    /**
+     * Construct and retrieve a map of all searchable variant effects, grouped into broader variant categories.
+     *
+     * @return An immutable ordered map of categories summarizing all of the variant effects used by the variant store.
+     */
+    Map<String, MendelianVariantCategory> getVariantCategories();
 }
