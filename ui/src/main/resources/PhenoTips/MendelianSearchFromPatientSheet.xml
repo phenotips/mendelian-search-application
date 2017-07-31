@@ -239,7 +239,7 @@ $xwiki.ssx.use('PhenoTips.MendelianSearchFromPatientSheet')
 {{html}}
 #set($phenotype = $doc.getObject('PhenoTips.PatientClass').getProperty("phenotype").getValue())
 #if($xcontext.action == 'view' &amp;&amp; $phenotype.isEmpty() == false)
-&lt;form action="$xwiki.getURL('data.MendelianResults')" method="post"&gt;
+&lt;form action="$xwiki.getURL('data.CohortDiscoveryResults')" method="post"&gt;
 	&lt;div class="mendelian-search-from-patient-sheet"&gt;
 		#foreach($id in $phenotype)
 		  &lt;input type="hidden" name="phenotype" value="$id"/&gt;
