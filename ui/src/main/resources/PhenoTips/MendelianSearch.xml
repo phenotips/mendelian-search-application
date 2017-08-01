@@ -483,13 +483,9 @@ div.mendelian-search-symptoms {
 .variant-categories {
   background-color: #FFF;
   border:  1px solid #DDD;
-  height: 8em;
   margin-left: 0;
-  overflow-y: scroll;
 }
-
 .variant-categories li {
-  border-bottom: 1px dotted #DDD;
   font-size: 12px;
   padding: 5px;
 }</code>
