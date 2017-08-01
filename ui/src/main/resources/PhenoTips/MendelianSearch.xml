@@ -53,25 +53,30 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
     &lt;input type="text" class="suggested suggest-genes gene-name" name="gene" placeholder="$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.gene.placeholder'))" value="$!{escapetool.xml($request.gene)}"/&gt;
     &lt;div class='mendelian-search-advanced collapsed'&gt;
         &lt;p class='advanced-option-heading'&gt;$escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.mutation'))&lt;/p&gt;
-        #set($variantEffects = $services.MendelianSearch.getVariantEffects())
-        #if("$!{request.variant-effect}" != '')
-          #set($previousEffects = [])
-          #foreach($previousEffect in $request.getParameterValues('variant-effect'))
-            #set($discard = $previousEffects.add($previousEffect))
+        #set($variantCategories = $services.MendelianSearch.getVariantCategories())
+        #set($variantCategoryNames = $variantCategories.keySet())
+        #if("$!{request.variant-category}" != '')
+          #set($previousCategories = [])
+          #foreach($previousCategory in $request.getParameterValues('variant-category'))
+            #set($discard = $previousCategories.add($previousCategory))
           #end
         #end
-        #set($uncheckedEffect = ["3_prime_utr_truncation", "5_prime_utr_truncation", "synonymous_variant", "non_coding_transcript_variant",
-            "upstream_gene_variant", "downstream_gene_variant", "intergenic_variant"])
-        #if("$!{variantEffects}" != '')
-          &lt;ul class='variant-effects'&gt;
-            #foreach($effect in $variantEffects)
+        #set($uncheckedCategory = [])
+        #foreach($categoryName in $variantCategoryNames)
+          #if (!$variantCategories.get($categoryName).isSelectedByDefault())
+            #set($isUnchecked = $uncheckedCategory.add($categoryName))## Must use "set" b/c add() returns a boolean that would else be printed
+          #end
+        #end
+        #if("$!{variantCategoryNames}" != '')
+          &lt;ul class='variant-categories'&gt;
+            #foreach($categoryName in $variantCategoryNames)
               #set($checked = '')
-              #if("$!{previousEffects}" != '' &amp;&amp; $previousEffects.contains($effect))
+              #if("$!{previousCategories}" != '' &amp;&amp; $previousCategories.contains($categoryName))
                 #set($checked="checked='checked")
-              #elseif("$!{previousEffects}" == '' &amp;&amp; $uncheckedEffect.contains($effect) == false)
+              #elseif("$!{previousCategories}" == '' &amp;&amp; $uncheckedCategory.contains($categoryName) == false)
                 #set($checked="checked='checked")
               #end
-              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-effect' value="$effect" $checked/&gt;$effect&lt;/label&gt;&lt;/li&gt;
+              &lt;li&gt;&lt;label class='filter-option'&gt;&lt;input type='checkbox' name='variant-category' value='$categoryName' $checked/&gt;$escapetool.xml($services.localization.render("phenotips.mendelianSearch.searchBy.mutation.${categoryName}"))&lt;/label&gt;&lt;/li&gt;
             #end
           &lt;/ul&gt;
         #else
@@ -475,7 +480,7 @@ div.mendelian-search-symptoms {
   border-top: 1px solid #EEE;
   padding-left: .5em;
 }
-.variant-effects {
+.variant-categories {
   background-color: #FFF;
   border:  1px solid #DDD;
   height: 8em;
@@ -483,7 +488,7 @@ div.mendelian-search-symptoms {
   overflow-y: scroll;
 }
 
-.variant-effects li {
+.variant-categories li {
   border-bottom: 1px dotted #DDD;
   font-size: 12px;
   padding: 5px;

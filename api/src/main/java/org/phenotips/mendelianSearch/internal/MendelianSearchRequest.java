@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An object representation of the query made by a user interacting witht the mendelian search application. Just wraps a
+ * An object representation of the query made by a user interacting with the mendelian search application. Just wraps a
  * map.
  *
  * @version $Id$

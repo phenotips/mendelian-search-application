@@ -45,7 +45,7 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
 
     private String phenotypeMatchingKey = "phenotypeMatching";
 
-    private String variantEffectsKey = "variantEffects";
+    private String variantCategoriesKey = "variantCategoryNames";
 
     private String alleleFrequenciesKey = "alleleFrequencies";
 
@@ -70,7 +70,7 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
         request.setId(this.generateRequestId());
         request.set(this.geneKey, rawRequest.getParameter("gene"));
         request.set(this.phenotypeKey, Arrays.asList(rawRequest.getParameterValues(this.phenotypeKey)));
-        request.set(this.variantEffectsKey, Arrays.asList(rawRequest.getParameterValues("variant-effect")));
+        request.set(this.variantCategoriesKey, Arrays.asList(rawRequest.getParameterValues("variant-category")));
 
         Map<String, Double> alleleFrequencies = new HashMap<String, Double>();
         alleleFrequencies.put("PhenomeCentral",
