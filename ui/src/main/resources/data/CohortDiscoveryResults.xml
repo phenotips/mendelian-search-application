@@ -20,7 +20,13 @@
 
 <xwikidoc version="1.1">
   <web>data</web>
-  <name>MendelianResults</name>
+<!--
+* CohortDiscoveryResults is used instead of MendelianResults so that the
+* URL for the results page will appear as .../CohortDiscoveryResults ,
+* "Cohort Discovery Tool" being the user-facing title for the
+* Mendelian Search Apllication.
+-->
+  <name>CohortDiscoveryResults</name>
   <language/>
   <defaultLanguage/>
   <translation>0</translation>
@@ -39,8 +45,8 @@
   <hidden>false</hidden>
   <content>{{include reference='PhenoTips.MendelianSearch' /}}
 {{velocity}}
-$xwiki.jsx.use('data.MendelianResults', {'minify' : false})##
-$xwiki.ssx.use('data.MendelianResults')##
+$xwiki.jsx.use('data.CohortDiscoveryResults', {'minify' : false})##
+$xwiki.ssx.use('data.CohortDiscoveryResults')##
 $xwiki.jsx.use('PhenoTips.VariantTableWidget', {'minify' : false})##
 $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
 #if($!{request} != '' &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
@@ -78,7 +84,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
 #end
 {{/velocity}}</content>
   <object>
-    <name>data.MendelianResults</name>
+    <name>data.CohortDiscoveryResults</name>
     <number>0</number>
     <className>XWiki.JavaScriptExtension</className>
     <guid>ada3713a-0b08-4c0b-bd4d-c3583d467654</guid>
@@ -784,7 +790,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     </property>
   </object>
   <object>
-    <name>data.MendelianResults</name>
+    <name>data.CohortDiscoveryResults</name>
     <number>1</number>
     <className>XWiki.JavaScriptExtension</className>
     <guid>bca6c561-900b-46e7-af79-f0b39c574ef0</guid>
@@ -1162,7 +1168,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     </property>
   </object>
   <object>
-    <name>data.MendelianResults</name>
+    <name>data.CohortDiscoveryResults</name>
     <number>2</number>
     <className>XWiki.JavaScriptExtension</className>
     <guid>5974718a-42b4-4aba-93c1-f4c7eb227902</guid>
@@ -1242,7 +1248,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     </property>
     <property>
       <code>require(['BoxPlotGenerator'], function(){
-  function MendelianResultsController() {
+  function CohortDiscoveryResultsController() {
     if ($('chart') &amp;&amp;  $('box-plot-values')){
       PhenoTips.widgets.boxPlotGenerator();
     
@@ -1292,11 +1298,11 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     }
   }
   
-  (XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; MendelianResultsController() || document.observe("xwiki:dom:loaded", MendelianResultsController));
+  (XWiki &amp;&amp; XWiki.domIsLoaded &amp;&amp; CohortDiscoveryResultsController() || document.observe("xwiki:dom:loaded", CohortDiscoveryResultsController));
 });</code>
     </property>
     <property>
-      <name>MendelianResultsController</name>
+      <name>CohortDiscoveryResultsController</name>
     </property>
     <property>
       <parse/>
@@ -1306,7 +1312,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
     </property>
   </object>
   <object>
-    <name>data.MendelianResults</name>
+    <name>data.CohortDiscoveryResults</name>
     <number>0</number>
     <className>XWiki.StyleSheetExtension</className>
     <guid>2b621d55-392e-42c5-89c5-b5b408e4ba39</guid>
@@ -1623,7 +1629,7 @@ Diagnosis Box Styles
     </property>
   </object>
   <object>
-    <name>data.MendelianResults</name>
+    <name>data.CohortDiscoveryResults</name>
     <number>2</number>
     <className>XWiki.StyleSheetExtension</className>
     <guid>405d6425-08d3-4bd2-b8d6-5af2aacb089e</guid>
