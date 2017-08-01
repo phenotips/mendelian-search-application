@@ -49,11 +49,12 @@ $xwiki.jsx.use('data.CohortDiscoveryResults', {'minify' : false})##
 $xwiki.ssx.use('data.CohortDiscoveryResults')##
 $xwiki.jsx.use('PhenoTips.VariantTableWidget', {'minify' : false})##
 $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
-#if($!{request} != '' &amp;&amp; $request.getMethod() == 'POST' &amp;&amp; "$!{request.getParameter('gene')}" != '' &amp;&amp; "$!{request.getParameterValues('phenotype')}" != '')
+#set ($incompleteRequest = ($!{request} == '' || $request.getMethod() != 'POST' || "$!{request.getParameter('gene')}" == '' || "$!{request.getParameterValues('phenotype')}" == '' || "$!{request.getParameter('variant-category')}" == '' || "$!{request.getParameter('allele-freq-pc')}" == '' || "$!{request.getParameter('allele-freq-exac')}" == ''))
+#if($incompleteRequest)
+  #set ($displayResults = false)
+#else
   #set ($overview = $services.MendelianSearch.getOverview($request))
   #set ($displayResults = true)
-#else
-  #set ($displayResults = false)
 #end
 #if (!${displayResults})
   {{html clean=false}}
