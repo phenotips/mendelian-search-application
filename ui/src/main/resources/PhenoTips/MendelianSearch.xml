@@ -121,7 +121,7 @@ $xwiki.ssx.use('PhenoTips.FontAwesomeIcons')##
   &lt;div class='form-section button-section'&gt;
     &lt;input type='hidden' name='matchGene' value='1'/&gt;
     &lt;input type='hidden' name='matchPhenotype' value='1'/&gt;
-    &lt;span class="buttonwrapper"&gt;&lt;a class="button" id="mendelian-advanced-options-button" href='#'&gt;Advanced options&lt;/a&gt;&lt;/span&gt;
+    &lt;span class="buttonwrapper"&gt;&lt;a class="button" id="mendelian-advanced-options-button" href='#'&gt;$!{escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.advancedOptionsButton'))}&lt;/a&gt;&lt;/span&gt;
     &lt;span class="buttonwrapper"&gt;&lt;input class='button' type='submit' value="$!{escapetool.xml($services.localization.render('phenotips.mendelianSearch.searchBy.searchButton'))}" /&gt;&lt;/span&gt;
   &lt;/div&gt;
 &lt;/form&gt;

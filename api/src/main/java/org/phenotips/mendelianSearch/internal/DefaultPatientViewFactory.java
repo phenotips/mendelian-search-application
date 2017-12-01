@@ -32,7 +32,7 @@ import org.phenotips.mendelianSearch.PatientViewFactory;
 import org.xwiki.component.annotation.Component;
 
 import java.util.ArrayList;
-
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +42,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ga4gh.GAVariant;
 
 import com.xpn.xwiki.XWiki;
@@ -56,8 +57,6 @@ import com.xpn.xwiki.XWikiContext;
 public class DefaultPatientViewFactory implements PatientViewFactory
 {
     private static final String UNDISCLOSED_MARKER = "?";
-
-    private static final String SOLVED_STRING = "solved";
 
     @Inject
     private PermissionsManager pm;
@@ -177,60 +176,30 @@ public class DefaultPatientViewFactory implements PatientViewFactory
 
     private String getPatientGeneStatus(Patient patient, String geneSymbol)
     {
-        List<String> candidateGenes = this.getPatientGenes(patient, "genes");
-
-        if (this.isGeneSolved(patient, geneSymbol)) {
-            return SOLVED_STRING;
-        }
-
-        if (candidateGenes.contains(geneSymbol)) {
-            return "candidate";
-        }
-
-        List<String> rejectedGenes = this.getPatientGenes(patient, "rejectedGenes");
-        if (rejectedGenes.contains(geneSymbol)) {
-            return "rejected";
-        }
-
-        return "";
-    }
-
-    private List<String> getPatientGenes(Patient patient, String name)
-    {
-        List<String> result = new ArrayList<String>();
-        PatientData data = patient.getData(name);
-        if (data != null) {
-            for (Object datum : data) {
-                Map<String, String> gene = (Map<String, String>) datum;
-                result.add(gene.get("gene"));
-            }
-        }
-        return result;
-    }
-
-    private boolean isGeneSolved(Patient patient, String geneSymbol)
-    {
-        PatientData solvedData = patient.getData(SOLVED_STRING);
-        if (solvedData != null) {
-            if ("1".equals(solvedData.get(SOLVED_STRING))) {
-                if (geneSymbol.equals(solvedData.get("solved__gene_id"))) {
-                    return true;
+        PatientData<Map<String, String>> allGenes = patient.getData("genes");
+        if (allGenes != null && allGenes.isIndexed()) {
+            for (Map<String, String> gene : allGenes) {
+                String geneName = gene.get("gene");
+                if (StringUtils.isBlank(geneName) || !gene.equals(geneSymbol)) {
+                    continue;
                 }
+                return gene.get("status");
             }
         }
-        return false;
+        return "";
     }
 
     private List<Disorder> getPatientDiagnosis(Patient patient)
     {
         List<Disorder> result = new ArrayList<Disorder>();
-        Set<? extends Disorder> disorders = patient.getDisorders();
-        if (!disorders.isEmpty()) {
-            for (Disorder dis : disorders) {
-                result.add(dis);
+        PatientData<Disorder> disorders = patient.getData("disorders");
+        if (disorders != null) {
+            Iterator<Disorder> iterator = disorders.iterator();
+            while (iterator.hasNext()) {
+                Disorder disease = iterator.next();
+                result.add(disease);
             }
         }
         return result;
     }
-
 }

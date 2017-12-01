@@ -649,7 +649,12 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
       if (container.select('.variant-display-table')[0]) {
         container.select('.variant-display-table')[0].remove();
       }
-      this.displayVariantTable(row.patientVariants, container);
+      if (row.patientVariants.length == 0) {
+        container.hide();
+      } else {
+        container.show();
+        this.displayVariantTable(row.patientVariants, container);
+      }
     },
 
     addDiagnosisToggleListeners: function() {
@@ -927,16 +932,6 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
 
       function decorateCategory(c, datum, i) {
         category = d3.select(c);
-        
-        //Data points
-        category.selectAll('circle')
-          .data(function(d){return data[d];})
-          .enter()
-          .append('circle')
-            .attr('class', 'data-point')
-            .attr('cx', function(){ return nrmRandom(x.bandwidth(), 0.2);})
-            .attr('cy', function(d , i){return y(d);})
-            .attr('r','1.5px');
 
         //Median lines
         category.append('line')
@@ -1078,21 +1073,30 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
           .attr('dy', '2.25em')
           .style("text-anchor", "start");
 
-
         //Axes
-        chart.append("g").attr("class", "x axis")
+        chart.insert("g",":first-child").attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
             .call(xAxis);
 
-        chart.append("g").attr("class", "y axis")
+        chart.insert("g",":first-child").attr("class", "y axis")
           .call(yAxis)
           .append("text")
             .attr("transform", "rotate(-90)")
             .attr("x", -(height-margin.top)/2)
             .attr("dy", "-3.5em")
             .style("text-anchor", "middle")
-            .text("Phenotypic Similarity Score");
+            .style("fill", "#000")
+            .text("$escapetool.javascript($services.localization.render('phenotips.mendelianSearch.results.boxPlot.yAxis.similarityScore'))");
 
+        //Data points
+        category.selectAll('circle')
+          .data(function(d){return data[d];})
+          .enter()
+          .append('circle')
+            .attr('class', 'data-point')
+            .attr('cx', function(){ return nrmRandom(x.bandwidth(), 0.2);})
+            .attr('cy', function(d , i){return y(d);})
+            .attr('r','3px');
 
       }
 
@@ -1413,6 +1417,7 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
 #mendelian-overview-container{
   float: left;
   width: 400px;
+  margin-top: -20px;
 }
 
 #mendelian-livetable-container{
@@ -1429,7 +1434,10 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
   float: left;
 }
 .mendelian-livetable-controls .results-per-page{
-  margin-right: 0;
+  margin: -0.5em 0 0 0;
+}
+.mendelian-livetable-controls .results-per-page select{
+  margin-left: 5px;
 }
 #hidden-query-form{
   display: none;
@@ -1537,10 +1545,17 @@ $xwiki.ssx.use('PhenoTips.VariantTableWidget')##
   width: 100%;
 }
 
+.patient-phenotype-container ul {
+  margin-left: 0;
+}
+
 .patient-phenotype-container ul li {
   float:  left;
-  display: inline;
-  width:  50%;
+  display: inline-block;
+  background-color: #f0f1f3;
+  margin: 3px;
+  border-radius: 4px;
+  padding: 3px;
 }
 
 .patient-subResult .patient-variant-container{
@@ -1733,13 +1748,13 @@ Diagnosis Box Styles
 }
 #chart .axis path, .axis line{
   fill:none;
-  stroke:#000;
+  stroke:#ddd;
   shape-rendering: crispEdges;
 }
 #chart .box-plot{
   fill: #FFF;
   fill-opacity: 0;
-  stroke: #000;
+  stroke: #ddd;
   stroke-width: 1.5px;
 }
 #chart line.box-plot.whisker {
@@ -1750,7 +1765,6 @@ Diagnosis Box Styles
 }
 #chart circle.data-point{
   fill: steelblue;
-  opacity: 0.7;
 }
 #chart rect.hover-box{
   opacity:0;

@@ -44,18 +44,18 @@ public interface PatientView
      * <pre>
      *
      *      {
-     *          "patientId" : <patient id>,
-     *          "owner"     : <patient owner>,
-     *          "phenotypeScore : <double score>,
-     *          "phenotype" : [<String trait>, ...]
+     *          "patientId" : patient id,
+     *          "owner"     : patient owner,
+     *          "phenotypeScore : double score,
+     *          "phenotype" : [String trait, ...]
      *          "variants"  : [
      *              {
-     *                  "geneSymbol : <String geneSymbol>,
-     *                  "start"  : <Long position>,
-     *                  "referenceBases"       : <String reference bases>,
-     *                  "alternateBases"       : <String alternate bases or "-">,
-     *                  "score"     : <Double exomiser score>,
-     *                  "effect"    : <String predicted gene effect>
+     *                  "geneSymbol : String geneSymbol,
+     *                  "start"  : Long position,
+     *                  "referenceBases"       : String reference bases,
+     *                  "alternateBases"       : String alternate bases or "-",
+     *                  "score"     : Double exomiser score,
+     *                  "effect"    : String predicted gene effect
      *              },
      *              ...
      *          ]

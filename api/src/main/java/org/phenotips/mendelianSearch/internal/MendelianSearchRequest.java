@@ -63,7 +63,7 @@ public class MendelianSearchRequest
      */
     public String getId()
     {
-        return id;
+        return this.id;
     }
 
     /**

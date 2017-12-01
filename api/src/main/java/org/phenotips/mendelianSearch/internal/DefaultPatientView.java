@@ -67,7 +67,8 @@ public class DefaultPatientView implements PatientView
     }
 
     @Override
-    public JSONObject toJSON() {
+    public JSONObject toJSON()
+    {
         return toJSON(null);
     }
 

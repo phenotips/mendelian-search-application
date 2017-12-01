@@ -128,11 +128,10 @@ public class DefaultMendelianSearch implements MendelianSearch
      *
      * @param request Phenotype filter parameters should be present in the request
      * @param ids The set of all valid Ids which may be returned.
-     * @return
+     * @return Right now only the matching type 'fuzzy' so just return the ids
      */
     private Set<String> findIdsMatchingPhenotype(MendelianSearchRequest request, Set<String> ids)
     {
-        //Right now only the matching type 'fuzzy' so just return the ids.
         return ids;
     }
 
@@ -155,10 +154,9 @@ public class DefaultMendelianSearch implements MendelianSearch
             varEffects.addAll(varCategories.get(category).getVariantEffects());
         }
 
+        String gene = (String) request.get("geneSymbol");
         // First query the variant store and receive a JSONArray of patient variant information --> store in List.
-        matchingVariants = this.variantStore.getIndividualsWithGene(
-            (String) request.get("geneSymbol"),
-            varEffects,
+        matchingVariants = this.variantStore.getIndividualsWithGene(gene, varEffects,
             (Map<String, Double>) request.get("alleleFrequencies"));
 
         if ((int) request.get("matchGene") == 1) {
@@ -168,7 +166,7 @@ public class DefaultMendelianSearch implements MendelianSearch
         nonMatchingIds.removeAll(matchingVariants.keySet());
         Map<String, List<GAVariant>> nonMatchingVariants = new HashMap<String, List<GAVariant>>();
         for (String id : nonMatchingIds) {
-            nonMatchingVariants.put(id, this.variantStore.getTopHarmfullVariants(id, 5));
+            nonMatchingVariants.put(id, this.variantStore.getTopHarmfullVariantsForGene(id, gene, 5));
         }
         return nonMatchingVariants;
     }
@@ -180,7 +178,8 @@ public class DefaultMendelianSearch implements MendelianSearch
     }
 
     @Override
-    public Map<String, MendelianVariantCategory> getVariantCategories() {
+    public Map<String, MendelianVariantCategory> getVariantCategories()
+    {
         if (this.variantCategories == null) {
             this.variantCategories = new LinkedHashMap<String, MendelianVariantCategory>();
 

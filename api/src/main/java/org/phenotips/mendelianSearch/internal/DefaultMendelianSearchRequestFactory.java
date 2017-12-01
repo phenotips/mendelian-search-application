@@ -64,7 +64,8 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
     private String matchPhenotypeKey = "matchPhenotype";
 
 
-    @Override public MendelianSearchRequest makeRequest(XWikiRequest rawRequest)
+    @Override
+    public MendelianSearchRequest makeRequest(XWikiRequest rawRequest)
     {
         MendelianSearchRequest request = new MendelianSearchRequest();
         request.setId(this.generateRequestId());
@@ -74,8 +75,8 @@ public class DefaultMendelianSearchRequestFactory implements MendelianSearchRequ
 
         Map<String, Double> alleleFrequencies = new HashMap<String, Double>();
         alleleFrequencies.put("PhenomeCentral",
-            Double.parseDouble((String) rawRequest.getParameter("allele-freq-pc")) / 100);
-        alleleFrequencies.put("EXAC", Double.parseDouble((String) rawRequest.getParameter("allele-freq-exac")) / 100);
+            Double.parseDouble(rawRequest.getParameter("allele-freq-pc")) / 100);
+        alleleFrequencies.put("EXAC", Double.parseDouble(rawRequest.getParameter("allele-freq-exac")) / 100);
 
         request.set(this.alleleFrequenciesKey, alleleFrequencies);
         request.set(this.phenotypeMatchingKey, rawRequest.getParameter("phenotype-matching"));

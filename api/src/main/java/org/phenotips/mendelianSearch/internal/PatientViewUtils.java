@@ -47,7 +47,8 @@ public final class PatientViewUtils
         Collections.sort(views, generateComparator(key, ascending));
     }
 
-    private static Comparator<JSONObject> generateComparator(final String key, final boolean ascending) {
+    private static Comparator<JSONObject> generateComparator(final String key, final boolean ascending)
+    {
         return new Comparator<JSONObject>()
         {
             @Override
@@ -71,7 +72,8 @@ public final class PatientViewUtils
      * @param elementsPerPage The number of JSONs to be returned in the final list.
      * @return The trimmed list of JSON objects representing the specified page.
      */
-    public static List<JSONObject> paginatePatientViewJSON(List<JSONObject> views, int page, int elementsPerPage) {
+    public static List<JSONObject> paginatePatientViewJSON(List<JSONObject> views, int page, int elementsPerPage)
+    {
         if (page < 1 || elementsPerPage < 1) {
             return new ArrayList<JSONObject>();
         }
